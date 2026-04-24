@@ -995,8 +995,9 @@
                             <div class="huge-temp" id="val-temp">--<span>°</span></div>
                         </div>
                         <div class="cond-desc" id="val-desc" style="margin-top: 5px;">Processando...</div>
-                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Sensação Térmica: <span id="val-feels"
-                                style="color: #fff;">--°C</span></div>
+                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Sensação Térmica:
+                            <span id="val-feels" style="color: #fff;">--°C</span>
+                        </div>
                     </div>
                     <div class="main-icon-wrapper">
                         <i data-lucide="loader" id="main-icon" stroke-width="1.5"></i>
@@ -1680,7 +1681,7 @@
         async function fetchData() {
             try {
                 // Modificado para buscar relative_humidity_2m, pressure_msl, visibility e dew_point_2m no hourly para cálculo de tendência
-                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=America%2FSao_Paulo`;
+                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto`;
 
                 const resW = await fetch(urlWeather, { signal: AbortSignal.timeout(8000) });
 
