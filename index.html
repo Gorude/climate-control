@@ -235,6 +235,8 @@
             border-bottom: 1px solid var(--divider);
             display: flex;
             flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
         /* Posicionamento do Grid */
@@ -281,14 +283,16 @@
         .cell-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             font-weight: 600;
             font-size: 0.85rem;
             color: var(--text-muted);
             letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 20px;
-            justify-content: space-between;
+            margin-bottom: 25px;
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
         }
 
         .cell-header-title {
@@ -328,7 +332,9 @@
         .temp-display {
             display: flex;
             align-items: center;
+            justify-content: center;
             margin-top: 10px;
+            width: 100%;
         }
 
         .main-icon-wrapper {
@@ -385,11 +391,13 @@
 
         .min-max-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            gap: 30px;
             margin-top: auto;
             padding-top: 15px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
         }
 
         .min-max-item {
@@ -477,10 +485,12 @@
 
         .sun-times {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 30px;
             margin-top: -5px;
             font-size: 0.85rem;
             color: var(--text-muted);
+            width: 100%;
         }
 
         .sun-times div {
@@ -493,9 +503,11 @@
         /* Bússola de Vento */
         .compass-wrapper {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            gap: 30px;
             margin-bottom: 10px;
+            width: 100%;
         }
 
         .compass-dial {
@@ -589,9 +601,13 @@
         /* Atmosfera Horizontal Items */
         .atmos-item {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 15px;
+            justify-content: center;
+            text-align: center;
+            gap: 12px;
             border-right: 1px solid var(--divider);
+            padding: 10px;
         }
 
         .atmos-item:last-child {
@@ -800,7 +816,7 @@
             .temp-display {
                 gap: 10px;
                 flex-wrap: nowrap;
-                justify-content: space-between;
+                justify-content: center;
                 width: 100%;
             }
 
@@ -1029,7 +1045,7 @@
             <div class="grid-cell cell-sun">
                 <div class="cell-header">
                     <div class="cell-header-title"><i data-lucide="compass"></i> Ciclos Celestes</div>
-                    <div class="forecast-toggle" style="margin-left: auto;">
+                    <div class="forecast-toggle">
                         <button id="btn-solar" class="active" onclick="switchAstro('solar')">Sol</button>
                         <button id="btn-lunar" onclick="switchAstro('lunar')">Lua</button>
                     </div>
@@ -1118,7 +1134,7 @@
             <div class="grid-cell cell-precip">
                 <div class="cell-header">
                     <div class="cell-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)</div>
-                    <div style="margin-left: auto; font-size: 0.8rem; color: var(--accent-cyan);">Acumulado: <span
+                    <div style="font-size: 0.8rem; color: var(--accent-cyan);">Acumulado: <span
                             id="val-precip" style="font-weight:bold;">-- mm</span></div>
                 </div>
                 <div class="chart-container"><canvas id="chart-precip"></canvas></div>
@@ -1128,7 +1144,7 @@
             <div class="grid-cell cell-wind">
                 <div class="cell-header">
                     <div class="cell-header-title"><i data-lucide="wind"></i> Vento (24h)</div>
-                    <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-muted);">Rajada Max: <span
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Rajada Max: <span
                             id="val-gusts" style="font-weight:bold; color: #fff;">-- km/h</span></div>
                 </div>
 
