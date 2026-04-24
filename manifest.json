@@ -2,7 +2,7 @@
   "name": "Dashboard Clima - Naviraí",
   "short_name": "Clima Naviraí",
   "description": "Dashboard meteorológico premium para Naviraí",
-  "start_url": "./Clima.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#060D17",
   "theme_color": "#00D2D3",
