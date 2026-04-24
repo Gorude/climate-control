@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Clima - Naviraí</title>
+
+    <!-- PWA Config -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#060D17">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Clima Naviraí">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            /* Paleta Dark/Neon Cyan Premium */
+            --bg-main: #060D17;
+            --glass-bg: rgba(11, 21, 36, 0.6);
+            --glass-border: rgba(0, 210, 211, 0.15);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --text-main: #FFFFFF;
+            --text-muted: #829AB1;
+            --accent-cyan: #00D2D3;
+            --accent-blue: #3b82f6;
+            --accent-yellow: #facc15;
+            --divider: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body,
+        html {
+            width: 100%;
+            min-height: 100vh;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Fundo Dinâmico (Sutil para dar destaque ao painel) */
+        #weather-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.2;
+            pointer-events: none;
+            transition: background 2s ease;
+        }
+
+        .bg-day {
+            background: linear-gradient(180deg, #1e3a8a 0%, #060D17 100%);
+        }
+
+        .bg-night {
+            background: radial-gradient(circle at top right, #111827 0%, #000000 100%);
+        }
+
+        .bg-rain {
+            background: linear-gradient(180deg, #0f172a 0%, #060D17 100%);
+        }
+
+        /* Navegação Superior */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(6, 13, 23, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(0, 210, 211, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 210, 211, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-btn:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            background: rgba(0, 210, 211, 0.1);
+        }
+
+        /* Nova classe para controlar a animação sem perder a referência do ícone */
+        .refresh-btn.spinning svg {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Container Principal do Dashboard Unificado */
+        .dashboard-container {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Sistema de Alertas */
+        .alert-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .weather-alert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            animation: slideInDown 0.5s ease-out;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fcd34d;
+        }
+
+        .alert-icon {
+            animation: pulse-alert 2s infinite;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse-alert {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Painel Único (Bento Box Estático) */
+        .dashboard-board {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px var(--glass-shadow);
+            overflow: hidden;
+        }
+
+        .grid-cell {
+            padding: 30px;
+            border-right: 1px solid var(--divider);
+            border-bottom: 1px solid var(--divider);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Posicionamento do Grid */
+        .cell-current {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+        }
+
+        .cell-hourly {
+            grid-column: 2 / 4;
+            grid-row: 1 / 2;
+            border-right: none;
+        }
+
+        .cell-sun {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        .cell-precip {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+        }
+
+        .cell-wind {
+            grid-column: 3 / 4;
+            grid-row: 2 / 3;
+            border-right: none;
+        }
+
+        .cell-atmos {
+            grid-column: 1 / -1;
+            grid-row: 3 / 4;
+            border-right: none;
+            border-bottom: none;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 25px 30px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Cabeçalhos Internos */
+        .cell-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            justify-content: space-between;
+        }
+
+        .cell-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Toggle de Previsão (24h / 7d) */
+        .forecast-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .forecast-toggle button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .forecast-toggle button.active {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 10px rgba(0, 210, 211, 0.3);
+        }
+
+        /* Tipografia de Temperatura */
+        .temp-display {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .main-icon-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: -30px;
+            margin-left: 15px;
+        }
+
+        .huge-temp {
+            font-size: 5.5rem;
+            font-weight: 300;
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        .huge-temp span {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            font-weight: 400;
+            vertical-align: super;
+            margin-left: 2px;
+        }
+
+        .cond-desc {
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            font-weight: 500;
+            text-transform: capitalize;
+            margin-bottom: 5px;
+        }
+
+        #main-icon {
+            width: 100px;
+            height: 100px;
+            color: var(--accent-yellow);
+            filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.3));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .min-max-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .min-max-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .min-max-item span:first-child {
+            color: var(--text-muted);
+        }
+
+        .min-max-item span:last-child {
+            font-weight: 600;
+        }
+
+        /* Barra de Rolagem Horizontal (Previsão) */
+        .hourly-scroll {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--divider) transparent;
+        }
+
+        .hourly-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .hourly-scroll::-webkit-scrollbar-thumb {
+            background-color: var(--divider);
+            border-radius: 3px;
+        }
+
+        .hour-card {
+            min-width: 75px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 12px;
+            border-radius: 16px;
+            border: 1px solid transparent;
+            background: transparent;
+            transition: 0.3s;
+        }
+
+        .hour-card.now {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 210, 211, 0.05);
+            box-shadow: inset 0 0 15px rgba(0, 210, 211, 0.1);
+        }
+
+        .hour-time {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .hour-temp {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .hour-prob {
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            font-weight: 500;
+        }
+
+        /* Arco Solar */
+        .sun-arc-container {
+            position: relative;
+            height: 110px;
+            margin-top: 10px;
+        }
+
+        .sun-arc-container svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .sun-times {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -5px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .sun-times div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Bússola de Vento */
+        .compass-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .compass-dial {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--divider);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .compass-dial span {
+            position: absolute;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .c-n {
+            top: 4px;
+        }
+
+        .c-s {
+            bottom: 4px;
+        }
+
+        .c-e {
+            right: 6px;
+        }
+
+        .c-w {
+            left: 6px;
+        }
+
+        /* Pino central da bússola */
+        .compass-dial::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .compass-needle {
+            position: absolute;
+            width: 8px;
+            height: 50px;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .needle-head {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 25px solid #ef4444;
+        }
+
+        .needle-tail {
+            width: 4px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 0 0 2px 2px;
+        }
+
+        .wind-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        /* Gráficos Chart.js */
+        .chart-container {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 120px;
+            position: relative;
+        }
+
+        /* Atmosfera Horizontal Items */
+        .atmos-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-right: 1px solid var(--divider);
+        }
+
+        .atmos-item:last-child {
+            border-right: none;
+        }
+
+        .atmos-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .atmos-val {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Medidor UV (Mini Circular) */
+        .uv-mini-gauge {
+            position: relative;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .uv-mini-gauge svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loader Elegante */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(0, 210, 211, 0.1);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== RESPONSIVIDADE COMPLETA ===== */
+
+        /* Tablet / Telas médias */
+        @media (max-width: 1100px) {
+            .dashboard-board {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .cell-current {
+                grid-column: 1 / 2;
+            }
+
+            .cell-hourly {
+                grid-column: 2 / 3;
+                border-right: none;
+            }
+
+            .cell-sun {
+                grid-column: 1 / 2;
+            }
+
+            .cell-precip {
+                grid-column: 2 / 3;
+                border-right: none;
+            }
+
+            .cell-wind {
+                grid-column: 1 / -1;
+                border-right: none;
+            }
+
+            .cell-atmos {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 30px;
+            }
+
+            .atmos-item:nth-child(3) {
+                border-right: none;
+            }
+        }
+
+        /* Mobile — Telas estreitas (retrato de celular) */
+        @media (max-width: 768px) {
+
+            /* Navbar: empilha título e controles */
+            .top-nav {
+                flex-direction: column;
+                gap: 10px;
+                padding: 12px 16px;
+            }
+
+            .nav-title {
+                font-size: 1.1rem;
+            }
+
+            .nav-controls {
+                width: 100%;
+                justify-content: space-between;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            /* Container principal */
+            .dashboard-container {
+                padding: 14px;
+            }
+
+            /* Grid: coluna única vertical */
+            .dashboard-board {
+                grid-template-columns: 1fr !important;
+                border-radius: 18px;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .grid-cell {
+                border-right: none !important;
+                padding: 22px 18px;
+                min-width: 0;
+                overflow: hidden;
+            }
+
+            .cell-current {
+                grid-column: 1 / -1 !important;
+                grid-row: auto !important;
+            }
+
+            .cell-hourly {
+                grid-column: 1 / -1 !important;
+                grid-row: auto !important;
+            }
+
+            .cell-sun {
+                grid-column: 1 / -1 !important;
+                grid-row: auto !important;
+            }
+
+            .cell-precip {
+                grid-column: 1 / -1 !important;
+                grid-row: auto !important;
+            }
+
+            .cell-wind {
+                grid-column: 1 / -1 !important;
+                grid-row: auto !important;
+            }
+
+            .cell-atmos {
+                grid-column: 1 / -1 !important;
+                grid-row: auto !important;
+            }
+
+            /* Temperatura principal menor */
+            .huge-temp {
+                font-size: 3.8rem;
+            }
+
+            .huge-temp span {
+                font-size: 1.5rem;
+            }
+
+            .cond-desc {
+                font-size: 1rem;
+            }
+
+            #main-icon {
+                width: 95px;
+                height: 95px;
+            }
+
+            .main-icon-wrapper {
+                flex: 0 0 auto;
+                margin-left: 0;
+                margin-top: 0;
+            }
+
+            .temp-display {
+                gap: 10px;
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .min-max-row {
+                gap: 10px;
+            }
+
+            .min-max-item {
+                font-size: 0.85rem;
+            }
+
+            /* Cabeçalhos menores */
+            .cell-header {
+                font-size: 0.8rem;
+                margin-bottom: 14px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            /* Previsão: scroll horizontal continua funcionando */
+            .hourly-scroll {
+                gap: 10px;
+            }
+
+            .hour-card {
+                min-width: 65px;
+                padding: 12px 8px;
+            }
+
+            /* Arco Solar */
+            .sun-arc-container {
+                height: 90px;
+            }
+
+            .sun-times {
+                font-size: 0.78rem;
+            }
+
+            /* Bússola de Vento */
+            .compass-wrapper {
+                flex-direction: column;
+                align-items: center;
+                gap: 14px;
+            }
+
+            .wind-info {
+                align-items: center;
+                text-align: center;
+            }
+
+            /* Gráficos */
+            .chart-container {
+                min-height: 100px;
+            }
+
+            /* Atmosfera: coluna única */
+            .cell-atmos {
+                grid-template-columns: 1fr;
+                gap: 0;
+                padding: 0;
+            }
+
+            .atmos-item {
+                border-right: none;
+                border-bottom: 1px solid var(--divider);
+                padding: 16px 18px;
+            }
+
+            .atmos-item:last-child {
+                border-bottom: none;
+            }
+
+            .atmos-label {
+                font-size: 0.8rem;
+            }
+
+            .atmos-val {
+                font-size: 1.15rem;
+            }
+
+            /* Alertas */
+            .weather-alert {
+                font-size: 0.85rem;
+                padding: 10px 14px;
+            }
+        }
+
+        /* Mobile XS — Telas muito pequenas (<400px) */
+        @media (max-width: 400px) {
+            .top-nav {
+                padding: 10px 12px;
+            }
+
+            .nav-title {
+                font-size: 1rem;
+                gap: 8px;
+            }
+
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+
+            .dashboard-container {
+                padding: 10px;
+            }
+
+            .grid-cell {
+                padding: 18px 14px;
+            }
+
+            .huge-temp {
+                font-size: 3.2rem;
+            }
+
+            #main-icon {
+                width: 80px;
+                height: 80px;
+            }
+
+            .forecast-toggle button {
+                font-size: 0.7rem;
+                padding: 3px 10px;
+            }
+
+            .hour-card {
+                min-width: 58px;
+                padding: 10px 6px;
+                gap: 8px;
+            }
+
+            .hour-temp {
+                font-size: 0.95rem;
+            }
+
+            .compass-dial {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="weather-bg" class="bg-day"></div>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <h3 style="font-weight: 500; letter-spacing: 1px;">Sincronizando Dados</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">Conectando satélites para Naviraí - MS
+        </p>
+    </div>
+
+    <nav class="top-nav">
+        <div class="nav-title"><i data-lucide="map-pin"></i> Naviraí - MS</div>
+        <div class="nav-controls">
+            <div id="season-indicator"
+                style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--divider); padding-right: 15px; margin-right: -5px;">
+                --</div>
+            <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-muted);">--:--</div>
+            <div class="status-badge" id="api-status"><i data-lucide="activity" size="14"></i> Tempo Real</div>
+            <button class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
+                    size="18"></i></button>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+
+        <!-- Recipiente Dinâmico para Alertas Severos -->
+        <div id="alert-container" class="alert-container"></div>
+
+        <!-- PAINEL UNIFICADO (BENTO BOX) -->
+        <div class="dashboard-board">
+
+            <!-- 1. Visão Geral (Top Left) -->
+            <div class="grid-cell cell-current">
+                <div class="cell-header">
+                    <div class="cell-header-title">
+                        <i data-lucide="thermometer"></i> Visão Geral
+                        <div id="trend-temp"
+                            style="display: flex; align-items: center; gap: 4px; font-size: 1rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);"
+                            title="Variação na última hora">
+                            <i data-lucide="minus" size="16" color="var(--text-muted)"></i> <span
+                                style="color: var(--text-muted);">--°</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="temp-display">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="huge-temp" id="val-temp">--<span>°</span></div>
+                        </div>
+                        <div class="cond-desc" id="val-desc" style="margin-top: 5px;">Processando...</div>
+                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Sensação Térmica: <span id="val-feels"
+                                style="color: #fff;">--°C</span></div>
+                    </div>
+                    <div class="main-icon-wrapper">
+                        <i data-lucide="loader" id="main-icon" stroke-width="1.5"></i>
+                    </div>
+                </div>
+                <div class="min-max-row">
+                    <div class="min-max-item"><span>Máxima:</span><span id="val-max"
+                            style="color: var(--accent-yellow);">--°</span></div>
+                    <div class="min-max-item"><span>Mínima:</span><span id="val-min"
+                            style="color: var(--accent-cyan);">--°</span></div>
+                </div>
+            </div>
+
+            <!-- 2. Previsão (Top Right - Spans 2 Cols) -->
+            <div class="grid-cell cell-hourly">
+                <div class="cell-header">
+                    <div class="cell-header-title"><i data-lucide="calendar-clock"></i> Previsão</div>
+                    <div class="forecast-toggle">
+                        <button id="btn-24h" class="active" onclick="switchForecast('24h')">24h</button>
+                        <button id="btn-7d" onclick="switchForecast('7d')">7 Dias</button>
+                    </div>
+                </div>
+                <div class="hourly-scroll" id="forecast-container">
+                    <!-- Gerado pelo JS -->
+                </div>
+            </div>
+
+            <!-- 3. Ciclos Celestes (Middle Left) -->
+            <div class="grid-cell cell-sun">
+                <div class="cell-header">
+                    <div class="cell-header-title"><i data-lucide="compass"></i> Ciclos Celestes</div>
+                    <div class="forecast-toggle" style="margin-left: auto;">
+                        <button id="btn-solar" class="active" onclick="switchAstro('solar')">Sol</button>
+                        <button id="btn-lunar" onclick="switchAstro('lunar')">Lua</button>
+                    </div>
+                </div>
+
+                <!-- Visão Solar -->
+                <div id="astro-solar-view">
+                    <div class="sun-arc-container">
+                        <svg viewBox="0 0 200 80">
+                            <defs>
+                                <clipPath id="sun-clip">
+                                    <rect id="sun-clip-rect" x="0" y="-30" width="20" height="120"
+                                        style="transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);" />
+                                </clipPath>
+                            </defs>
+                            <path d="M 20 70 Q 100 -20 180 70" fill="none" stroke="rgba(255, 255, 255, 0.1)"
+                                stroke-width="2" stroke-dasharray="4 4" />
+                            <path id="sun-path-active" d="M 20 70 Q 100 -20 180 70" fill="none"
+                                stroke="var(--accent-yellow)" stroke-width="2.5" clip-path="url(#sun-clip)" />
+                            <circle id="sun-dot" cx="20" cy="70" r="5" fill="var(--accent-yellow)"
+                                style="transition: all 2s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 6px var(--accent-yellow));" />
+                        </svg>
+                    </div>
+                    <div class="sun-times">
+                        <div><span style="color:#fff; font-weight:600;" id="val-sunrise">--:--</span><span><i
+                                    data-lucide="sunrise" size="14" color="#f97316" style="vertical-align: middle;"></i>
+                                Nascer</span></div>
+                        <div>
+                            <span
+                                style="color:var(--accent-cyan); font-weight:600; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                <span id="val-daylight">--h --m</span>
+                                <span id="daylight-trend"></span>
+                            </span>
+                            <span>Luz do Dia</span>
+                        </div>
+                        <div><span style="color:#fff; font-weight:600;" id="val-sunset">--:--</span><span><i
+                                    data-lucide="sunset" size="14" color="#a855f7" style="vertical-align: middle;"></i>
+                                Pôr do sol</span></div>
+                    </div>
+
+                    <!-- Indicador Golden Hour -->
+                    <div style="text-align: center; margin-top: 15px;">
+                        <div
+                            style="display: inline-flex; align-items: center; gap: 6px; background: rgba(250, 204, 21, 0.1); border: 1px solid rgba(250, 204, 21, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: var(--accent-yellow); font-weight: 500;">
+                            <i data-lucide="camera" size="12"></i> Golden Hour: <span id="val-golden-hour"
+                                style="color: #fff;">--:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visão Lunar -->
+                <div id="astro-lunar-view"
+                    style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; margin-top: 5px;">
+                    <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));"
+                        id="val-moon-emoji">🌕</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan);" id="val-moon-phase">--
+                    </div>
+                    <div
+                        style="display: flex; gap: 20px; font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; background: rgba(0,0,0,0.2); padding: 6px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div>Iluminação: <span id="val-moon-ill" style="color: #fff; font-weight: 600;">--%</span></div>
+                        <div>Idade: <span id="val-moon-age" style="color: #fff; font-weight: 600;">-- dias</span></div>
+                    </div>
+
+                    <!-- Indicador Ponto Sublunar -->
+                    <div style="text-align: center; margin-top: 5px;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 210, 211, 0.1); border: 1px solid rgba(0, 210, 211, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: var(--accent-cyan); font-weight: 500;"
+                            title="Ponto Sublunar (Onde a lua está a pino na Terra agora)">
+                            <i data-lucide="map-pin" size="12"></i> Vertical em: <span id="val-moon-location"
+                                style="color: #fff;">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Indicador de Visibilidade Local -->
+                    <div style="text-align: center; margin-top: 2px;">
+                        <div id="badge-moon-vis"
+                            style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;"
+                            title="Visibilidade calculada para Naviraí">
+                            <i data-lucide="eye" size="12" id="icon-moon-vis"></i> <span id="val-moon-vis">--</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 4. Precipitação (Middle Center) -->
+            <div class="grid-cell cell-precip">
+                <div class="cell-header">
+                    <div class="cell-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)</div>
+                    <div style="margin-left: auto; font-size: 0.8rem; color: var(--accent-cyan);">Acumulado: <span
+                            id="val-precip" style="font-weight:bold;">-- mm</span></div>
+                </div>
+                <div class="chart-container"><canvas id="chart-precip"></canvas></div>
+            </div>
+
+            <!-- 5. Perfil Eólico (Middle Right) -->
+            <div class="grid-cell cell-wind">
+                <div class="cell-header">
+                    <div class="cell-header-title"><i data-lucide="wind"></i> Vento (24h)</div>
+                    <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-muted);">Rajada Max: <span
+                            id="val-gusts" style="font-weight:bold; color: #fff;">-- km/h</span></div>
+                </div>
+
+                <!-- Bússola e Dados Numéricos -->
+                <div class="compass-wrapper">
+                    <div class="compass-dial">
+                        <span class="c-n">N</span><span class="c-e">L</span><span class="c-s">S</span><span
+                            class="c-w">O</span>
+                        <div class="compass-needle" id="wind-needle">
+                            <div class="needle-head"></div>
+                            <div class="needle-tail"></div>
+                        </div>
+                    </div>
+                    <div class="wind-info">
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #fff;"><span id="val-wind-sfc">--</span>
+                            <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">km/h</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Soprando em direção ao <br><span
+                                id="val-wind-dest" style="color: var(--accent-cyan); font-weight: 600;">--</span></div>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="min-height: 80px; margin-top: 5px;"><canvas
+                        id="chart-wind"></canvas></div>
+            </div>
+
+            <!-- 6. Atmosfera (Bottom Horizontal Strip) -->
+            <div class="grid-cell cell-atmos">
+                <div class="atmos-item">
+                    <i data-lucide="droplets" size="32" color="var(--accent-blue)"></i>
+                    <div>
+                        <div class="atmos-label">Umidade Relativa</div>
+                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
+                            <span id="val-humidity">--%</span>
+                            <span id="trend-humidity"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="atmos-item">
+                    <i data-lucide="gauge" size="32" color="#a855f7"></i>
+                    <div>
+                        <div class="atmos-label">Pressão (Nível do Mar)</div>
+                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
+                            <div><span id="val-pressure">--</span> <span
+                                    style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">hPa</span></div>
+                            <span id="trend-pressure"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="atmos-item">
+                    <i data-lucide="eye" size="32" color="#4ade80"></i>
+                    <div>
+                        <div class="atmos-label">Visibilidade</div>
+                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
+                            <div><span id="val-vis">--</span> <span
+                                    style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">km</span></div>
+                            <span id="trend-vis"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="atmos-item">
+                    <div class="uv-mini-gauge">
+                        <svg viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="uvGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#4ade80" />
+                                    <stop offset="50%" stop-color="#facc15" />
+                                    <stop offset="100%" stop-color="#ef4444" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M 20 80 A 42.4 42.4 0 1 1 80 80" fill="none" stroke="rgba(255,255,255,0.05)"
+                                stroke-width="12" stroke-linecap="round" />
+                            <path id="uv-ring-mini" d="M 20 80 A 42.4 42.4 0 1 1 80 80" fill="none"
+                                stroke="url(#uvGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="200"
+                                stroke-dashoffset="200" style="transition: stroke-dashoffset 1.5s ease;" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="atmos-label">Índice UV Atual</div>
+                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
+                            <span id="val-uv">--</span>
+                            <span id="trend-uv"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="atmos-item">
+                    <i data-lucide="thermometer" size="32" color="#38bdf8"></i>
+                    <div>
+                        <div class="atmos-label">Ponto de Orvalho</div>
+                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
+                            <div><span id="val-dew">--</span> <span
+                                    style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">°C</span></div>
+                            <span id="trend-dew"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        const LAT = -23.0650;
+        const LON = -54.1906;
+        let chartsObj = {};
+        let globalWeatherData = null;
+        let currentForecastTab = '24h';
+
+        // Configuração Premium Global do Chart.js
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = 'rgba(255, 255, 255, 0.5)';
+        Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.03)';
+        Chart.defaults.scale.grid.borderColor = 'transparent';
+
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(11, 21, 36, 0.9)';
+        Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+        Chart.defaults.plugins.tooltip.bodyColor = '#e2e8f0';
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+        Chart.defaults.plugins.tooltip.borderColor = 'rgba(0, 210, 211, 0.3)';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+
+        // Relógio
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }, 1000);
+
+        // Estação do Ano
+        function updateSeason() {
+            const month = new Date().getMonth();
+            let seasonName = '';
+            let iconName = '';
+            let iconColor = '';
+
+            if (month === 11 || month === 0 || month === 1) { // Dez, Jan, Fev
+                seasonName = 'Verão'; iconName = 'sun'; iconColor = '#facc15';
+            } else if (month >= 2 && month <= 4) { // Mar, Abr, Mai
+                seasonName = 'Outono'; iconName = 'leaf'; iconColor = '#fb923c';
+            } else if (month >= 5 && month <= 7) { // Jun, Jul, Ago
+                seasonName = 'Inverno'; iconName = 'snowflake'; iconColor = '#38bdf8';
+            } else if (month >= 8 && month <= 10) { // Set, Out, Nov
+                seasonName = 'Primavera'; iconName = 'flower-2'; iconColor = '#f472b6';
+            }
+
+            const seasonEl = document.getElementById('season-indicator');
+            if (seasonEl) {
+                seasonEl.innerHTML = `<i data-lucide="${iconName}" size="16" style="color: ${iconColor};"></i> <span style="font-weight: 500;">${seasonName}</span>`;
+                lucide.createIcons();
+            }
+        }
+        updateSeason();
+
+        // --- RENDERIZADORES DE GRÁFICOS (CHART.JS) ---
+        function createChart(canvasId, type, data, options) {
+            if (chartsObj[canvasId]) chartsObj[canvasId].destroy();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartsObj[canvasId] = new Chart(ctx, { type, data, options });
+        }
+
+        function renderCharts(hourly) {
+            const startIndex = new Date().getHours();
+            const timeLabels = hourly.time.slice(startIndex, startIndex + 24).map(t => new Date(t).getHours() + 'h');
+
+            const anim = { y: { duration: 1000, easing: 'easeOutQuart', delay: (ctx) => ctx.dataIndex * 30 } };
+
+            // 1. Chuva (Bar & Line)
+            const ctxP = document.getElementById('chart-precip').getContext('2d');
+            const gradRain = ctxP.createLinearGradient(0, 0, 0, 200);
+            gradRain.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+            gradRain.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
+
+            createChart('chart-precip', 'bar', {
+                labels: timeLabels,
+                datasets: [
+                    { label: 'Probabilidade (%)', data: hourly.precipitation_probability.slice(startIndex, startIndex + 24), type: 'line', borderColor: '#facc15', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], tension: 0.4, pointRadius: 0, pointHoverRadius: 5, fill: false, yAxisID: 'y1' },
+                    { label: 'Volume (mm)', data: hourly.precipitation.slice(startIndex, startIndex + 24), backgroundColor: gradRain, borderRadius: 4, yAxisID: 'y' }
+                ]
+            }, {
+                responsive: true, maintainAspectRatio: false, animation: anim, interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, border: { display: false } },
+                    y1: { beginAtZero: true, max: 100, position: 'right', border: { display: false }, grid: { display: false } }
+                }
+            });
+
+            // 2. Vento (Single-Line Area)
+            createChart('chart-wind', 'line', {
+                labels: timeLabels,
+                datasets: [
+                    { label: 'Velocidade', data: hourly.wind_speed_10m.slice(startIndex, startIndex + 24), borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, fill: true }
+                ]
+            }, {
+                responsive: true, maintainAspectRatio: false, animation: anim, interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            });
+        }
+
+        // --- MAPA WMO E UI ---
+        function parseWMO(code, isDay = true) {
+            const map = {
+                0: { t: 'Céu Limpo', i: isDay ? 'sun' : 'moon', c: '#facc15' },
+                1: { t: 'Quase Limpo', i: isDay ? 'sun' : 'moon', c: '#facc15' },
+                2: { t: 'Parcialmente Nublado', i: isDay ? 'cloud-sun' : 'cloud-moon', c: '#94a3b8' },
+                3: { t: 'Nublado', i: 'cloud', c: '#64748b' },
+                45: { t: 'Neblina', i: 'cloud-fog', c: '#94a3b8' },
+                48: { t: 'Névoa', i: 'cloud-fog', c: '#94a3b8' },
+                51: { t: 'Chuvisco Leve', i: 'cloud-drizzle', c: '#38bdf8' },
+                53: { t: 'Chuvisco', i: 'cloud-drizzle', c: '#38bdf8' },
+                55: { t: 'Chuvisco Forte', i: 'cloud-drizzle', c: '#38bdf8' },
+                61: { t: 'Chuva Leve', i: 'cloud-rain', c: '#3b82f6' },
+                63: { t: 'Chuva', i: 'cloud-rain', c: '#3b82f6' },
+                65: { t: 'Chuva Forte', i: 'cloud-rain', c: '#3b82f6' },
+                80: { t: 'Pancadas', i: 'cloud-rain', c: '#3b82f6' },
+                81: { t: 'Pancadas Fortes', i: 'cloud-rain', c: '#3b82f6' },
+                82: { t: 'Pancadas Violentas', i: 'cloud-rain', c: '#3b82f6' },
+                95: { t: 'Tempestade', i: 'cloud-lightning', c: '#a855f7' },
+                96: { t: 'Tempestade', i: 'cloud-lightning', c: '#a855f7' },
+                99: { t: 'Tempestade Severa', i: 'cloud-lightning', c: '#a855f7' }
+            };
+            let res = map[code];
+            if (!res) res = code < 50 ? map[3] : (code < 80 ? map[61] : map[95]);
+            return res;
+        }
+
+        function getWindDirectionStr(degrees) {
+            const points = ["Norte", "Nordeste", "Leste", "Sudeste", "Sul", "Sudoeste", "Oeste", "Noroeste"];
+            const index = Math.round(((degrees %= 360) < 0 ? degrees + 360 : degrees) / 45) % 8;
+            return points[index];
+        }
+
+        function renderForecast() {
+            if (!globalWeatherData) return;
+            const container = document.getElementById('forecast-container');
+            container.innerHTML = '';
+
+            const c = globalWeatherData.current;
+            const h = globalWeatherData.hourly;
+            const d = globalWeatherData.daily;
+            const startIndex = new Date().getHours();
+
+            if (currentForecastTab === '24h') {
+                for (let i = startIndex + 1; i <= startIndex + 24; i++) {
+                    const hDate = new Date(h.time[i]);
+                    const isHDay = hDate.getHours() > 5 && hDate.getHours() < 18;
+                    const hwmo = parseWMO(h.weather_code[i], isHDay);
+
+                    const displayTemp = Math.round(h.temperature_2m[i]);
+
+                    container.innerHTML += `
+                        <div class="hour-card">
+                            <div class="hour-time">${hDate.getHours() + ':00'}</div>
+                            <i data-lucide="${hwmo.i}" size="26" color="${hwmo.c}"></i>
+                            <div class="hour-temp">${displayTemp}°</div>
+                            <div class="hour-prob">${h.precipitation_probability[i]}%</div>
+                        </div>
+                    `;
+                }
+            } else {
+                const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                for (let i = 0; i < 7; i++) {
+                    const dDate = new Date(d.time[i] + 'T00:00:00');
+                    const dwmo = parseWMO(d.weather_code[i], true);
+                    const isToday = i === 0;
+
+                    container.innerHTML += `
+                        <div class="hour-card ${isToday ? 'now' : ''}" style="min-width: 90px;">
+                            <div class="hour-time" style="font-weight: 600;">${isToday ? 'Hoje' : daysOfWeek[dDate.getDay()]}</div>
+                            <i data-lucide="${dwmo.i}" size="26" color="${dwmo.c}"></i>
+                            <div class="hour-temp" style="font-size: 0.95rem; display: flex; gap:5px;">
+                                <span style="color:var(--accent-yellow);">${Math.round(d.temperature_2m_max[i])}°</span> 
+                                <span style="color:var(--accent-cyan);">${Math.round(d.temperature_2m_min[i])}°</span>
+                            </div>
+                            <div class="hour-prob">${Math.round(d.precipitation_sum[i])}mm</div>
+                        </div>
+                    `;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        window.switchForecast = function (tab) {
+            currentForecastTab = tab;
+            document.getElementById('btn-24h').classList.toggle('active', tab === '24h');
+            document.getElementById('btn-7d').classList.toggle('active', tab === '7d');
+            renderForecast();
+        }
+
+        window.switchAstro = function (tab) {
+            document.getElementById('btn-solar').classList.toggle('active', tab === 'solar');
+            document.getElementById('btn-lunar').classList.toggle('active', tab === 'lunar');
+            document.getElementById('astro-solar-view').style.display = tab === 'solar' ? 'block' : 'none';
+            document.getElementById('astro-lunar-view').style.display = tab === 'lunar' ? 'flex' : 'none';
+        }
+
+        // --- SISTEMA DE ALERTAS SEVEROS ---
+        function checkAlerts(current, daily) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = '';
+            let alerts = [];
+
+            const code = current.weather_code;
+            const gusts = current.wind_gusts_10m;
+            const tempFeels = current.apparent_temperature;
+            const uvMax = daily.uv_index_max[0];
+
+            // 1. Tempestades (Raios)
+            if ([95, 96, 99].includes(code)) {
+                alerts.push({ type: 'danger', icon: 'cloud-lightning', text: 'ALERTA DE TEMPESTADE: Condições severas com possibilidade de raios detectadas na região.' });
+            } else if ([65, 81, 82].includes(code)) { // Chuva Forte
+                alerts.push({ type: 'warning', icon: 'cloud-rain-wind', text: 'ATENÇÃO: Chuva forte ou pancadas intensas ocorrendo agora. Risco de alagamentos pontuais.' });
+            }
+
+            // 2. Ventos e Rajadas
+            if (gusts >= 60) {
+                alerts.push({ type: 'danger', icon: 'wind', text: `PERIGO: Rajadas de vento muito fortes (${Math.round(gusts)} km/h). Risco de queda de galhos e destelhamentos.` });
+            } else if (gusts >= 45) {
+                alerts.push({ type: 'warning', icon: 'wind', text: `ATENÇÃO: Ventos fortes com rajadas de até ${Math.round(gusts)} km/h.` });
+            }
+
+            // 3. Calor Extremo
+            if (tempFeels >= 38) {
+                alerts.push({ type: 'danger', icon: 'thermometer-sun', text: `ALERTA DE CALOR: Sensação térmica perigosa de ${Math.round(tempFeels)}°C. Hidrate-se e evite exercícios ao ar livre!` });
+            }
+
+            // 4. Radiação UV (Usando a máxima do dia)
+            if (uvMax >= 11) {
+                alerts.push({ type: 'warning', icon: 'sun-dim', text: `RADIAÇÃO EXTREMA: Índice UV atingirá ${Math.round(uvMax)} hoje. Risco altíssimo de queimaduras.` });
+            }
+
+            // Renderiza os Alertas no DOM
+            alerts.forEach(al => {
+                const div = document.createElement('div');
+                div.className = `weather-alert alert-${al.type}`;
+                div.innerHTML = `<i data-lucide="${al.icon}" size="20" class="alert-icon"></i> <span>${al.text}</span>`;
+                container.appendChild(div);
+            });
+
+            if (alerts.length > 0) lucide.createIcons();
+        }
+
+        function populateUI() {
+            if (!globalWeatherData) return;
+            const c = globalWeatherData.current; const h = globalWeatherData.hourly; const d = globalWeatherData.daily;
+            const isDay = c.is_day === 1;
+            const wmo = parseWMO(c.weather_code, isDay);
+
+            // Verifica Alertas Metereológicos
+            checkAlerts(c, d);
+
+            // Background dinâmico
+            const bg = document.getElementById('weather-bg');
+            if (c.precipitation > 0) bg.className = 'bg-rain';
+            else bg.className = isDay ? 'bg-day' : 'bg-night';
+
+            // Visão Geral
+            document.getElementById('val-temp').innerHTML = `${c.temperature_2m.toFixed(1)}<span>°</span>`;
+            document.getElementById('val-desc').innerText = wmo.t;
+
+            // Lógica de Tendência da Temperatura Atual
+            const currentHour = new Date().getHours();
+            const prevHour = Math.max(0, currentHour - 1);
+            const diffTemp = (c.temperature_2m - h.temperature_2m[prevHour]).toFixed(1);
+
+            let trendTempHtml = '';
+            if (diffTemp > 0) {
+                trendTempHtml = `<i data-lucide="trending-up" size="16" color="#ef4444"></i> <span style="color: #ef4444;">+${diffTemp}°</span>`;
+            } else if (diffTemp < 0) {
+                trendTempHtml = `<i data-lucide="trending-down" size="16" color="#3b82f6"></i> <span style="color: #3b82f6;">${diffTemp}°</span>`;
+            } else {
+                trendTempHtml = `<i data-lucide="minus" size="16" color="var(--text-muted)"></i> <span style="color: var(--text-muted);">0.0°</span>`;
+            }
+            document.getElementById('trend-temp').innerHTML = trendTempHtml;
+
+            document.getElementById('val-feels').innerText = `${Math.round(c.apparent_temperature)}°C`;
+            document.getElementById('val-max').innerText = Math.round(d.temperature_2m_max[0]) + '°';
+            document.getElementById('val-min').innerText = Math.round(d.temperature_2m_min[0]) + '°';
+
+            const iconEl = document.getElementById('main-icon');
+            iconEl.setAttribute('data-lucide', wmo.i);
+            iconEl.style.color = wmo.c;
+            iconEl.style.filter = `drop-shadow(0 0 25px ${wmo.c})`;
+
+            // Sol e Crepúsculo
+            const sr = new Date(d.sunrise[0]); const ss = new Date(d.sunset[0]); const now = new Date();
+            document.getElementById('val-sunrise').innerText = sr.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('val-sunset').innerText = ss.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            // Lógica da Golden Hour (45 min antes do pôr do sol)
+            const ghStart = new Date(ss.getTime() - (45 * 60000));
+            document.getElementById('val-golden-hour').innerText = ghStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' às ' + ss.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const diffMs = ss - sr;
+            document.getElementById('val-daylight').innerText = `${Math.floor(diffMs / 3600000)}h ${Math.round((diffMs % 3600000) / 60000)}m`;
+
+            // Lógica Astronômica da Seta (Dias aumentando ou diminuindo no Hemisfério Sul)
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            const isLengthening = dayOfYear > 172 && dayOfYear <= 355; // Após solstício de inverno até solstício de verão
+
+            if (isLengthening) {
+                document.getElementById('daylight-trend').innerHTML = `<i data-lucide="trending-up" size="14" color="#4ade80" title="Aumentando em relação a ontem"></i>`;
+            } else {
+                document.getElementById('daylight-trend').innerHTML = `<i data-lucide="trending-down" size="14" color="#fb923c" title="Diminuindo em relação a ontem"></i>`;
+            }
+
+            let t = (now - sr) / diffMs;
+            if (t < 0) t = 0; if (t > 1) t = 1;
+
+            const p0 = { x: 20, y: 70 }, p1 = { x: 100, y: -20 }, p2 = { x: 180, y: 70 };
+            const sunX = Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x;
+            const sunY = Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y;
+
+            document.getElementById('sun-dot').setAttribute('cx', sunX);
+            document.getElementById('sun-dot').setAttribute('cy', sunY);
+            document.getElementById('sun-clip-rect').setAttribute('width', sunX);
+
+            // Lógica do Ciclo Lunar
+            const LUNAR_MONTH = 29.53058867;
+            const KNOWN_NEW_MOON = 1704974220000; // Referência astronômica: 11 Jan 2024
+            const diffDaysMoon = (now.getTime() - KNOWN_NEW_MOON) / (1000 * 60 * 60 * 24);
+            let phaseFraction = (diffDaysMoon % LUNAR_MONTH) / LUNAR_MONTH;
+            if (phaseFraction < 0) phaseFraction += 1;
+
+            let phaseName, moonIcon;
+            if (phaseFraction < 0.03 || phaseFraction >= 0.97) { phaseName = 'Lua Nova'; moonIcon = '🌑'; }
+            else if (phaseFraction < 0.22) { phaseName = 'Crescente'; moonIcon = '🌒'; }
+            else if (phaseFraction < 0.28) { phaseName = 'Quarto Crescente'; moonIcon = '🌓'; }
+            else if (phaseFraction < 0.47) { phaseName = 'Crescente Convexa'; moonIcon = '🌔'; }
+            else if (phaseFraction < 0.53) { phaseName = 'Lua Cheia'; moonIcon = '🌕'; }
+            else if (phaseFraction < 0.72) { phaseName = 'Minguante Convexa'; moonIcon = '🌖'; }
+            else if (phaseFraction < 0.78) { phaseName = 'Quarto Minguante'; moonIcon = '🌗'; }
+            else { phaseName = 'Minguante Côncava'; moonIcon = '🌘'; }
+
+            const illumination = Math.round((0.5 - Math.cos(phaseFraction * Math.PI * 2) * 0.5) * 100);
+            const ageDays = Math.round(phaseFraction * 29.53);
+
+            document.getElementById('val-moon-emoji').innerText = moonIcon;
+            document.getElementById('val-moon-phase').innerText = phaseName;
+            document.getElementById('val-moon-ill').innerText = illumination + '%';
+            document.getElementById('val-moon-age').innerText = ageDays + ' dias';
+
+            // Ponto Sublunar (Aproximação de onde a lua está a pino na Terra)
+            const utcHour = now.getUTCHours() + (now.getUTCMinutes() / 60);
+            let sunLon = (12 - utcHour) * 15;
+            let moonLon = sunLon - (phaseFraction * 360);
+            while (moonLon <= -180) moonLon += 360;
+            while (moonLon > 180) moonLon -= 360;
+
+            let region = "";
+            if (moonLon > -180 && moonLon <= -130) region = "Oceano Pacífico";
+            else if (moonLon > -130 && moonLon <= -80) region = "América do Norte / Pacífico";
+            else if (moonLon > -80 && moonLon <= -35) region = "América do Sul / Atlântico";
+            else if (moonLon > -35 && moonLon <= 20) region = "Oceano Atlântico / África";
+            else if (moonLon > 20 && moonLon <= 60) region = "África / Oriente Médio";
+            else if (moonLon > 60 && moonLon <= 120) region = "Ásia / Oceano Índico";
+            else region = "Austrália / Pacífico";
+
+            document.getElementById('val-moon-location').innerText = region;
+
+            // Visibilidade Local em Naviraí (Baseado na Longitude Relativa)
+            let diffLon = moonLon - LON;
+            while (diffLon <= -180) diffLon += 360;
+            while (diffLon > 180) diffLon -= 360;
+
+            const badgeVis = document.getElementById('badge-moon-vis');
+            const textVis = document.getElementById('val-moon-vis');
+            const iconVis = document.getElementById('icon-moon-vis');
+
+            if (Math.abs(diffLon) < 85) {
+                // Está acima do horizonte
+                let direcao = "Acima / Norte";
+                if (diffLon > 15) direcao = "Leste";
+                else if (diffLon < -15) direcao = "Oeste";
+
+                badgeVis.style.background = "rgba(74, 222, 128, 0.1)";
+                badgeVis.style.border = "1px solid rgba(74, 222, 128, 0.2)";
+                badgeVis.style.color = "#4ade80";
+                iconVis.setAttribute('data-lucide', 'eye');
+                textVis.innerHTML = `<span style="color: #fff;">Visível agora:</span> ${direcao}`;
+            } else {
+                // Abaixo do horizonte
+                badgeVis.style.background = "rgba(255, 255, 255, 0.05)";
+                badgeVis.style.border = "1px solid rgba(255, 255, 255, 0.1)";
+                badgeVis.style.color = "var(--text-muted)";
+                iconVis.setAttribute('data-lucide', 'eye-off');
+                textVis.innerHTML = `Abaixo do horizonte`;
+            }
+
+            // Bússola de Vento
+            const originDir = c.wind_direction_10m;
+            const destDir = (originDir + 180) % 360;
+
+            document.getElementById('wind-needle').style.transform = `rotate(${destDir}deg)`;
+            document.getElementById('val-wind-sfc').innerText = Math.round(c.wind_speed_10m);
+            document.getElementById('val-gusts').innerText = Math.round(c.wind_gusts_10m) + ' km/h';
+            document.getElementById('val-wind-dest').innerText = getWindDirectionStr(destDir);
+
+            // Previsão
+            renderForecast();
+
+            // Textos Atmosféricos
+            document.getElementById('val-precip').innerText = d.precipitation_sum[0].toFixed(1) + ' mm';
+
+            // Cálculos de Tendência Atmosférica (Comparando com a hora anterior)
+            const startIndex = new Date().getHours();
+            const prevIndex = Math.max(0, startIndex - 1);
+
+            const getTrend = (current, previous) => {
+                if (current > previous) return `<i data-lucide="trending-up" size="14" color="#4ade80" title="Subindo"></i>`;
+                if (current < previous) return `<i data-lucide="trending-down" size="14" color="#fb923c" title="Descendo"></i>`;
+                return `<i data-lucide="minus" size="14" color="var(--text-muted)" title="Estável"></i>`;
+            };
+
+            document.getElementById('val-humidity').innerText = c.relative_humidity_2m + '%';
+            document.getElementById('trend-humidity').innerHTML = getTrend(c.relative_humidity_2m, h.relative_humidity_2m[prevIndex]);
+
+            document.getElementById('val-pressure').innerText = Math.round(c.pressure_msl);
+            document.getElementById('trend-pressure').innerHTML = getTrend(c.pressure_msl, h.pressure_msl[prevIndex]);
+
+            document.getElementById('val-vis').innerText = (c.visibility / 1000).toFixed(1);
+            document.getElementById('trend-vis').innerHTML = getTrend(c.visibility, h.visibility[prevIndex]);
+
+            // Índice UV Atual e Gráfico
+            const currentUv = h.uv_index[startIndex] || 0;
+            const prevUv = h.uv_index[prevIndex] || 0;
+            document.getElementById('val-uv').innerText = currentUv.toFixed(1);
+            document.getElementById('trend-uv').innerHTML = getTrend(currentUv, prevUv);
+
+            let uvPct = currentUv / 11;
+            if (uvPct > 1) uvPct = 1;
+            document.getElementById('uv-ring-mini').style.strokeDashoffset = 200 - (200 * uvPct);
+
+            // Ponto de Orvalho Atual
+            const currentDew = h.dew_point_2m[startIndex] || 0;
+            const prevDew = h.dew_point_2m[prevIndex] || 0;
+            document.getElementById('val-dew').innerText = currentDew.toFixed(1);
+            document.getElementById('trend-dew').innerHTML = getTrend(currentDew, prevDew);
+
+            lucide.createIcons();
+            renderCharts(h);
+
+            setTimeout(() => { document.getElementById('loader').style.opacity = '0'; }, 300);
+            setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 800);
+        }
+
+        async function fetchData() {
+            try {
+                // Modificado para buscar relative_humidity_2m, pressure_msl, visibility e dew_point_2m no hourly para cálculo de tendência
+                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=America%2FSao_Paulo`;
+
+                const resW = await fetch(urlWeather, { signal: AbortSignal.timeout(8000) });
+
+                if (!resW.ok) throw new Error("API Failure");
+
+                globalWeatherData = await resW.json();
+
+                populateUI();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loader').innerHTML = '<h3 style="color:#ef4444">Falha Crítica</h3><p style="color:var(--text-muted)">Servidores meteorológicos inacessíveis.</p>';
+            }
+        }
+
+        window.forceUpdate = async function () {
+            const btn = document.querySelector('.refresh-btn');
+
+            // Adiciona a classe no botão (que não é apagado pelo Lucide)
+            btn.classList.add('spinning');
+
+            await fetchData();
+
+            // Remove a classe para parar o giro
+            btn.classList.remove('spinning');
+
+            const badge = document.getElementById('api-status');
+            const originalHtml = badge.innerHTML;
+            badge.innerHTML = '<i data-lucide="check" size="14"></i> Atualizado';
+            lucide.createIcons();
+
+            setTimeout(() => {
+                badge.innerHTML = originalHtml;
+                lucide.createIcons();
+            }, 3000);
+        }
+
+        fetchData();
+        setInterval(fetchData, 300000); // Atualiza a cada 5 minutos
+
+    </script>
+    <script>
+        // Registro do Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado!', reg))
+                    .catch(err => console.error('Erro ao registrar Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+
+
+</html>
