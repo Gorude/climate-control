@@ -450,8 +450,15 @@
         }
 
         @keyframes pulse-notif {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
-            50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 4px rgba(74, 222, 128, 0);
+            }
         }
 
         /* Tipografia de Temperatura */
@@ -932,7 +939,9 @@
             .main-icon-wrapper {
                 flex: 0 0 auto;
                 margin-left: 0;
+                margin-right: 30px;
                 margin-top: 0;
+                margin-bottom: 35px;
             }
 
             .temp-display {
@@ -992,7 +1001,7 @@
 
             /* Gráficos */
             .chart-container {
-                min-height: 100px;
+                min-height: 230px;
             }
 
             /* Alertas */
@@ -1116,7 +1125,8 @@
                 --</div>
             <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-muted);">--:--</div>
             <div class="status-badge" id="api-status"><i data-lucide="activity" size="14"></i> Tempo Real</div>
-            <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()" title="Ativar notificações de alerta">
+            <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()"
+                title="Ativar notificações de alerta">
                 <i data-lucide="bell" size="18"></i>
                 <span class="notif-badge" id="notif-badge"></span>
             </button>
@@ -1274,7 +1284,8 @@
             <!-- 4. Precipitação / Histórico de Temperatura (Middle Center) -->
             <div class="grid-cell cell-precip">
                 <div class="cell-header">
-                    <div class="cell-header-title" id="precip-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)</div>
+                    <div class="cell-header-title" id="precip-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)
+                    </div>
                     <div class="forecast-toggle" style="margin-left: auto; margin-right: 10px;">
                         <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">Chuva</button>
                         <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
@@ -1283,7 +1294,8 @@
                             id="val-precip" style="font-weight:bold;">-- mm</span></div>
                 </div>
                 <div class="chart-container" id="view-precip-rain"><canvas id="chart-precip"></canvas></div>
-                <div class="chart-container" id="view-precip-temp" style="display:none;"><canvas id="chart-temp-history"></canvas></div>
+                <div class="chart-container" id="view-precip-temp" style="display:none;"><canvas
+                        id="chart-temp-history"></canvas></div>
             </div>
 
             <!-- 5. Perfil Eólico (Middle Right) -->
