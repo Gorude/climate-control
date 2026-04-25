@@ -1250,8 +1250,12 @@
                 <!-- Visão Lunar -->
                 <div id="astro-lunar-view"
                     style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; margin-top: 5px;">
-                    <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));"
-                        id="val-moon-emoji">🌕</div>
+                    <div style="margin-bottom: 5px;">
+                        <svg id="moon-svg" viewBox="0 0 100 100" width="65" height="65" style="filter: drop-shadow(0 0 10px rgba(250,204,21,0.2));">
+                            <circle cx="50" cy="50" r="48" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1" />
+                            <path id="moon-lit-path" fill="var(--accent-yellow)" d="" />
+                        </svg>
+                    </div>
                     <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-cyan);" id="val-moon-phase">--
                     </div>
                     <div
@@ -1994,20 +1998,31 @@
             let phaseFraction = (diffDaysMoon % LUNAR_MONTH) / LUNAR_MONTH;
             if (phaseFraction < 0) phaseFraction += 1;
 
-            let phaseName, moonIcon;
-            if (phaseFraction < 0.03 || phaseFraction >= 0.97) { phaseName = 'Lua Nova'; moonIcon = '🌑'; }
-            else if (phaseFraction < 0.22) { phaseName = 'Crescente'; moonIcon = '🌒'; }
-            else if (phaseFraction < 0.28) { phaseName = 'Quarto Crescente'; moonIcon = '🌓'; }
-            else if (phaseFraction < 0.47) { phaseName = 'Crescente Convexa'; moonIcon = '🌔'; }
-            else if (phaseFraction < 0.53) { phaseName = 'Lua Cheia'; moonIcon = '🌕'; }
-            else if (phaseFraction < 0.72) { phaseName = 'Minguante Convexa'; moonIcon = '🌖'; }
-            else if (phaseFraction < 0.78) { phaseName = 'Quarto Minguante'; moonIcon = '🌗'; }
-            else { phaseName = 'Minguante Côncava'; moonIcon = '🌘'; }
+            let phaseName;
+            if (phaseFraction < 0.03 || phaseFraction >= 0.97) { phaseName = 'Lua Nova'; }
+            else if (phaseFraction < 0.22) { phaseName = 'Crescente'; }
+            else if (phaseFraction < 0.28) { phaseName = 'Quarto Crescente'; }
+            else if (phaseFraction < 0.47) { phaseName = 'Crescente Convexa'; }
+            else if (phaseFraction < 0.53) { phaseName = 'Lua Cheia'; }
+            else if (phaseFraction < 0.72) { phaseName = 'Minguante Convexa'; }
+            else if (phaseFraction < 0.78) { phaseName = 'Quarto Minguante'; }
+            else { phaseName = 'Minguante Côncava'; }
 
             const illumination = Math.round((0.5 - Math.cos(phaseFraction * Math.PI * 2) * 0.5) * 100);
             const ageDays = Math.round(phaseFraction * 29.53);
 
-            document.getElementById('val-moon-emoji').innerText = moonIcon;
+            // Calcula o path SVG da parte iluminada da lua para criar o efeito realista de sombra
+            const rMoon = 48;
+            const sweepOut = phaseFraction <= 0.5 ? 1 : 0;
+            let sweepRet;
+            if (phaseFraction < 0.25) sweepRet = 0;
+            else if (phaseFraction <= 0.5) sweepRet = 1;
+            else if (phaseFraction < 0.75) sweepRet = 0;
+            else sweepRet = 1;
+            
+            const rxMoon = rMoon * Math.abs(Math.cos(phaseFraction * 2 * Math.PI));
+            const litPath = `M 50 2 A 48 48 0 0 ${sweepOut} 50 98 A ${rxMoon} 48 0 0 ${sweepRet} 50 2`;
+            document.getElementById('moon-lit-path').setAttribute('d', litPath);
             document.getElementById('val-moon-phase').innerText = phaseName;
             document.getElementById('val-moon-ill').innerText = illumination + '%';
             document.getElementById('val-moon-age').innerText = ageDays + ' dias';
