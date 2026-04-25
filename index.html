@@ -1139,7 +1139,7 @@
                     <i data-lucide="bell" size="18"></i>
                     <span class="notif-badge" id="notif-badge"></span>
                 </button>
-                <button class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
+                <button id="btn-refresh" class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
                         size="18"></i></button>
             </div>
         </div>
@@ -2195,7 +2195,7 @@
         }
 
         window.forceUpdate = async function () {
-            const btn = document.querySelector('.refresh-btn');
+            const btn = document.getElementById('btn-refresh');
 
             // Adiciona a classe no botão (que não é apagado pelo Lucide)
             btn.classList.add('spinning');
