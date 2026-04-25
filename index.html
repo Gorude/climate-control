@@ -855,9 +855,18 @@
 
             .nav-controls {
                 width: 100%;
-                justify-content: space-between;
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
+                align-items: center;
                 gap: 10px;
-                flex-wrap: wrap;
+            }
+
+            #clock {
+                justify-self: center;
+            }
+
+            .nav-buttons-group {
+                justify-self: end;
             }
 
             /* Container principal */
@@ -1124,14 +1133,15 @@
                 style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--divider); padding-right: 15px; margin-right: -5px;">
                 --</div>
             <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-muted);">--:--</div>
-            <div class="status-badge" id="api-status"><i data-lucide="activity" size="14"></i> Tempo Real</div>
-            <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()"
-                title="Ativar notificações de alerta">
-                <i data-lucide="bell" size="18"></i>
-                <span class="notif-badge" id="notif-badge"></span>
-            </button>
-            <button class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
-                    size="18"></i></button>
+            <div class="nav-buttons-group" style="display: flex; align-items: center; gap: 10px;">
+                <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()"
+                    title="Ativar notificações de alerta">
+                    <i data-lucide="bell" size="18"></i>
+                    <span class="notif-badge" id="notif-badge"></span>
+                </button>
+                <button class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
+                        size="18"></i></button>
+            </div>
         </div>
     </nav>
 
