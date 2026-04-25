@@ -1783,7 +1783,8 @@
             const c = globalWeatherData.current;
             const h = globalWeatherData.hourly;
             const d = globalWeatherData.daily;
-            const startIndex = new Date().getHours();
+            // Com past_days=1, as horas começam em ontem 00:00, logo a hora atual é 24 + hora_atual
+            const startIndex = 24 + new Date().getHours();
 
             if (currentForecastTab === '24h') {
                 for (let i = startIndex + 1; i <= startIndex + 24; i++) {
@@ -1804,10 +1805,10 @@
                 }
             } else {
                 const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                for (let i = 0; i < 7; i++) {
+                for (let i = 1; i <= 7; i++) {
                     const dDate = new Date(d.time[i] + 'T00:00:00');
                     const dwmo = parseWMO(d.weather_code[i], true);
-                    const isToday = i === 0;
+                    const isToday = i === 1;
 
                     container.innerHTML += `
                         <div class="hour-card ${isToday ? 'now' : ''}" style="min-width: 90px;">
@@ -1849,7 +1850,7 @@
             const gusts = current.wind_gusts_10m;
             const tempFeels = current.apparent_temperature;
             const tempReal = current.temperature_2m;
-            const uvMax = daily.uv_index_max[0];
+            const uvMax = daily.uv_index_max[1];
 
             // 1. Tempestades (Raios)
             if ([95, 96, 99].includes(code)) {
@@ -1918,9 +1919,9 @@
             document.getElementById('val-desc').innerText = wmo.t;
 
             // Lógica de Tendência da Temperatura Atual
-            const currentHour = new Date().getHours();
-            const prevHour = Math.max(0, currentHour - 1);
-            const diffTemp = (c.temperature_2m - h.temperature_2m[prevHour]).toFixed(1);
+            const currentHourOffset = 24 + new Date().getHours();
+            const prevHourOffset = Math.max(0, currentHourOffset - 1);
+            const diffTemp = (c.temperature_2m - h.temperature_2m[prevHourOffset]).toFixed(1);
 
             let trendTempHtml = '';
             if (diffTemp > 0) {
@@ -1933,8 +1934,8 @@
             document.getElementById('trend-temp').innerHTML = trendTempHtml;
 
             document.getElementById('val-feels').innerText = `${Math.round(c.apparent_temperature)}°C`;
-            document.getElementById('val-max').innerText = Math.round(d.temperature_2m_max[0]) + '°';
-            document.getElementById('val-min').innerText = Math.round(d.temperature_2m_min[0]) + '°';
+            document.getElementById('val-max').innerText = Math.round(d.temperature_2m_max[1]) + '°';
+            document.getElementById('val-min').innerText = Math.round(d.temperature_2m_min[1]) + '°';
 
             const iconEl = document.getElementById('main-icon');
             iconEl.setAttribute('data-lucide', wmo.i);
@@ -1942,7 +1943,7 @@
             iconEl.style.filter = `drop-shadow(0 0 25px ${wmo.c})`;
 
             // Sol e Crepúsculo
-            const sr = new Date(d.sunrise[0]); const ss = new Date(d.sunset[0]); const now = new Date();
+            const sr = new Date(d.sunrise[1]); const ss = new Date(d.sunset[1]); const now = new Date();
             document.getElementById('val-sunrise').innerText = sr.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             document.getElementById('val-sunset').innerText = ss.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -2059,10 +2060,11 @@
             renderForecast();
 
             // Textos Atmosféricos
-            document.getElementById('val-precip').innerText = d.precipitation_sum[0].toFixed(1) + ' mm';
+            document.getElementById('val-precip').innerText = d.precipitation_sum[1].toFixed(1) + ' mm';
 
             // Cálculos de Tendência Atmosférica (Comparando com a hora anterior)
-            const startIndex = new Date().getHours();
+            // Lembre-se que com past_days=1 o índice base é 24 + hora atual
+            const startIndex = 24 + new Date().getHours();
             const prevIndex = Math.max(0, startIndex - 1);
 
             const getTrend = (current, previous) => {
