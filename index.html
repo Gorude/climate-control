@@ -1287,15 +1287,26 @@
 
             <!-- 4. Precipitação / Histórico de Temperatura (Middle Center) -->
             <div class="grid-cell cell-precip">
-                <div class="cell-header">
-                    <div class="cell-header-title" id="precip-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)
+                <div class="cell-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <!-- Lado Esquerdo: Título e Meta -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div class="cell-header-title" id="precip-header-title" style="margin-top: 5px;">
+                            <i data-lucide="cloud-rain"></i> Chuva (24h)
+                        </div>
+                        <div id="precip-header-meta" style="font-size: 0.8rem; color: var(--accent-cyan); text-transform: none;">
+                            <span id="meta-rain">Acumulado: <span id="val-precip" style="font-weight:bold;">-- mm</span></span>
+                            <span id="meta-temp" style="display:none; color: var(--accent-yellow);">Variação: <span id="val-temp-range" style="font-weight:bold;">--° — --°</span></span>
+                        </div>
                     </div>
-                    <div class="forecast-toggle" style="margin-left: auto; margin-right: 10px;">
-                        <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">Chuva</button>
-                        <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
+                    
+                    <!-- Lado Direito: Switch e Indicador -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                        <div class="forecast-toggle" style="margin-right: 0;">
+                            <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">Chuva</button>
+                            <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
+                        </div>
+                        <div id="precip-type-badge" style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px;"></div>
                     </div>
-                    <div id="precip-header-meta" style="font-size: 0.8rem; color: var(--accent-cyan);">Acumulado: <span
-                            id="val-precip" style="font-weight:bold;">-- mm</span></div>
                 </div>
                 <div class="chart-container" id="view-precip-rain"><canvas id="chart-precip"></canvas></div>
                 <div class="chart-container" id="view-precip-temp" style="display:none;"><canvas
@@ -1533,8 +1544,7 @@
             });
 
             // 3. Histórico de Temperatura (24h passadas)
-            const totalHours = hourly.time.length;
-            const past24End = startIndex + 24; // current position in the 48h+ array (with past_days=1)
+            const past24End = startIndex; 
             const past24Start = Math.max(0, past24End - 24);
             const tempData = hourly.temperature_2m.slice(past24Start, past24End);
             const tempLabels = hourly.time.slice(past24Start, past24End).map(t => {
@@ -1597,14 +1607,28 @@
             document.getElementById('view-precip-temp').style.display = view === 'temp' ? 'block' : 'none';
 
             const headerTitle = document.getElementById('precip-header-title');
-            const headerMeta = document.getElementById('precip-header-meta');
+            const typeBadge = document.getElementById('precip-type-badge');
+            const metaRain = document.getElementById('meta-rain');
+            const metaTemp = document.getElementById('meta-temp');
 
             if (view === 'rain') {
                 headerTitle.innerHTML = '<i data-lucide="cloud-rain"></i> Chuva (24h)';
-                headerMeta.style.display = '';
+                typeBadge.innerHTML = 'PREVISÃO';
+                typeBadge.style.color = 'var(--accent-cyan)';
+                typeBadge.style.background = 'rgba(0,210,211,0.15)';
+                typeBadge.style.padding = '2px 8px';
+                typeBadge.style.borderRadius = '4px';
+                metaRain.style.display = 'inline';
+                metaTemp.style.display = 'none';
             } else {
                 headerTitle.innerHTML = '<i data-lucide="thermometer"></i> Temperatura (24h)';
-                headerMeta.style.display = 'none';
+                typeBadge.innerHTML = 'HISTÓRICO';
+                typeBadge.style.color = 'var(--accent-yellow)';
+                typeBadge.style.background = 'rgba(250,204,21,0.15)';
+                typeBadge.style.padding = '2px 8px';
+                typeBadge.style.borderRadius = '4px';
+                metaRain.style.display = 'none';
+                metaTemp.style.display = 'inline';
             }
             lucide.createIcons();
         }
