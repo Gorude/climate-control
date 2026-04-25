@@ -1251,8 +1251,10 @@
                 <div id="astro-lunar-view"
                     style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; margin-top: 5px;">
                     <div style="margin-bottom: 5px;">
-                        <svg id="moon-svg" viewBox="0 0 100 100" width="65" height="65" style="filter: drop-shadow(0 0 10px rgba(250,204,21,0.2));">
-                            <circle cx="50" cy="50" r="48" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1" />
+                        <svg id="moon-svg" viewBox="0 0 100 100" width="65" height="65"
+                            style="filter: drop-shadow(0 0 10px rgba(250,204,21,0.2));">
+                            <circle cx="50" cy="50" r="48" fill="rgba(255, 255, 255, 0.05)"
+                                stroke="rgba(255, 255, 255, 0.1)" stroke-width="1" />
                             <path id="moon-lit-path" fill="var(--accent-yellow)" d="" />
                         </svg>
                     </div>
@@ -1287,25 +1289,32 @@
 
             <!-- 4. Precipitação / Histórico de Temperatura (Middle Center) -->
             <div class="grid-cell cell-precip">
-                <div class="cell-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="cell-header"
+                    style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <!-- Lado Esquerdo: Título e Meta -->
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <div class="cell-header-title" id="precip-header-title" style="margin-top: 5px;">
                             <i data-lucide="cloud-rain"></i> Chuva (24h)
                         </div>
-                        <div id="precip-header-meta" style="font-size: 0.8rem; color: var(--accent-cyan); text-transform: none;">
-                            <span id="meta-rain">Acumulado: <span id="val-precip" style="font-weight:bold;">-- mm</span></span>
-                            <span id="meta-temp" style="display:none; color: var(--accent-yellow);">Variação: <span id="val-temp-range" style="font-weight:bold;">--° — --°</span></span>
+                        <div id="precip-header-meta"
+                            style="font-size: 0.8rem; color: var(--accent-cyan); text-transform: none;">
+                            <span id="meta-rain">Acumulado: <span id="val-precip" style="font-weight:bold;">--
+                                    mm</span></span>
+                            <span id="meta-temp"
+                                style="display:none; font-size: 0.7rem; color: var(--accent-yellow);">Variação: <span
+                                    id="val-temp-range" style="font-weight:bold;">--° — --°</span></span>
                         </div>
                     </div>
-                    
+
                     <!-- Lado Direito: Switch e Indicador -->
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
                         <div class="forecast-toggle" style="margin-right: 0;">
-                            <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">Chuva</button>
+                            <button id="btn-precip-rain" class="active"
+                                onclick="switchPrecipView('rain')">Chuva</button>
                             <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
                         </div>
-                        <div id="precip-type-badge" style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px;"></div>
+                        <div id="precip-type-badge" style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px;">
+                        </div>
                     </div>
                 </div>
                 <div class="chart-container" id="view-precip-rain"><canvas id="chart-precip"></canvas></div>
@@ -1544,7 +1553,7 @@
             });
 
             // 3. Histórico de Temperatura (24h passadas)
-            const past24End = startIndex; 
+            const past24End = startIndex;
             const past24Start = Math.max(0, past24End - 24);
             const tempData = hourly.temperature_2m.slice(past24Start, past24End);
             const tempLabels = hourly.time.slice(past24Start, past24End).map(t => {
@@ -2043,7 +2052,7 @@
             else if (phaseFraction <= 0.5) sweepRet = 1;
             else if (phaseFraction < 0.75) sweepRet = 0;
             else sweepRet = 1;
-            
+
             const rxMoon = rMoon * Math.abs(Math.cos(phaseFraction * 2 * Math.PI));
             const litPath = `M 50 2 A 48 48 0 0 ${sweepOut} 50 98 A ${rxMoon} 48 0 0 ${sweepRet} 50 2`;
             document.getElementById('moon-lit-path').setAttribute('d', litPath);
