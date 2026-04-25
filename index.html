@@ -1191,7 +1191,7 @@
             <!-- 2. Previsão (Top Right - Spans 2 Cols) -->
             <div class="grid-cell cell-hourly">
                 <div class="cell-header">
-                    <div class="cell-header-title"><i data-lucide="calendar-clock"></i> Previsão</div>
+                    <div class="cell-header-title" id="forecast-header-title"><i data-lucide="calendar-clock"></i> Previsão</div>
                     <div class="forecast-toggle">
                         <button id="btn-24h" class="active" onclick="switchForecast('24h')">24h</button>
                         <button id="btn-7d" onclick="switchForecast('7d')">7 Dias</button>
@@ -1846,7 +1846,16 @@
             const startIndex = 24 + new Date().getHours();
 
             if (currentForecastTab === '24h') {
-                for (let i = startIndex + 1; i <= startIndex + 24; i++) {
+                let startLoop, endLoop;
+                if (selectedDayIndex === 0) {
+                    startLoop = startIndex + 1;
+                    endLoop = startIndex + 24;
+                } else {
+                    startLoop = selectedDayIndex * 24;
+                    endLoop = startLoop + 23;
+                }
+
+                for (let i = startLoop; i <= endLoop; i++) {
                     const hDate = new Date(h.time[i]);
                     const isHDay = hDate.getHours() > 5 && hDate.getHours() < 18;
                     const hwmo = parseWMO(h.weather_code[i], isHDay);
@@ -1870,7 +1879,7 @@
                     const isToday = i === 1;
 
                     container.innerHTML += `
-                        <div class="hour-card ${isToday ? 'now' : ''}" style="min-width: 90px;">
+                        <div class="hour-card ${isToday ? 'now' : ''}" style="min-width: 90px; cursor: pointer; transition: transform 0.2s;" onclick="viewDayForecast(${i})" title="Ver previsão de 24h" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                             <div class="hour-time" style="font-weight: 600;">${isToday ? 'Hoje' : daysOfWeek[dDate.getDay()]}</div>
                             <i data-lucide="${dwmo.i}" size="26" color="${dwmo.c}"></i>
                             <div class="hour-temp" style="font-size: 0.95rem; display: flex; gap:5px;">
@@ -1884,11 +1893,33 @@
             }
             lucide.createIcons();
         }
+        let selectedDayIndex = 0; // 0 = default 24h from now
 
         window.switchForecast = function (tab) {
             currentForecastTab = tab;
+            if (tab === '24h') {
+                selectedDayIndex = 0; // reset
+                document.getElementById('forecast-header-title').innerHTML = '<i data-lucide="calendar-clock"></i> Previsão (Próximas 24h)';
+            } else {
+                document.getElementById('forecast-header-title').innerHTML = '<i data-lucide="calendar-clock"></i> Previsão (7 Dias)';
+            }
             document.getElementById('btn-24h').classList.toggle('active', tab === '24h');
             document.getElementById('btn-7d').classList.toggle('active', tab === '7d');
+            renderForecast();
+        }
+
+        window.viewDayForecast = function (dayIndex) {
+            currentForecastTab = '24h';
+            selectedDayIndex = dayIndex;
+            document.getElementById('btn-24h').classList.add('active');
+            document.getElementById('btn-7d').classList.remove('active');
+            
+            const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const d = globalWeatherData.daily;
+            const dDate = new Date(d.time[dayIndex] + 'T00:00:00');
+            const dayName = dayIndex === 1 ? 'Hoje' : daysOfWeek[dDate.getDay()];
+            
+            document.getElementById('forecast-header-title').innerHTML = `<i data-lucide="calendar-clock"></i> 24h (${dayName})`;
             renderForecast();
         }
 
