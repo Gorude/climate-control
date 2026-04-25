@@ -324,6 +324,136 @@
             box-shadow: 0 0 10px rgba(0, 210, 211, 0.3);
         }
 
+        /* === Busca de Localização === */
+        .search-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-toggle:hover {
+            color: var(--accent-cyan);
+            background: rgba(0, 210, 211, 0.1);
+        }
+
+        .search-location {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-location input {
+            width: 100%;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-location input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 210, 211, 0.15);
+        }
+
+        .search-location input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            background: rgba(11, 21, 36, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 200;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .search-results.visible {
+            display: block;
+            animation: slideInDown 0.25s ease-out;
+        }
+
+        .search-result-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--divider);
+            transition: background 0.2s ease;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: rgba(0, 210, 211, 0.1);
+        }
+
+        .search-result-item .result-city {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .search-result-item .result-region {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .search-no-results {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* === Notificações === */
+        .notif-btn {
+            position: relative;
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            border: 2px solid var(--bg-main);
+            transition: background 0.3s ease;
+        }
+
+        .notif-badge.active {
+            background: #4ade80;
+            animation: pulse-notif 2s infinite;
+        }
+
+        @keyframes pulse-notif {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+        }
+
         /* Tipografia de Temperatura */
         .temp-display {
             display: flex;
@@ -336,7 +466,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: -30px;
+            margin-top: -50px;
             margin-left: 15px;
         }
 
@@ -612,6 +742,41 @@
             font-size: 1.3rem;
             font-weight: 600;
             color: #fff;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .atmos-val.premium-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+
+        .atmos-val.premium-center .main-num {
+            font-size: 1.5rem;
+            color: #fff;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .atmos-val.premium-center .suffix-wrapper {
+            width: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-left: 4px;
+            overflow: visible;
+        }
+
+        .atmos-item>div {
+            width: 100%;
         }
 
         /* Medidor UV (Mini Circular) */
@@ -669,45 +834,6 @@
 
         /* Tablet / Telas médias */
         @media (max-width: 1100px) {
-            .dashboard-board {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .cell-current {
-                grid-column: 1 / 2;
-            }
-
-            .cell-hourly {
-                grid-column: 2 / 3;
-                border-right: none;
-            }
-
-            .cell-sun {
-                grid-column: 1 / 2;
-            }
-
-            .cell-precip {
-                grid-column: 2 / 3;
-                border-right: none;
-            }
-
-            .cell-wind {
-                grid-column: 1 / -1;
-                border-right: none;
-            }
-
-            .cell-atmos {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 30px;
-            }
-
-            .atmos-item:nth-child(3) {
-                border-right: none;
-            }
-        }
-
-        /* Mobile — Telas estreitas (retrato de celular) */
-        @media (max-width: 768px) {
 
             /* Navbar: empilha título e controles */
             .top-nav {
@@ -729,52 +855,60 @@
 
             /* Container principal */
             .dashboard-container {
-                padding: 14px;
+                padding: 16px;
             }
 
             /* Grid: coluna única vertical */
             .dashboard-board {
-                grid-template-columns: 1fr !important;
+                grid-template-columns: 1fr;
                 border-radius: 18px;
                 max-width: 100%;
                 overflow-x: hidden;
             }
 
             .grid-cell {
-                border-right: none !important;
+                border-right: none;
                 padding: 22px 18px;
                 min-width: 0;
                 overflow: hidden;
             }
 
             .cell-current {
-                grid-column: 1 / -1 !important;
-                grid-row: auto !important;
+                grid-column: 1 / -1;
+                grid-row: auto;
             }
 
             .cell-hourly {
-                grid-column: 1 / -1 !important;
-                grid-row: auto !important;
+                grid-column: 1 / -1;
+                grid-row: auto;
+                border-right: none;
             }
 
             .cell-sun {
-                grid-column: 1 / -1 !important;
-                grid-row: auto !important;
+                grid-column: 1 / -1;
+                grid-row: auto;
             }
 
             .cell-precip {
-                grid-column: 1 / -1 !important;
-                grid-row: auto !important;
+                grid-column: 1 / -1;
+                grid-row: auto;
             }
 
             .cell-wind {
-                grid-column: 1 / -1 !important;
-                grid-row: auto !important;
+                grid-column: 1 / -1;
+                grid-row: auto;
+                border-right: none;
             }
 
             .cell-atmos {
-                grid-column: 1 / -1 !important;
-                grid-row: auto !important;
+                grid-column: 1 / -1;
+                grid-row: auto;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 30px;
+            }
+
+            .atmos-item:nth-child(3) {
+                border-right: none;
             }
 
             /* Temperatura principal menor */
@@ -861,7 +995,17 @@
                 min-height: 100px;
             }
 
-            /* Atmosfera: coluna única */
+            /* Alertas */
+            .weather-alert {
+                font-size: 0.85rem;
+                padding: 10px 14px;
+            }
+        }
+
+        /* Mobile — Telas estreitas (retrato de celular) */
+        @media (max-width: 768px) {
+
+            /* Atmosfera: coluna única em mobile estreito */
             .cell-atmos {
                 grid-template-columns: 1fr;
                 gap: 0;
@@ -885,16 +1029,10 @@
             .atmos-val {
                 font-size: 1.15rem;
             }
-
-            /* Alertas */
-            .weather-alert {
-                font-size: 0.85rem;
-                padding: 10px 14px;
-            }
         }
 
         /* Mobile XS — Telas muito pequenas (<400px) */
-        @media (max-width: 400px) {
+        @media (max-width: 1000px) {
             .top-nav {
                 padding: 10px 12px;
             }
@@ -961,13 +1099,27 @@
     </div>
 
     <nav class="top-nav">
-        <div class="nav-title"><i data-lucide="map-pin"></i> Naviraí - MS</div>
+        <div class="nav-title" id="location-display">
+            <i data-lucide="map-pin"></i>
+            <span id="city-name">Naviraí - MS</span>
+            <button class="search-toggle" onclick="toggleSearch()" title="Buscar cidade">
+                <i data-lucide="search" size="16"></i>
+            </button>
+        </div>
+        <div class="search-location" id="search-panel" style="display:none;">
+            <input type="text" id="search-input" placeholder="Buscar cidade..." autocomplete="off">
+            <div class="search-results" id="search-results"></div>
+        </div>
         <div class="nav-controls">
             <div id="season-indicator"
                 style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--divider); padding-right: 15px; margin-right: -5px;">
                 --</div>
             <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-muted);">--:--</div>
             <div class="status-badge" id="api-status"><i data-lucide="activity" size="14"></i> Tempo Real</div>
+            <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()" title="Ativar notificações de alerta">
+                <i data-lucide="bell" size="18"></i>
+                <span class="notif-badge" id="notif-badge"></span>
+            </button>
             <button class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
                     size="18"></i></button>
         </div>
@@ -1119,14 +1271,19 @@
 
             </div>
 
-            <!-- 4. Precipitação (Middle Center) -->
+            <!-- 4. Precipitação / Histórico de Temperatura (Middle Center) -->
             <div class="grid-cell cell-precip">
                 <div class="cell-header">
-                    <div class="cell-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)</div>
-                    <div style="margin-left: auto; font-size: 0.8rem; color: var(--accent-cyan);">Acumulado: <span
+                    <div class="cell-header-title" id="precip-header-title"><i data-lucide="cloud-rain"></i> Chuva (24h)</div>
+                    <div class="forecast-toggle" style="margin-left: auto; margin-right: 10px;">
+                        <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">Chuva</button>
+                        <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
+                    </div>
+                    <div id="precip-header-meta" style="font-size: 0.8rem; color: var(--accent-cyan);">Acumulado: <span
                             id="val-precip" style="font-weight:bold;">-- mm</span></div>
                 </div>
-                <div class="chart-container"><canvas id="chart-precip"></canvas></div>
+                <div class="chart-container" id="view-precip-rain"><canvas id="chart-precip"></canvas></div>
+                <div class="chart-container" id="view-precip-temp" style="display:none;"><canvas id="chart-temp-history"></canvas></div>
             </div>
 
             <!-- 5. Perfil Eólico (Middle Right) -->
@@ -1166,9 +1323,12 @@
                     <i data-lucide="droplets" size="32" color="var(--accent-blue)"></i>
                     <div>
                         <div class="atmos-label">Umidade Relativa</div>
-                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
-                            <span id="val-humidity">--%</span>
-                            <span id="trend-humidity"></span>
+                        <div class="atmos-val premium-center">
+                            <span id="val-humidity" class="main-num">--</span>
+                            <div class="suffix-wrapper">
+                                <span>%</span>
+                                <span id="trend-humidity"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1176,10 +1336,12 @@
                     <i data-lucide="gauge" size="32" color="#a855f7"></i>
                     <div>
                         <div class="atmos-label">Pressão (Nível do Mar)</div>
-                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
-                            <div><span id="val-pressure">--</span> <span
-                                    style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">hPa</span></div>
-                            <span id="trend-pressure"></span>
+                        <div class="atmos-val premium-center">
+                            <span id="val-pressure" class="main-num">--</span>
+                            <div class="suffix-wrapper">
+                                <span>hPa</span>
+                                <span id="trend-pressure"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1187,10 +1349,12 @@
                     <i data-lucide="eye" size="32" color="#4ade80"></i>
                     <div>
                         <div class="atmos-label">Visibilidade</div>
-                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
-                            <div><span id="val-vis">--</span> <span
-                                    style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">km</span></div>
-                            <span id="trend-vis"></span>
+                        <div class="atmos-val premium-center">
+                            <span id="val-vis" class="main-num">--</span>
+                            <div class="suffix-wrapper">
+                                <span>km</span>
+                                <span id="trend-vis"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1213,9 +1377,11 @@
                     </div>
                     <div>
                         <div class="atmos-label">Índice UV Atual</div>
-                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
-                            <span id="val-uv">--</span>
-                            <span id="trend-uv"></span>
+                        <div class="atmos-val premium-center">
+                            <span id="val-uv" class="main-num">--</span>
+                            <div class="suffix-wrapper">
+                                <span id="trend-uv"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1223,10 +1389,12 @@
                     <i data-lucide="thermometer" size="32" color="#38bdf8"></i>
                     <div>
                         <div class="atmos-label">Ponto de Orvalho</div>
-                        <div class="atmos-val" style="display: flex; align-items: center; gap: 6px;">
-                            <div><span id="val-dew">--</span> <span
-                                    style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">°C</span></div>
-                            <span id="trend-dew"></span>
+                        <div class="atmos-val premium-center">
+                            <span id="val-dew" class="main-num">--</span>
+                            <div class="suffix-wrapper">
+                                <span>°C</span>
+                                <span id="trend-dew"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1238,11 +1406,22 @@
     <script>
         lucide.createIcons();
 
-        const LAT = -23.0650;
-        const LON = -54.1906;
+        let LAT = -23.0650;
+        let LON = -54.1906;
+        let currentCityName = 'Naviraí - MS';
         let chartsObj = {};
         let globalWeatherData = null;
         let currentForecastTab = '24h';
+        let currentPrecipView = 'rain';
+        let searchDebounceTimer = null;
+        let notificationsEnabled = localStorage.getItem('notif_enabled') === 'true';
+
+        const ALERT_THRESHOLDS = {
+            tempMax: 38,
+            tempMin: 15,
+            windGusts: 40,
+            uvIndex: 11
+        };
 
         // Configuração Premium Global do Chart.js
         Chart.defaults.font.family = "'Inter', sans-serif";
@@ -1296,7 +1475,9 @@
         }
 
         function renderCharts(hourly) {
-            const startIndex = new Date().getHours();
+            // Com past_days=1, o array hourly começa no dia anterior 00:00
+            // Então o índice da hora atual é 24 + hora_atual
+            const startIndex = 24 + new Date().getHours();
             const timeLabels = hourly.time.slice(startIndex, startIndex + 24).map(t => new Date(t).getHours() + 'h');
 
             const anim = { y: { duration: 1000, easing: 'easeOutQuart', delay: (ctx) => ctx.dataIndex * 30 } };
@@ -1334,6 +1515,231 @@
                 plugins: { legend: { display: false } },
                 scales: { x: { display: false }, y: { display: false } }
             });
+
+            // 3. Histórico de Temperatura (24h passadas)
+            const totalHours = hourly.time.length;
+            const past24End = startIndex + 24; // current position in the 48h+ array (with past_days=1)
+            const past24Start = Math.max(0, past24End - 24);
+            const tempData = hourly.temperature_2m.slice(past24Start, past24End);
+            const tempLabels = hourly.time.slice(past24Start, past24End).map(t => {
+                const d = new Date(t);
+                return d.getHours() + 'h';
+            });
+
+            const ctxT = document.getElementById('chart-temp-history').getContext('2d');
+            const gradTemp = ctxT.createLinearGradient(0, 0, 0, 200);
+            gradTemp.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
+            gradTemp.addColorStop(0.5, 'rgba(250, 204, 21, 0.15)');
+            gradTemp.addColorStop(1, 'rgba(56, 189, 248, 0.05)');
+
+            const tempMin = Math.min(...tempData);
+            const tempMax = Math.max(...tempData);
+            const rangeEl = document.getElementById('val-temp-range');
+            if (rangeEl) rangeEl.innerText = `${tempMin.toFixed(0)}° — ${tempMax.toFixed(0)}°`;
+
+            createChart('chart-temp-history', 'line', {
+                labels: tempLabels,
+                datasets: [{
+                    label: 'Temperatura (°C)',
+                    data: tempData,
+                    borderColor: '#facc15',
+                    backgroundColor: gradTemp,
+                    borderWidth: 2.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#facc15',
+                    fill: true
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: anim,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.parsed.y.toFixed(1)}°C`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { border: { display: false }, ticks: { callback: v => v + '°' } }
+                }
+            });
+        }
+
+        // --- SWITCH: CHUVA / TEMPERATURA ---
+        let currentPrecipViewState = 'rain';
+        window.switchPrecipView = function (view) {
+            currentPrecipViewState = view;
+            document.getElementById('btn-precip-rain').classList.toggle('active', view === 'rain');
+            document.getElementById('btn-precip-temp').classList.toggle('active', view === 'temp');
+            document.getElementById('view-precip-rain').style.display = view === 'rain' ? 'block' : 'none';
+            document.getElementById('view-precip-temp').style.display = view === 'temp' ? 'block' : 'none';
+
+            const headerTitle = document.getElementById('precip-header-title');
+            const headerMeta = document.getElementById('precip-header-meta');
+
+            if (view === 'rain') {
+                headerTitle.innerHTML = '<i data-lucide="cloud-rain"></i> Chuva (24h)';
+                headerMeta.style.display = '';
+            } else {
+                headerTitle.innerHTML = '<i data-lucide="thermometer"></i> Temperatura (24h)';
+                headerMeta.style.display = 'none';
+            }
+            lucide.createIcons();
+        }
+
+        // --- BUSCA DE LOCALIZAÇÃO ---
+        window.toggleSearch = function () {
+            const panel = document.getElementById('search-panel');
+            const display = document.getElementById('location-display');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                display.style.display = 'none';
+                document.getElementById('search-input').focus();
+            } else {
+                panel.style.display = 'none';
+                display.style.display = '';
+                document.getElementById('search-results').classList.remove('visible');
+                document.getElementById('search-input').value = '';
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('search-panel');
+            const toggle = document.querySelector('.search-toggle');
+            if (panel.style.display !== 'none' && !panel.contains(e.target) && !toggle.contains(e.target)) {
+                toggleSearch();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('search-input');
+            input.addEventListener('input', (e) => {
+                clearTimeout(searchDebounceTimer);
+                const query = e.target.value.trim();
+                if (query.length < 2) {
+                    document.getElementById('search-results').classList.remove('visible');
+                    return;
+                }
+                searchDebounceTimer = setTimeout(() => searchCity(query), 400);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') toggleSearch();
+            });
+
+            // Restaurar estado do badge de notificação
+            updateNotifBadge();
+        });
+
+        async function searchCity(query) {
+            try {
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=pt&format=json`);
+                const data = await res.json();
+                const container = document.getElementById('search-results');
+
+                if (!data.results || data.results.length === 0) {
+                    container.innerHTML = '<div class="search-no-results">Nenhuma cidade encontrada</div>';
+                    container.classList.add('visible');
+                    return;
+                }
+
+                container.innerHTML = data.results.map(r => {
+                    const region = [r.admin1, r.country].filter(Boolean).join(', ');
+                    return `<div class="search-result-item" onclick="selectCity(${r.latitude}, ${r.longitude}, '${(r.name + (r.admin1 ? ' - ' + r.admin1 : '')).replace(/'/g, "\\'")}')">
+                        <div>
+                            <div class="result-city">${r.name}</div>
+                            <div class="result-region">${region}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                container.classList.add('visible');
+            } catch (e) {
+                console.error('Erro na busca:', e);
+            }
+        }
+
+        window.selectCity = function (lat, lon, name) {
+            LAT = lat;
+            LON = lon;
+            currentCityName = name;
+            document.getElementById('city-name').innerText = name;
+            document.title = `Dashboard Clima - ${name}`;
+            toggleSearch();
+
+            // Mostrar loader
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            loader.style.opacity = '1';
+            loader.querySelector('p').innerText = `Conectando satélites para ${name}`;
+
+            fetchData();
+        }
+
+        // --- SISTEMA DE NOTIFICAÇÕES ---
+        window.toggleNotifications = async function () {
+            if (!('Notification' in window)) {
+                alert('Seu navegador não suporta notificações.');
+                return;
+            }
+
+            if (Notification.permission === 'default') {
+                const perm = await Notification.requestPermission();
+                if (perm !== 'granted') return;
+            }
+
+            if (Notification.permission === 'denied') {
+                alert('Notificações bloqueadas. Habilite nas configurações do navegador.');
+                return;
+            }
+
+            notificationsEnabled = !notificationsEnabled;
+            localStorage.setItem('notif_enabled', notificationsEnabled);
+            updateNotifBadge();
+        }
+
+        function updateNotifBadge() {
+            const badge = document.getElementById('notif-badge');
+            if (badge) {
+                badge.classList.toggle('active', notificationsEnabled);
+            }
+            const btn = document.getElementById('btn-notifications');
+            if (btn) {
+                btn.title = notificationsEnabled ? 'Notificações ativas (clique para desativar)' : 'Ativar notificações de alerta';
+            }
+        }
+
+        function sendWeatherNotification(title, body) {
+            if (!notificationsEnabled || Notification.permission !== 'granted') return;
+
+            // Cooldown: não repetir o mesmo alerta em 30 minutos
+            const key = `notif_${title.replace(/\s/g, '_')}`;
+            const lastSent = parseInt(localStorage.getItem(key) || '0');
+            const now = Date.now();
+            if (now - lastSent < 30 * 60 * 1000) return; // 30 min cooldown
+
+            localStorage.setItem(key, now.toString());
+
+            // Tenta via Service Worker (PWA) primeiro, depois fallback
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(title, {
+                        body: body,
+                        icon: './icon-192.png',
+                        badge: './icon-192.png',
+                        vibrate: [200, 100, 200],
+                        tag: key
+                    });
+                });
+            } else {
+                new Notification(title, { body: body, icon: './icon-192.png' });
+            }
         }
 
         // --- MAPA WMO E UI ---
@@ -1442,30 +1848,34 @@
             const code = current.weather_code;
             const gusts = current.wind_gusts_10m;
             const tempFeels = current.apparent_temperature;
+            const tempReal = current.temperature_2m;
             const uvMax = daily.uv_index_max[0];
 
             // 1. Tempestades (Raios)
             if ([95, 96, 99].includes(code)) {
-                alerts.push({ type: 'danger', icon: 'cloud-lightning', text: 'ALERTA DE TEMPESTADE: Condições severas com possibilidade de raios detectadas na região.' });
-            } else if ([65, 81, 82].includes(code)) { // Chuva Forte
+                alerts.push({ type: 'danger', icon: 'cloud-lightning', text: `ALERTA DE TEMPESTADE: Condições severas com possibilidade de raios detectadas em ${currentCityName}.` });
+            } else if ([65, 81, 82].includes(code)) {
                 alerts.push({ type: 'warning', icon: 'cloud-rain-wind', text: 'ATENÇÃO: Chuva forte ou pancadas intensas ocorrendo agora. Risco de alagamentos pontuais.' });
             }
 
-            // 2. Ventos e Rajadas
-            if (gusts >= 60) {
-                alerts.push({ type: 'danger', icon: 'wind', text: `PERIGO: Rajadas de vento muito fortes (${Math.round(gusts)} km/h). Risco de queda de galhos e destelhamentos.` });
-            } else if (gusts >= 45) {
-                alerts.push({ type: 'warning', icon: 'wind', text: `ATENÇÃO: Ventos fortes com rajadas de até ${Math.round(gusts)} km/h.` });
+            // 2. Ventos e Rajadas (Configurável)
+            if (gusts >= ALERT_THRESHOLDS.windGusts) {
+                alerts.push({ type: gusts >= 60 ? 'danger' : 'warning', icon: 'wind', text: `${gusts >= 60 ? 'PERIGO' : 'ATENÇÃO'}: Rajadas de vento de ${Math.round(gusts)} km/h. ${gusts >= 60 ? 'Risco de queda de galhos e destelhamentos.' : 'Tenha cuidado ao ar livre.'}` });
             }
 
-            // 3. Calor Extremo
-            if (tempFeels >= 38) {
-                alerts.push({ type: 'danger', icon: 'thermometer-sun', text: `ALERTA DE CALOR: Sensação térmica perigosa de ${Math.round(tempFeels)}°C. Hidrate-se e evite exercícios ao ar livre!` });
+            // 3. Calor Extremo (Configurável)
+            if (tempFeels >= ALERT_THRESHOLDS.tempMax) {
+                alerts.push({ type: 'danger', icon: 'thermometer-sun', text: `ALERTA DE CALOR: Sensação térmica perigosa de ${Math.round(tempFeels)}°C em ${currentCityName}. Hidrate-se e evite exercícios ao ar livre!` });
             }
 
-            // 4. Radiação UV (Usando a máxima do dia)
-            if (uvMax >= 11) {
-                alerts.push({ type: 'warning', icon: 'sun-dim', text: `RADIAÇÃO EXTREMA: Índice UV atingirá ${Math.round(uvMax)} hoje. Risco altíssimo de queimaduras.` });
+            // 4. Frio Intenso (Configurável)
+            if (tempReal <= ALERT_THRESHOLDS.tempMin) {
+                alerts.push({ type: 'warning', icon: 'thermometer-snowflake', text: `ATENÇÃO FRIO: Temperatura de ${Math.round(tempReal)}°C em ${currentCityName}. Agasalhe-se e proteja-se do frio!` });
+            }
+
+            // 5. Radiação UV (Configurável)
+            if (uvMax >= ALERT_THRESHOLDS.uvIndex) {
+                alerts.push({ type: 'warning', icon: 'sun-dim', text: `RADIAÇÃO EXTREMA: Índice UV atingirá ${Math.round(uvMax)} hoje em ${currentCityName}. Risco altíssimo de queimaduras.` });
             }
 
             // Renderiza os Alertas no DOM
@@ -1476,7 +1886,17 @@
                 container.appendChild(div);
             });
 
-            if (alerts.length > 0) lucide.createIcons();
+            if (alerts.length > 0) {
+                lucide.createIcons();
+
+                // Enviar notificações push para alertas críticos
+                alerts.forEach(al => {
+                    sendWeatherNotification(
+                        `⚠️ Alerta Clima - ${currentCityName}`,
+                        al.text
+                    );
+                });
+            }
         }
 
         function populateUI() {
@@ -1651,7 +2071,7 @@
                 return `<i data-lucide="minus" size="14" color="var(--text-muted)" title="Estável"></i>`;
             };
 
-            document.getElementById('val-humidity').innerText = c.relative_humidity_2m + '%';
+            document.getElementById('val-humidity').innerText = c.relative_humidity_2m;
             document.getElementById('trend-humidity').innerHTML = getTrend(c.relative_humidity_2m, h.relative_humidity_2m[prevIndex]);
 
             document.getElementById('val-pressure').innerText = Math.round(c.pressure_msl);
@@ -1686,7 +2106,8 @@
         async function fetchData() {
             try {
                 // Modificado para buscar relative_humidity_2m, pressure_msl, visibility e dew_point_2m no hourly para cálculo de tendência
-                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto`;
+                // past_days=1 garante dados das últimas 24h para o gráfico de histórico de temperatura
+                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto&past_days=1`;
 
                 const resW = await fetch(urlWeather, { signal: AbortSignal.timeout(8000) });
 
