@@ -1,7 +1,7 @@
 {
-  "name": "Dashboard Clima - Naviraí",
-  "short_name": "Clima Naviraí",
-  "description": "Dashboard meteorológico premium para Naviraí",
+  "name": "AeroSky - Dashboard de Clima Inteligente",
+  "short_name": "AeroSky",
+  "description": "Dashboard meteorológico premium e consultor de bem-estar inteligente",
   "scope": "/climate-control/",
   "start_url": "/climate-control/",
   "display": "standalone",

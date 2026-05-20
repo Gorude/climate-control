@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clima-navirai-v1';
+const CACHE_NAME = 'aerosky-v1';
 const ASSETS = [
   './index.html',
   './manifest.json',

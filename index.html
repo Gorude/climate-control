@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Clima - Naviraí</title>
+    <title>AeroSky</title>
 
     <!-- PWA Config -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#060D17">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Clima Naviraí">
+    <meta name="apple-mobile-web-app-title" content="AeroSky">
     <link rel="apple-touch-icon" href="icon-192.png">
 
 
@@ -41,7 +41,7 @@
             --accent-purple: #7209B7;
             --accent-danger: #FF0054;
             --divider: rgba(255, 255, 255, 0.05);
-            
+
             --font-family-title: 'Plus Jakarta Sans', sans-serif;
             --font-family-body: 'Inter', sans-serif;
         }
@@ -141,7 +141,7 @@
             letter-spacing: 0.2px;
             transition: all 0.3s ease;
         }
-        
+
         .status-badge i {
             animation: pulse-glow 2s infinite;
         }
@@ -167,7 +167,7 @@
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
         }
-        
+
         .refresh-btn:active {
             transform: scale(0.95);
         }
@@ -247,8 +247,10 @@
             display: flex;
             flex-direction: column;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            min-width: 0; /* IMPEDE QUE O CANVA DO CHART.JS QUEBRE O LAYOUT */
-            overflow: hidden; /* PROTEGE A CAIXA CONTRA TRANSBORDAMENTO */
+            min-width: 0;
+            /* IMPEDE QUE O CANVA DO CHART.JS QUEBRE O LAYOUT */
+            overflow: hidden;
+            /* PROTEGE A CAIXA CONTRA TRANSBORDAMENTO */
             position: relative;
         }
 
@@ -317,7 +319,7 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .cell-header-title i {
             color: var(--accent-cyan);
             filter: drop-shadow(0 0 6px rgba(0, 245, 212, 0.3));
@@ -681,10 +683,22 @@
             font-family: var(--font-family-title);
         }
 
-        .c-n { top: 6px; color: var(--accent-danger) !important; }
-        .c-s { bottom: 6px; }
-        .c-e { right: 8px; }
-        .c-w { left: 8px; }
+        .c-n {
+            top: 6px;
+            color: var(--accent-danger) !important;
+        }
+
+        .c-s {
+            bottom: 6px;
+        }
+
+        .c-e {
+            right: 8px;
+        }
+
+        .c-w {
+            left: 8px;
+        }
 
         .compass-dial::after {
             content: '';
@@ -865,19 +879,25 @@
         }
 
         @keyframes float {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(0);
             }
+
             50% {
                 transform: translateY(-8px);
             }
         }
 
         @keyframes pulse-glow {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
                 opacity: 0.9;
             }
+
             50% {
                 transform: scale(1.1);
                 opacity: 1;
@@ -886,18 +906,24 @@
         }
 
         @keyframes pulse-alert {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
             }
+
             50% {
                 transform: scale(1.18);
             }
         }
 
         @keyframes pulse-notif {
-            0%, 100% {
+
+            0%,
+            100% {
                 box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
             }
+
             50% {
                 box-shadow: 0 0 0 5px rgba(74, 222, 128, 0.1);
             }
@@ -908,6 +934,7 @@
                 opacity: 0;
                 transform: translateY(-16px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -941,7 +968,8 @@
             }
 
             .cell-hourly {
-                grid-column: 1 / -1; /* Espalha as 2 colunas para melhor visualização */
+                grid-column: 1 / -1;
+                /* Espalha as 2 colunas para melhor visualização */
                 grid-row: auto;
             }
 
@@ -1064,7 +1092,8 @@
             }
 
             #season-indicator {
-                display: none !important; /* Esconde a estação em telas minúsculas para caber relógio */
+                display: none !important;
+                /* Esconde a estação em telas minúsculas para caber relógio */
             }
 
             .huge-temp {
@@ -1095,6 +1124,252 @@
                 padding-bottom: 0;
             }
         }
+
+        /* =======================================================
+           =========== CONSULTOR DE BEM-ESTAR (AEROSKY) ==========
+           ======================================================= */
+
+        .wellbeing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .wellbeing-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .wellbeing-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 440px;
+            height: 100%;
+            background: rgba(10, 20, 38, 0.75);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1001;
+            box-shadow: -15px 0 45px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .wellbeing-panel.active {
+            transform: translateX(0);
+        }
+
+        .wellbeing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--divider);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .wellbeing-header h2 {
+            font-family: var(--font-family-title);
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+        }
+
+        .wellbeing-header h2 i {
+            color: var(--accent-cyan);
+            filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.4));
+        }
+
+        .wellbeing-close {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-info);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .wellbeing-close:hover {
+            color: var(--accent-danger);
+            border-color: rgba(255, 0, 84, 0.3);
+            background: rgba(255, 0, 84, 0.08);
+            transform: rotate(90deg);
+        }
+
+        .wellbeing-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .wellbeing-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wellbeing-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-cyan);
+        }
+
+        .wellbeing-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--glass-border-hover);
+            transform: translateY(-2px);
+        }
+
+        .wellbeing-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-family-title);
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .wellbeing-card-desc {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-info);
+        }
+
+        .wellbeing-card.uv::before {
+            background: var(--accent-yellow);
+        }
+
+        .wellbeing-card.hydration::before {
+            background: var(--accent-blue);
+        }
+
+        .wellbeing-card.activity::before {
+            background: #4ade80;
+        }
+
+        .wellbeing-card.wind::before {
+            background: #a855f7;
+        }
+
+        .wellbeing-card.alert::before {
+            background: var(--accent-danger);
+        }
+
+        .wellbeing-card.uv .wellbeing-card-title {
+            color: var(--accent-yellow);
+        }
+
+        .wellbeing-card.hydration .wellbeing-card-title {
+            color: var(--accent-blue);
+        }
+
+        .wellbeing-card.activity .wellbeing-card-title {
+            color: #4ade80;
+        }
+
+        .wellbeing-card.wind .wellbeing-card-title {
+            color: #a855f7;
+        }
+
+        .wellbeing-card.alert .wellbeing-card-title {
+            color: var(--accent-danger);
+        }
+
+        /* Botão de Localização Atual */
+        .btn-locate {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            color: var(--text-info);
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-locate:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            background: rgba(0, 245, 212, 0.08);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
+        }
+
+        /* Botão Coração Pulsante */
+        .pulse-heart-btn i {
+            color: #ff0054;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 84, 0.4));
+            animation: heart-beat 1.8s infinite ease-in-out;
+        }
+
+        @keyframes heart-beat {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.12);
+            }
+        }
+
+        /* Responsividade do Painel de Bem-Estar no Mobile */
+        @media (max-width: 480px) {
+            .wellbeing-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--glass-border);
+                transform: translateY(100%);
+                height: 80%;
+                top: auto;
+                bottom: 0;
+                border-radius: 30px 30px 0 0;
+                padding: 24px 20px;
+            }
+
+            .wellbeing-panel.active {
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -1105,8 +1380,7 @@
     <div id="loader">
         <div class="spinner"></div>
         <h3 style="font-weight: 500; letter-spacing: 1px;">Sincronizando Dados</h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">Conectando satélites para Naviraí - MS
-        </p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">Sincronizando satélites do AeroSky...</p>
     </div>
 
     <nav class="top-nav">
@@ -1116,10 +1390,21 @@
             <button class="search-toggle" onclick="toggleSearch()" title="Buscar cidade">
                 <i data-lucide="search" size="16"></i>
             </button>
+            <button class="search-toggle" onclick="requestGeolocation()" title="Usar localização atual"
+                style="margin-left: -4px;">
+                <i data-lucide="locate" size="16"></i>
+            </button>
         </div>
-        <div class="search-location" id="search-panel" style="display:none;">
-            <input type="text" id="search-input" placeholder="Buscar cidade..." autocomplete="off">
-            <div class="search-results" id="search-results"></div>
+        <div class="search-location" id="search-panel" style="display:none; width: 100%; max-width: 320px;">
+            <div style="display: flex; gap: 8px; width: 100%;">
+                <input type="text" id="search-input" placeholder="Buscar cidade..." autocomplete="off"
+                    style="flex-grow: 1;">
+                <button class="btn-locate" onclick="requestGeolocation()" title="Usar localização atual"
+                    style="flex-shrink: 0;">
+                    <i data-lucide="locate" size="18"></i>
+                </button>
+            </div>
+            <div class="search-results" id="search-results" style="width: 100%;"></div>
         </div>
         <div class="nav-controls">
             <div id="api-status" class="status-badge" style="cursor: default;">
@@ -1130,13 +1415,17 @@
                 --</div>
             <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-info);">--:--</div>
             <div class="nav-buttons-group" style="display: flex; align-items: center; gap: 10px;">
+                <button class="refresh-btn pulse-heart-btn" id="btn-wellbeing" onclick="toggleWellbeing(true)"
+                    title="Recomendações de Bem-Estar e Saúde">
+                    <i data-lucide="heart" size="18"></i>
+                </button>
                 <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()"
                     title="Ativar notificações de alerta">
                     <i data-lucide="bell" size="18"></i>
                     <span class="notif-badge" id="notif-badge"></span>
                 </button>
-                <button id="btn-refresh" class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i data-lucide="refresh-cw"
-                        size="18"></i></button>
+                <button id="btn-refresh" class="refresh-btn" onclick="forceUpdate()" title="Atualizar agora"><i
+                        data-lucide="refresh-cw" size="18"></i></button>
             </div>
         </div>
     </nav>
@@ -1187,7 +1476,8 @@
             <!-- 2. Previsão (Top Right - Spans 2 Cols) -->
             <div class="grid-cell cell-hourly">
                 <div class="cell-header">
-                    <div class="cell-header-title" id="forecast-header-title"><i data-lucide="calendar-clock"></i> Previsão</div>
+                    <div class="cell-header-title" id="forecast-header-title"><i data-lucide="calendar-clock"></i>
+                        Previsão</div>
                     <div class="forecast-toggle">
                         <button id="btn-24h" class="active" onclick="switchForecast('24h')">24h</button>
                         <button id="btn-7d" onclick="switchForecast('7d')">7 Dias</button>
@@ -1320,8 +1610,11 @@
                             <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
                         </div>
                         <div class="forecast-toggle" id="precip-sub-toggle" style="margin-right: 0; padding: 2px;">
-                            <button id="btn-precip-forecast" class="active" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchPrecipSubTab('forecast')">Previsão</button>
-                            <button id="btn-precip-history" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchPrecipSubTab('history')">Histórico</button>
+                            <button id="btn-precip-forecast" class="active"
+                                style="padding: 3px 8px; font-size: 0.65rem;"
+                                onclick="switchPrecipSubTab('forecast')">Previsão</button>
+                            <button id="btn-precip-history" style="padding: 3px 8px; font-size: 0.65rem;"
+                                onclick="switchPrecipSubTab('history')">Histórico</button>
                         </div>
                     </div>
                 </div>
@@ -1332,7 +1625,8 @@
 
             <!-- 5. Perfil Eólico (Middle Right) -->
             <div class="grid-cell cell-wind">
-                <div class="cell-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="cell-header"
+                    style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <!-- Lado Esquerdo: Título e Meta -->
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <div class="cell-header-title" id="wind-header-title" style="margin-top: 5px;">
@@ -1342,11 +1636,13 @@
                             Rajada Max: <span id="val-gusts" style="font-weight:bold; color: #fff;">-- km/h</span>
                         </div>
                     </div>
-                    
+
                     <!-- Lado Direito: Toggle -->
                     <div class="forecast-toggle" id="wind-sub-toggle" style="margin-right: 0; padding: 2px;">
-                        <button id="btn-wind-forecast" class="active" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchWindSubTab('forecast')">Previsão</button>
-                        <button id="btn-wind-history" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchWindSubTab('history')">Histórico</button>
+                        <button id="btn-wind-forecast" class="active" style="padding: 3px 8px; font-size: 0.65rem;"
+                            onclick="switchWindSubTab('forecast')">Previsão</button>
+                        <button id="btn-wind-history" style="padding: 3px 8px; font-size: 0.65rem;"
+                            onclick="switchWindSubTab('history')">Histórico</button>
                     </div>
                 </div>
 
@@ -1459,6 +1755,23 @@
         </div>
     </main>
 
+    <!-- CONSULTOR DE BEM-ESTAR (AEROSKY SIDEBAR DRAWER) -->
+    <div class="wellbeing-overlay" id="wellbeing-overlay" onclick="toggleWellbeing(false)"></div>
+    <div class="wellbeing-panel" id="wellbeing-panel">
+        <div class="wellbeing-header">
+            <h2><i data-lucide="heart"></i> Bem-Estar</h2>
+            <button class="wellbeing-close" onclick="toggleWellbeing(false)" title="Fechar painel">
+                <i data-lucide="x" size="18"></i>
+            </button>
+        </div>
+        <div class="wellbeing-content" id="wellbeing-content">
+            <div style="text-align: center; color: var(--text-info); margin-top: 40px;">
+                <i data-lucide="loader" class="spinning" size="24" style="margin-bottom: 12px; opacity: 0.7;"></i>
+                <p>Analisando dados atmosféricos...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
 
@@ -1474,6 +1787,250 @@
         let windSubTab = 'forecast';
         let searchDebounceTimer = null;
         let notificationsEnabled = localStorage.getItem('notif_enabled') === 'true';
+
+        // --- AEROSKY: GEOLOCALIZAÇÃO INTELIGENTE & NOMINATIM ---
+        async function reverseGeocode(lat, lon) {
+            try {
+                // Nominatim requer um Header ou parâmetro identificável para evitar rate-limit
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`, {
+                    headers: { 'Accept-Language': 'pt-BR' }
+                });
+                if (!res.ok) throw new Error("Erro no Nominatim");
+                const data = await res.json();
+                
+                const addr = data.address;
+                // Busca obter o nome da cidade de forma flexível e robusta
+                const city = addr.city || addr.town || addr.village || addr.municipality || addr.suburb || addr.city_district || "Sua Localização";
+                const state = addr.state ? addr.state : "";
+                
+                const finalName = state ? `${city} - ${state}` : city;
+                return finalName;
+            } catch (e) {
+                console.warn('Erro ao obter geocodificação reversa:', e);
+                return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+            }
+        }
+
+        async function performGeolocation(isAutomatic = false) {
+            const loader = document.getElementById('loader');
+            if (!isAutomatic) {
+                loader.style.display = 'flex';
+                loader.style.opacity = '1';
+                loader.querySelector('p').innerText = "Detectando sua localização...";
+            }
+
+            if (!navigator.geolocation) {
+                console.warn("Geolocalização não suportada.");
+                if (!isAutomatic) {
+                    alert("Seu navegador não suporta geolocalização.");
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 800);
+                } else {
+                    fetchData();
+                }
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    LAT = lat;
+                    LON = lon;
+                    
+                    const resolvedCity = await reverseGeocode(lat, lon);
+                    currentCityName = resolvedCity;
+                    
+                    document.getElementById('city-name').innerText = resolvedCity;
+                    document.title = `AeroSky - ${resolvedCity}`;
+                    
+                    if (isAutomatic) {
+                        loader.querySelector('p').innerText = `Carregando clima de ${resolvedCity}...`;
+                    }
+                    
+                    await fetchData();
+                },
+                (error) => {
+                    console.warn("Erro ou permissão negada de geolocalização:", error);
+                    if (!isAutomatic) {
+                        alert("Não foi possível acessar sua localização. Verifique as permissões de geolocalização do seu navegador.");
+                    }
+                    // Se automático falhou, apenas carrega com Naviraí padrão
+                    if (isAutomatic) {
+                        fetchData();
+                    } else {
+                        loader.style.opacity = '0';
+                        setTimeout(() => loader.style.display = 'none', 800);
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        window.requestGeolocation = function() {
+            // Se o painel de busca estiver aberto, fecha-o
+            const panel = document.getElementById('search-panel');
+            if (panel && panel.style.display !== 'none') {
+                toggleSearch();
+            }
+            performGeolocation(false);
+        }
+
+        window.initGeolocation = function() {
+            performGeolocation(true);
+        }
+
+        // --- AEROSKY: CONSULTOR DE BEM-ESTAR (RECOMENDAÇÕES) ---
+        window.toggleWellbeing = function(show) {
+            const panel = document.getElementById('wellbeing-panel');
+            const overlay = document.getElementById('wellbeing-overlay');
+            if (show) {
+                panel.classList.add('active');
+                overlay.classList.add('active');
+                updateWellbeingRecommendations();
+            } else {
+                panel.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+
+        function updateWellbeingRecommendations() {
+            const container = document.getElementById('wellbeing-content');
+            if (!globalWeatherData) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-info); margin-top: 40px;">
+                        <i data-lucide="cloud-off" size="24" style="margin-bottom: 12px; opacity: 0.7;"></i>
+                        <p>Nenhum dado meteorológico disponível para análise.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const c = globalWeatherData.current;
+            const h = globalWeatherData.hourly;
+            const startIndex = 24 + new Date().getHours();
+            
+            // Dados atuais
+            const uv = h.uv_index[startIndex] || 0;
+            const temp = c.temperature_2m;
+            const feels = c.apparent_temperature;
+            const humidity = c.relative_humidity_2m;
+            const wind = c.wind_speed_10m;
+            const rain = c.precipitation;
+            
+            let recommendations = [];
+
+            // 1. Recomendação de Proteção UV (Baseado no UV Index)
+            if (uv >= 8) {
+                recommendations.push({
+                    category: 'uv',
+                    icon: 'sun',
+                    title: 'Radiação UV Extrema',
+                    desc: `Índice UV está em ${uv.toFixed(1)} (Muito Alto). Use protetor solar FPS 50+, evite exposição direta ao sol entre 10h e 16h, e use boné, óculos de sol e roupas protetoras.`
+                });
+            } else if (uv >= 3) {
+                recommendations.push({
+                    category: 'uv',
+                    icon: 'sun-medium',
+                    title: 'Exposição UV Moderada',
+                    desc: `Índice UV está em ${uv.toFixed(1)}. Recomenda-se o uso de protetor solar FPS 30+, mesmo em dias nublados. Proteja a pele sensível.`
+                });
+            } else {
+                recommendations.push({
+                    category: 'uv',
+                    icon: 'sun-dim',
+                    title: 'Radiação UV Baixa',
+                    desc: `Índice UV está em ${uv.toFixed(1)}. Baixo risco para a saúde da pele. Excelente dia para desfrutar da claridade solar natural de forma saudável.`
+                });
+            }
+
+            // 2. Recomendação de Hidratação (Baseado em calor ou ar seco)
+            if (temp >= 33 || feels >= 35) {
+                recommendations.push({
+                    category: 'hydration',
+                    icon: 'droplet',
+                    title: 'Alerta de Calor Severo',
+                    desc: `Temperatura de ${temp.toFixed(1)}°C (Sensação de ${feels.toFixed(0)}°C). Risco de estresse térmico. Beba pelo menos 3 litros de água hoje, evite cafeína/álcool e prefira ambientes ventilados ou climatizados.`
+                });
+            } else if (humidity <= 40) {
+                recommendations.push({
+                    category: 'hydration',
+                    icon: 'droplets',
+                    title: 'Ar Muito Seco',
+                    desc: `Umidade relativa está em ${humidity}%. Beba água regularmente, aplique hidratante labial e use umidificador de ar ou toalha molhada no quarto para proteger as vias respiratórias.`
+                });
+            } else {
+                recommendations.push({
+                    category: 'hydration',
+                    icon: 'glass-water',
+                    title: 'Hidratação Normal',
+                    desc: `Umidade em ${humidity}% e clima agradável. Mantenha seu consumo básico de água (cerca de 2L/dia) para manter o metabolismo e vitalidade celular.`
+                });
+            }
+
+            // 3. Atividades Físicas / Exercícios (Baseado em chuva e clima geral)
+            if (rain > 0) {
+                recommendations.push({
+                    category: 'activity',
+                    icon: 'home',
+                    title: 'Exercícios Indoor Recomendados',
+                    desc: `Chovendo agora (${rain.toFixed(1)} mm). Dê preferência a alongamentos, musculação em casa ou atividades físicas em ambientes fechados (academia). Não esqueça o guarda-chuva ao sair!`
+                });
+            } else if (temp >= 16 && temp <= 26 && wind < 25) {
+                recommendations.push({
+                    category: 'activity',
+                    icon: 'bike',
+                    title: 'Perfeito para Esportes ao Ar Livre',
+                    desc: `Clima ideal de ${temp.toFixed(0)}°C e sem previsão de chuva. Perfeito para corrida, caminhada, andar de bicicleta ou atividades em parques.`
+                });
+            } else {
+                recommendations.push({
+                    category: 'activity',
+                    icon: 'dumbbell',
+                    title: 'Atividade Física Moderada',
+                    desc: `Condições climatológicas aceitáveis. Planeje seus exercícios ao ar livre de manhã bem cedo ou ao fim de tarde para evitar oscilações bruscas.`
+                });
+            }
+
+            // 4. Perfil Eólico e Conforto Térmico (Baseado em vento e sensação de frio/calor)
+            if (wind >= 30) {
+                recommendations.push({
+                    category: 'wind',
+                    icon: 'wind',
+                    title: 'Ventos Fortes & Alergias',
+                    desc: `Vento soprando a ${Math.round(wind)} km/h. Risco de dispersão de poeira e pólen. Pessoas alérgicas ou asmáticas devem evitar exposição prolongada e manter as janelas fechadas.`
+                });
+            } else if (feels <= 15) {
+                recommendations.push({
+                    category: 'wind',
+                    icon: 'thermometer-snowflake',
+                    title: 'Desconforto por Frio',
+                    desc: `Sensação térmica baixa de ${feels.toFixed(0)}°C. Agasalhe-se bem em camadas, proteja as extremidades (mãos e pés) e consuma chás ou bebidas quentes para termorregulação.`
+                });
+            } else {
+                recommendations.push({
+                    category: 'wind',
+                    icon: 'smile',
+                    title: 'Conforto Térmico Ideal',
+                    desc: `Equilíbrio perfeito de temperatura e vento. Sensação corporal neutra, propícia para relaxamento e bem-estar psicológico geral.`
+                });
+            }
+
+            // Renderiza no container
+            container.innerHTML = recommendations.map(r => `
+                <div class="wellbeing-card ${r.category}">
+                    <div class="wellbeing-card-title">
+                        <i data-lucide="${r.icon}" size="18"></i>
+                        <span>${r.title}</span>
+                    </div>
+                    <div class="wellbeing-card-desc">${r.desc}</div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
 
         const ALERT_THRESHOLDS = {
             tempMax: 38,
@@ -1620,7 +2177,7 @@
             const windEnd = windStart + 24;
             const windLabels = hourly.time.slice(windStart, windEnd).map(t => new Date(t).getHours() + 'h');
             const windSpeedData = hourly.wind_speed_10m.slice(windStart, windEnd);
-            
+
             // Rajada máxima de vento no intervalo
             const gustsSource = hourly.wind_gusts_10m ? hourly.wind_gusts_10m : hourly.wind_speed_10m;
             const windGustsData = gustsSource.slice(windStart, windEnd);
@@ -1855,7 +2412,7 @@
             LON = lon;
             currentCityName = name;
             document.getElementById('city-name').innerText = name;
-            document.title = `Dashboard Clima - ${name}`;
+            document.title = `AeroSky - ${name}`;
             toggleSearch();
 
             // Mostrar loader
@@ -1880,13 +2437,22 @@
             }
 
             if (Notification.permission === 'denied') {
-                alert('Notificações bloqueadas. Habilite nas configurações do navegador.');
+                alert('Notificações bloqueadas. Habilite nas configurações do navegador para receber os alertas.');
                 return;
             }
 
             notificationsEnabled = !notificationsEnabled;
             localStorage.setItem('notif_enabled', notificationsEnabled);
             updateNotifBadge();
+
+            if (notificationsEnabled) {
+                // Dispara instantaneamente um push de boas-vindas para sinalizar sucesso de ativação
+                sendWeatherNotification(
+                    "AeroSky - Conectado! 🚀", 
+                    "Notificações inteligentes ativas. Você receberá alertas de clima severo e boletins de bem-estar personalizados.", 
+                    true
+                );
+            }
         }
 
         function updateNotifBadge() {
@@ -1900,16 +2466,16 @@
             }
         }
 
-        function sendWeatherNotification(title, body) {
+        function sendWeatherNotification(title, body, bypassCooldown = false) {
             if (!notificationsEnabled || Notification.permission !== 'granted') return;
 
-            // Cooldown: não repetir o mesmo alerta em 30 minutos
             const key = `notif_${title.replace(/\s/g, '_')}`;
-            const lastSent = parseInt(localStorage.getItem(key) || '0');
-            const now = Date.now();
-            if (now - lastSent < 30 * 60 * 1000) return; // 30 min cooldown
-
-            localStorage.setItem(key, now.toString());
+            if (!bypassCooldown) {
+                const lastSent = parseInt(localStorage.getItem(key) || '0');
+                const now = Date.now();
+                if (now - lastSent < 30 * 60 * 1000) return; // 30 min cooldown
+                localStorage.setItem(key, now.toString());
+            }
 
             // Tenta via Service Worker (PWA) primeiro, depois fallback
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -2039,12 +2605,12 @@
             selectedDayIndex = dayIndex;
             document.getElementById('btn-24h').classList.add('active');
             document.getElementById('btn-7d').classList.remove('active');
-            
+
             const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             const d = globalWeatherData.daily;
             const dDate = new Date(d.time[dayIndex] + 'T00:00:00');
             const dayName = dayIndex === 1 ? 'Hoje' : daysOfWeek[dDate.getDay()];
-            
+
             document.getElementById('forecast-header-title').innerHTML = `<i data-lucide="calendar-clock"></i> 24h (${dayName})`;
             renderForecast();
         }
@@ -2373,7 +2939,7 @@
             }, 3000);
         }
 
-        fetchData();
+        initGeolocation();
         setInterval(fetchData, 300000); // Atualiza a cada 5 minutos
 
         // Adiciona um listener de redimensionamento debounced para garantir o redimensionamento fluido dos gráficos no desktop/mobile
