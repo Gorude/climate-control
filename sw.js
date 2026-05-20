@@ -1,6 +1,6 @@
 const CACHE_NAME = 'clima-navirai-v1';
 const ASSETS = [
-  './Clima.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'

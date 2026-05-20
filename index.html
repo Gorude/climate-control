@@ -23,25 +23,34 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
         :root {
-            /* Paleta Dark/Neon Cyan Premium */
-            --bg-main: #060D17;
-            --glass-bg: rgba(11, 21, 36, 0.6);
-            --glass-border: rgba(0, 210, 211, 0.15);
-            --glass-shadow: rgba(0, 0, 0, 0.4);
-            --text-main: #FFFFFF;
-            --text-muted: #829AB1;
-            --accent-cyan: #00D2D3;
-            --accent-blue: #3b82f6;
-            --accent-yellow: #facc15;
-            --divider: rgba(255, 255, 255, 0.06);
+            /* Paleta Neon Cyan & Deep Space Glassmorphism */
+            --bg-main: #030712;
+            --glass-bg: rgba(10, 18, 30, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(0, 245, 212, 0.25);
+            --glass-shadow: rgba(0, 0, 0, 0.55);
+            --text-main: #F8FAFC;
+            --text-muted: #64748B;
+            --text-info: #94A3B8;
+            --accent-cyan: #00F5D4;
+            --accent-blue: #00BBF9;
+            --accent-yellow: #FFB703;
+            --accent-purple: #7209B7;
+            --accent-danger: #FF0054;
+            --divider: rgba(255, 255, 255, 0.05);
+            
+            --font-family-title: 'Plus Jakarta Sans', sans-serif;
+            --font-family-body: 'Inter', sans-serif;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-family-body);
         }
 
         body,
@@ -51,9 +60,10 @@
             background-color: var(--bg-main);
             color: var(--text-main);
             overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
-        /* Fundo Dinâmico (Sutil para dar destaque ao painel) */
+        /* Fundo Dinâmico com Gradientes Premium */
         #weather-bg {
             position: fixed;
             top: 0;
@@ -61,74 +71,90 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            opacity: 0.2;
+            opacity: 0.35;
             pointer-events: none;
-            transition: background 2s ease;
+            transition: background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .bg-day {
-            background: linear-gradient(180deg, #1e3a8a 0%, #060D17 100%);
+            background: radial-gradient(circle at 80% 20%, rgba(0, 187, 249, 0.18) 0%, rgba(3, 7, 18, 1) 100%);
         }
 
         .bg-night {
-            background: radial-gradient(circle at top right, #111827 0%, #000000 100%);
+            background: radial-gradient(circle at 80% 20%, rgba(114, 9, 183, 0.15) 0%, rgba(3, 7, 18, 1) 100%);
         }
 
         .bg-rain {
-            background: linear-gradient(180deg, #0f172a 0%, #060D17 100%);
+            background: radial-gradient(circle at 80% 20%, rgba(15, 23, 42, 0.9) 0%, rgba(3, 7, 18, 1) 100%);
         }
 
-        /* Navegação Superior */
+        /* Navegação Superior Flutuante */
         .top-nav {
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(6, 13, 23, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(3, 7, 18, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--glass-border);
-            padding: 15px 30px;
+            padding: 16px 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
         }
 
         .nav-title {
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-family: var(--font-family-title);
+            font-size: 1.25rem;
+            font-weight: 700;
             color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-title i {
+            color: var(--accent-cyan);
+            filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.4));
         }
 
         .nav-controls {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
         }
 
         .status-badge {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             padding: 6px 12px;
-            border-radius: 20px;
-            background: rgba(0, 210, 211, 0.1);
+            border-radius: 30px;
+            background: rgba(0, 245, 212, 0.08);
             color: var(--accent-cyan);
-            border: 1px solid rgba(0, 210, 211, 0.3);
+            border: 1px solid rgba(0, 245, 212, 0.2);
             display: flex;
             align-items: center;
             gap: 6px;
-            font-weight: 500;
+            font-weight: 600;
+            letter-spacing: 0.2px;
             transition: all 0.3s ease;
+        }
+        
+        .status-badge i {
+            animation: pulse-glow 2s infinite;
         }
 
         .refresh-btn {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--glass-border);
-            color: var(--text-muted);
-            padding: 6px;
-            border-radius: 8px;
+            color: var(--text-info);
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -137,107 +163,103 @@
         .refresh-btn:hover {
             color: var(--accent-cyan);
             border-color: var(--accent-cyan);
-            background: rgba(0, 210, 211, 0.1);
+            background: rgba(0, 245, 212, 0.08);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
+        }
+        
+        .refresh-btn:active {
+            transform: scale(0.95);
         }
 
-        /* Nova classe para controlar a animação sem perder a referência do ícone */
         .refresh-btn.spinning svg {
             animation: spin 1s linear infinite;
         }
 
-        /* Container Principal do Dashboard Unificado */
+        /* Container Principal do Bento Dashboard */
         .dashboard-container {
-            padding: 30px;
-            max-width: 1400px;
+            padding: 32px;
+            max-width: 1440px;
             margin: 0 auto;
             position: relative;
             z-index: 10;
         }
 
-        /* Sistema de Alertas */
+        /* Alertas Severos Estilizados */
         .alert-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .weather-alert {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            border-radius: 12px;
+            gap: 14px;
+            padding: 14px 20px;
+            border-radius: 16px;
             font-weight: 500;
-            backdrop-filter: blur(10px);
-            animation: slideInDown 0.5s ease-out;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 0.9rem;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            border-left: 4px solid currentColor;
         }
 
         .alert-danger {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
+            background: rgba(255, 0, 84, 0.08);
+            border: 1px solid rgba(255, 0, 84, 0.25);
+            border-left-width: 4px;
+            color: #FFA3C4;
         }
 
         .alert-warning {
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid rgba(245, 158, 11, 0.4);
-            color: #fcd34d;
+            background: rgba(255, 183, 3, 0.08);
+            border: 1px solid rgba(255, 183, 3, 0.25);
+            border-left-width: 4px;
+            color: #FFE194;
         }
 
         .alert-icon {
-            animation: pulse-alert 2s infinite;
+            animation: pulse-alert 1.5s infinite ease-in-out;
+            flex-shrink: 0;
         }
 
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-15px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse-alert {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.2);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        /* Painel Único (Bento Box Estático) */
+        /* Painel Único (Bento Box Responsivo e Dinâmico) */
         .dashboard-board {
             display: grid;
-            grid-template-columns: 350px 1fr 350px;
+            grid-template-columns: 380px 1fr 380px;
+            gap: 24px;
+            background: transparent;
+        }
+
+        /* Cartão Glassmorphic Bento */
+        .grid-cell {
+            padding: 28px;
             background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            box-shadow: 0 20px 50px var(--glass-shadow);
-            overflow: hidden;
-        }
-
-        .grid-cell {
-            padding: 30px;
-            border-right: 1px solid var(--divider);
-            border-bottom: 1px solid var(--divider);
+            box-shadow: 0 15px 35px var(--glass-shadow);
             display: flex;
             flex-direction: column;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 0; /* IMPEDE QUE O CANVA DO CHART.JS QUEBRE O LAYOUT */
+            overflow: hidden; /* PROTEGE A CAIXA CONTRA TRANSBORDAMENTO */
+            position: relative;
         }
 
-        /* Posicionamento do Grid */
+        /* Efeito Hover nos Cartões Bento */
+        .grid-cell:hover {
+            transform: translateY(-5px);
+            border-color: var(--glass-border-hover);
+            box-shadow: 0 20px 45px rgba(0, 245, 212, 0.06), 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Posicionamento do Grid no Desktop */
         .cell-current {
             grid-column: 1 / 2;
             grid-row: 1 / 2;
@@ -246,7 +268,6 @@
         .cell-hourly {
             grid-column: 2 / 4;
             grid-row: 1 / 2;
-            border-right: none;
         }
 
         .cell-sun {
@@ -262,76 +283,82 @@
         .cell-wind {
             grid-column: 3 / 4;
             grid-row: 2 / 3;
-            border-right: none;
         }
 
         .cell-atmos {
             grid-column: 1 / -1;
             grid-row: 3 / 4;
-            border-right: none;
-            border-bottom: none;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 20px;
-            padding: 25px 30px;
-            background: rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            background: rgba(10, 18, 30, 0.6);
         }
 
-        /* Cabeçalhos Internos */
+        /* Cabeçalhos Modernos nos Cartões */
         .cell-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 600;
+            gap: 12px;
+            font-family: var(--font-family-title);
+            font-weight: 700;
             font-size: 0.85rem;
-            color: var(--text-muted);
-            letter-spacing: 1px;
+            color: var(--text-info);
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             justify-content: space-between;
+            border-bottom: 1px solid var(--divider);
+            padding-bottom: 12px;
         }
 
         .cell-header-title {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+        }
+        
+        .cell-header-title i {
+            color: var(--accent-cyan);
+            filter: drop-shadow(0 0 6px rgba(0, 245, 212, 0.3));
         }
 
-        /* Toggle de Previsão (24h / 7d) */
+        /* Toggles Modernos Estilo Floating Pill */
         .forecast-toggle {
             display: flex;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
+            background: rgba(3, 7, 18, 0.6);
+            border-radius: 30px;
             padding: 3px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
         }
 
         .forecast-toggle button {
             background: transparent;
             border: none;
-            color: var(--text-muted);
-            padding: 4px 12px;
-            border-radius: 16px;
+            color: var(--text-info);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-family: var(--font-family-title);
             font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .forecast-toggle button.active {
-            background: var(--accent-cyan);
-            color: #000;
-            box-shadow: 0 0 10px rgba(0, 210, 211, 0.3);
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #030712;
+            box-shadow: 0 4px 15px rgba(0, 245, 212, 0.35);
         }
 
-        /* === Busca de Localização === */
+        /* Caixa de Busca Glassmorphic */
         .search-toggle {
             background: none;
             border: none;
-            color: var(--text-muted);
+            color: var(--text-info);
             cursor: pointer;
-            padding: 4px;
-            border-radius: 6px;
+            padding: 6px;
+            border-radius: 8px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
@@ -339,31 +366,32 @@
 
         .search-toggle:hover {
             color: var(--accent-cyan);
-            background: rgba(0, 210, 211, 0.1);
+            background: rgba(0, 245, 212, 0.08);
         }
 
         .search-location {
             width: 100%;
-            max-width: 400px;
+            max-width: 320px;
             position: relative;
         }
 
         .search-location input {
             width: 100%;
             padding: 10px 16px;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(3, 7, 18, 0.7);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
+            border-radius: 14px;
             color: #fff;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-family-body);
             font-size: 0.9rem;
             outline: none;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .search-location input:focus {
             border-color: var(--accent-cyan);
-            box-shadow: 0 0 15px rgba(0, 210, 211, 0.15);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.2);
+            background: rgba(3, 7, 18, 0.9);
         }
 
         .search-location input::placeholder {
@@ -372,31 +400,32 @@
 
         .search-results {
             position: absolute;
-            top: calc(100% + 6px);
+            top: calc(100% + 8px);
             left: 0;
             width: 100%;
-            background: rgba(11, 21, 36, 0.95);
+            background: rgba(10, 18, 30, 0.95);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            max-height: 250px;
+            border-radius: 16px;
+            max-height: 260px;
             overflow-y: auto;
             z-index: 200;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
             display: none;
         }
 
         .search-results.visible {
             display: block;
-            animation: slideInDown 0.25s ease-out;
+            animation: slideInDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .search-result-item {
-            padding: 12px 16px;
+            padding: 12px 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             border-bottom: 1px solid var(--divider);
             transition: background 0.2s ease;
         }
@@ -406,10 +435,11 @@
         }
 
         .search-result-item:hover {
-            background: rgba(0, 210, 211, 0.1);
+            background: rgba(0, 245, 212, 0.08);
         }
 
         .search-result-item .result-city {
+            font-family: var(--font-family-title);
             font-weight: 600;
             color: #fff;
             font-size: 0.9rem;
@@ -417,17 +447,18 @@
 
         .search-result-item .result-region {
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: var(--text-info);
+            margin-top: 2px;
         }
 
         .search-no-results {
-            padding: 16px;
+            padding: 18px;
             text-align: center;
-            color: var(--text-muted);
+            color: var(--text-info);
             font-size: 0.85rem;
         }
 
-        /* === Notificações === */
+        /* Notificações */
         .notif-btn {
             position: relative;
         }
@@ -440,48 +471,31 @@
             height: 8px;
             border-radius: 50%;
             background: var(--text-muted);
-            border: 2px solid var(--bg-main);
+            border: 2px solid #030712;
             transition: background 0.3s ease;
         }
 
         .notif-badge.active {
             background: #4ade80;
-            animation: pulse-notif 2s infinite;
+            animation: pulse-notif 1.5s infinite;
         }
 
-        @keyframes pulse-notif {
-
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
-            }
-
-            50% {
-                box-shadow: 0 0 0 4px rgba(74, 222, 128, 0);
-            }
-        }
-
-        /* Tipografia de Temperatura */
+        /* Exibição da Temperatura Principal */
         .temp-display {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             margin-top: 10px;
-        }
-
-        .main-icon-wrapper {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: -50px;
-            margin-left: 15px;
+            width: 100%;
         }
 
         .huge-temp {
-            font-size: 5.5rem;
+            font-family: var(--font-family-title);
+            font-size: 5rem;
             font-weight: 300;
-            letter-spacing: -2px;
+            letter-spacing: -3px;
             line-height: 1;
+            color: #fff;
         }
 
         .huge-temp span {
@@ -493,65 +507,64 @@
         }
 
         .cond-desc {
-            font-size: 1.2rem;
+            font-family: var(--font-family-title);
+            font-size: 1.25rem;
             color: var(--accent-cyan);
-            font-weight: 500;
+            font-weight: 600;
             text-transform: capitalize;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+
+        .main-icon-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
         }
 
         #main-icon {
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             color: var(--accent-yellow);
-            filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.3));
+            filter: drop-shadow(0 0 25px rgba(250, 204, 21, 0.45));
             animation: float 4s ease-in-out infinite;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
         }
 
         .min-max-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: auto;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid var(--divider);
         }
 
         .min-max-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .min-max-item span:first-child {
-            color: var(--text-muted);
+            color: var(--text-info);
         }
 
         .min-max-item span:last-child {
-            font-weight: 600;
+            font-weight: 700;
+            font-family: var(--font-family-title);
         }
 
-        /* Barra de Rolagem Horizontal (Previsão) */
+        /* Barra de Rolagem Horizontal (Previsão de Horas/Dias) */
         .hourly-scroll {
             display: flex;
-            gap: 15px;
+            gap: 16px;
             overflow-x: auto;
             padding-bottom: 12px;
             scrollbar-width: thin;
             scrollbar-color: var(--divider) transparent;
+            width: 100%;
         }
 
         .hourly-scroll::-webkit-scrollbar {
@@ -560,50 +573,60 @@
 
         .hourly-scroll::-webkit-scrollbar-thumb {
             background-color: var(--divider);
-            border-radius: 3px;
+            border-radius: 10px;
         }
 
         .hour-card {
-            min-width: 75px;
+            min-width: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
             padding: 16px 12px;
             border-radius: 16px;
-            border: 1px solid transparent;
-            background: transparent;
-            transition: 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.01);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hour-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(0, 245, 212, 0.12);
+            transform: translateY(-3px);
         }
 
         .hour-card.now {
             border-color: var(--accent-cyan);
-            background: rgba(0, 210, 211, 0.05);
-            box-shadow: inset 0 0 15px rgba(0, 210, 211, 0.1);
+            background: rgba(0, 245, 212, 0.05);
+            box-shadow: inset 0 0 15px rgba(0, 245, 212, 0.08);
         }
 
         .hour-time {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 0.8rem;
+            color: var(--text-info);
+            font-weight: 500;
             white-space: nowrap;
         }
 
         .hour-temp {
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-family: var(--font-family-title);
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #fff;
         }
 
         .hour-prob {
-            font-size: 0.8rem;
-            color: var(--accent-cyan);
-            font-weight: 500;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            font-weight: 600;
         }
 
         /* Arco Solar */
         .sun-arc-container {
             position: relative;
             height: 110px;
-            margin-top: 10px;
+            margin-top: 12px;
+            width: 100%;
         }
 
         .sun-arc-container svg {
@@ -615,9 +638,10 @@
         .sun-times {
             display: flex;
             justify-content: space-between;
-            margin-top: -5px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: var(--text-info);
+            width: 100%;
         }
 
         .sun-times div {
@@ -632,61 +656,52 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 16px;
+            width: 100%;
         }
 
         .compass-dial {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             border-radius: 50%;
             border: 2px solid var(--divider);
             display: flex;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(3, 7, 18, 0.4);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         .compass-dial span {
             position: absolute;
             font-size: 0.65rem;
-            color: var(--text-muted);
-            font-weight: 600;
+            color: var(--text-info);
+            font-weight: 700;
+            font-family: var(--font-family-title);
         }
 
-        .c-n {
-            top: 4px;
-        }
+        .c-n { top: 6px; color: var(--accent-danger) !important; }
+        .c-s { bottom: 6px; }
+        .c-e { right: 8px; }
+        .c-w { left: 8px; }
 
-        .c-s {
-            bottom: 4px;
-        }
-
-        .c-e {
-            right: 6px;
-        }
-
-        .c-w {
-            left: 6px;
-        }
-
-        /* Pino central da bússola */
         .compass-dial::after {
             content: '';
             position: absolute;
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             background: #fff;
             border-radius: 50%;
             z-index: 2;
-            box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
         }
 
         .compass-needle {
             position: absolute;
             width: 8px;
-            height: 50px;
-            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 54px;
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -698,32 +713,41 @@
             height: 0;
             border-left: 4px solid transparent;
             border-right: 4px solid transparent;
-            border-bottom: 25px solid #ef4444;
+            border-bottom: 27px solid var(--accent-danger);
+            filter: drop-shadow(0 0 4px var(--accent-danger));
         }
 
         .needle-tail {
             width: 4px;
-            height: 25px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 0 0 2px 2px;
+            height: 27px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 0 0 3px 3px;
         }
 
         .wind-info {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 5px;
+            gap: 4px;
         }
 
-        /* Gráficos Chart.js */
+        /* Gráficos Responsivos */
         .chart-container {
             width: 100%;
             flex-grow: 1;
-            min-height: 120px;
+            min-height: 140px;
             position: relative;
         }
 
-        /* Atmosfera Horizontal Items */
+        .chart-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Atmosfera Sub-Items */
         .atmos-item {
             display: flex;
             flex-direction: column;
@@ -732,7 +756,8 @@
             text-align: center;
             gap: 12px;
             border-right: 1px solid var(--divider);
-            padding: 10px;
+            padding: 8px;
+            transition: all 0.3s ease;
         }
 
         .atmos-item:last-child {
@@ -740,14 +765,16 @@
         }
 
         .atmos-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 0.8rem;
+            color: var(--text-info);
             margin-bottom: 4px;
+            font-weight: 500;
         }
 
         .atmos-val {
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-family: var(--font-family-title);
+            font-size: 1.35rem;
+            font-weight: 700;
             color: #fff;
             width: 100%;
             display: flex;
@@ -763,34 +790,32 @@
         }
 
         .atmos-val.premium-center .main-num {
-            font-size: 1.5rem;
+            font-size: 1.45rem;
             color: #fff;
             white-space: nowrap;
             line-height: 1;
         }
 
         .atmos-val.premium-center .suffix-wrapper {
-            width: 0;
             display: flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.85rem;
-            font-weight: 400;
-            color: var(--text-muted);
-            white-space: nowrap;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-info);
             margin-left: 4px;
-            overflow: visible;
+            white-space: nowrap;
         }
 
         .atmos-item>div {
             width: 100%;
         }
 
-        /* Medidor UV (Mini Circular) */
+        /* Mini Medidor UV Circular */
         .uv-mini-gauge {
             position: relative;
-            width: 45px;
-            height: 45px;
+            width: 48px;
+            height: 48px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -804,14 +829,14 @@
             height: 100%;
         }
 
-        /* Loader Elegante */
+        /* Loader */
         #loader {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--bg-main);
+            background: #030712;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -822,284 +847,252 @@
         }
 
         .spinner {
-            width: 45px;
-            height: 45px;
-            border: 3px solid rgba(0, 210, 211, 0.1);
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 245, 212, 0.08);
             border-top-color: var(--accent-cyan);
             border-radius: 50%;
-            animation: spin 1s infinite linear;
+            animation: spin 0.8s infinite linear;
             margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.1);
         }
 
+        /* Animações Keyframes */
         @keyframes spin {
             100% {
                 transform: rotate(360deg);
             }
         }
 
-        /* ===== RESPONSIVIDADE COMPLETA ===== */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
 
-        /* Tablet / Telas médias */
-        @media (max-width: 1100px) {
+        @keyframes pulse-glow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+                filter: drop-shadow(0 0 10px var(--accent-cyan));
+            }
+        }
 
-            /* Navbar: empilha título e controles */
+        @keyframes pulse-alert {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.18);
+            }
+        }
+
+        @keyframes pulse-notif {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 5px rgba(74, 222, 128, 0.1);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        /* =======================================================
+           ================ RESPONSIVIDADE TOTAL =================
+           ======================================================= */
+
+        /* 1. Telas Médias / Tablets (máx: 1200px) */
+        @media (max-width: 1200px) {
             .top-nav {
-                flex-direction: column;
-                gap: 10px;
-                padding: 12px 16px;
+                padding: 14px 24px;
             }
 
-            .nav-title {
-                font-size: 1.1rem;
-            }
-
-            .nav-controls {
-                width: 100%;
-                display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                align-items: center;
-                gap: 10px;
-            }
-
-            #clock {
-                justify-self: center;
-            }
-
-            .nav-buttons-group {
-                justify-self: end;
-            }
-
-            /* Container principal */
             .dashboard-container {
-                padding: 16px;
+                padding: 24px;
             }
 
-            /* Grid: coluna única vertical */
+            /* Remodelagem do Bento Grid para 2 colunas */
             .dashboard-board {
-                grid-template-columns: 1fr;
-                border-radius: 18px;
-                max-width: 100%;
-                overflow-x: hidden;
-            }
-
-            .grid-cell {
-                border-right: none;
-                padding: 22px 18px;
-                min-width: 0;
-                overflow: hidden;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
             }
 
             .cell-current {
-                grid-column: 1 / -1;
+                grid-column: 1 / 2;
                 grid-row: auto;
             }
 
             .cell-hourly {
-                grid-column: 1 / -1;
+                grid-column: 1 / -1; /* Espalha as 2 colunas para melhor visualização */
                 grid-row: auto;
-                border-right: none;
             }
 
             .cell-sun {
-                grid-column: 1 / -1;
+                grid-column: 1 / 2;
                 grid-row: auto;
             }
 
             .cell-precip {
-                grid-column: 1 / -1;
+                grid-column: 2 / 3;
                 grid-row: auto;
             }
 
             .cell-wind {
-                grid-column: 1 / -1;
+                grid-column: 1 / 2;
                 grid-row: auto;
-                border-right: none;
             }
 
+            /* Atmosfera toma todo o fundo */
             .cell-atmos {
                 grid-column: 1 / -1;
                 grid-row: auto;
                 grid-template-columns: repeat(3, 1fr);
-                gap: 30px;
+                gap: 20px;
             }
 
             .atmos-item:nth-child(3) {
                 border-right: none;
             }
 
-            /* Temperatura principal menor */
-            .huge-temp {
-                font-size: 3.8rem;
-            }
-
-            .huge-temp span {
-                font-size: 1.5rem;
-            }
-
-            .cond-desc {
-                font-size: 1rem;
-            }
-
-            #main-icon {
-                width: 95px;
-                height: 95px;
-            }
-
-            .main-icon-wrapper {
-                flex: 0 0 auto;
-                margin-left: 0;
-                margin-right: 30px;
-                margin-top: 0;
-                margin-bottom: 35px;
-            }
-
-            .temp-display {
-                gap: 10px;
-                flex-wrap: nowrap;
-                justify-content: space-between;
-                width: 100%;
-            }
-
-            .min-max-row {
-                gap: 10px;
-            }
-
-            .min-max-item {
-                font-size: 0.85rem;
-            }
-
-            /* Cabeçalhos menores */
-            .cell-header {
-                font-size: 0.6rem;
-                margin-bottom: 14px;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            /* Previsão: scroll horizontal continua funcionando */
-            .hourly-scroll {
-                gap: 10px;
-            }
-
-            .hour-card {
-                min-width: 65px;
-                padding: 12px 8px;
-            }
-
-            /* Arco Solar */
-            .sun-arc-container {
-                height: 90px;
-            }
-
-            .sun-times {
-                font-size: 0.78rem;
-            }
-
-            /* Bússola de Vento */
-            .compass-wrapper {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                gap: 14px;
-            }
-
-            .wind-info {
-                align-items: flex-end;
-                text-align: right;
-            }
-
-            /* Gráficos */
             .chart-container {
-                min-height: 230px;
-            }
-
-            /* Alertas */
-            .weather-alert {
-                font-size: 0.85rem;
-                padding: 10px 14px;
+                min-height: 220px;
             }
         }
 
-        /* Mobile — Telas estreitas (retrato de celular) */
+        /* 2. Celulares Grandes e Tablets em Retrato (máx: 768px) */
         @media (max-width: 768px) {
+            .top-nav {
+                flex-direction: column;
+                gap: 12px;
+                padding: 14px 16px;
+                border-radius: 0 0 16px 16px;
+            }
 
-            /* Atmosfera: coluna única em mobile estreito */
-            .cell-atmos {
+            .nav-controls {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+            }
+
+            #season-indicator {
+                border-right: none !important;
+                padding-right: 0 !important;
+                margin-right: 0 !important;
+            }
+
+            .search-location {
+                max-width: 100%;
+            }
+
+            .dashboard-container {
+                padding: 16px;
+            }
+
+            /* Coluna única vertical para cartões Bento */
+            .dashboard-board {
                 grid-template-columns: 1fr;
-                gap: 0;
-                padding: 0;
+                gap: 16px;
+            }
+
+            .grid-cell {
+                grid-column: 1 / -1 !important;
+                padding: 20px 18px;
+            }
+
+            /* Ajuste de Temperatura no Mobile */
+            .huge-temp {
+                font-size: 4rem;
+            }
+
+            #main-icon {
+                width: 76px;
+                height: 76px;
+            }
+
+            /* Atmosfera reorganizada */
+            .cell-atmos {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px 14px;
             }
 
             .atmos-item {
                 border-right: none;
                 border-bottom: 1px solid var(--divider);
-                padding: 16px 18px;
+                padding-bottom: 14px;
             }
 
-            .atmos-item:last-child {
+            .atmos-item:nth-child(4),
+            .atmos-item:nth-child(5) {
                 border-bottom: none;
+                padding-bottom: 0;
             }
 
-            .atmos-label {
-                font-size: 0.8rem;
+            .atmos-val.premium-center .main-num {
+                font-size: 1.25rem;
             }
 
-            .atmos-val {
-                font-size: 1.15rem;
+            .chart-container {
+                min-height: 200px;
             }
         }
 
-        /* Mobile XS — Telas muito pequenas (<400px) */
-        @media (max-width: 1000px) {
-            .top-nav {
-                padding: 10px 12px;
-            }
-
-            .nav-title {
-                font-size: 1rem;
+        /* 3. Celulares Pequenos (máx: 480px) */
+        @media (max-width: 480px) {
+            .nav-controls {
                 gap: 8px;
             }
 
-            .status-badge {
-                font-size: 0.7rem;
-                padding: 4px 8px;
+            #season-indicator {
+                display: none !important; /* Esconde a estação em telas minúsculas para caber relógio */
             }
 
-            .dashboard-container {
-                padding: 10px;
+            .huge-temp {
+                font-size: 3.4rem;
+            }
+
+            #main-icon {
+                width: 65px;
+                height: 65px;
             }
 
             .grid-cell {
                 padding: 18px 14px;
             }
 
-            .huge-temp {
-                font-size: 3.2rem;
+            .cell-atmos {
+                grid-template-columns: 1fr;
+                gap: 12px;
             }
 
-            #main-icon {
-                width: 80px;
-                height: 80px;
+            .atmos-item {
+                border-bottom: 1px solid var(--divider);
+                padding-bottom: 12px;
             }
 
-            .forecast-toggle button {
-                font-size: 0.7rem;
-                padding: 3px 10px;
-            }
-
-            .hour-card {
-                min-width: 58px;
-                padding: 10px 6px;
-                gap: 8px;
-            }
-
-            .hour-temp {
-                font-size: 0.95rem;
-            }
-
-            .compass-dial {
-                width: 70px;
-                height: 70px;
+            .atmos-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
             }
         }
     </style>
@@ -1129,10 +1122,13 @@
             <div class="search-results" id="search-results"></div>
         </div>
         <div class="nav-controls">
+            <div id="api-status" class="status-badge" style="cursor: default;">
+                <i data-lucide="check" size="14"></i> Conectado
+            </div>
             <div id="season-indicator"
-                style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--divider); padding-right: 15px; margin-right: -5px;">
+                style="font-size: 0.9rem; color: var(--text-info); display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--divider); padding-right: 15px; margin-right: -5px;">
                 --</div>
-            <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-muted);">--:--</div>
+            <div id="clock" style="font-family: monospace; font-size: 1.1rem; color: var(--text-info);">--:--</div>
             <div class="nav-buttons-group" style="display: flex; align-items: center; gap: 10px;">
                 <button class="refresh-btn notif-btn" id="btn-notifications" onclick="toggleNotifications()"
                     title="Ativar notificações de alerta">
@@ -1323,7 +1319,9 @@
                                 onclick="switchPrecipView('rain')">Chuva</button>
                             <button id="btn-precip-temp" onclick="switchPrecipView('temp')">Temperatura</button>
                         </div>
-                        <div id="precip-type-badge" style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; color: var(--accent-cyan); background: rgba(0, 210, 211, 0.15); padding: 2px 8px; border-radius: 4px;">PREVISÃO</div>
+                        <div class="forecast-toggle" id="precip-sub-toggle" style="margin-right: 0; padding: 2px;">
+                            <button id="btn-precip-forecast" class="active" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchPrecipSubTab('forecast')">Previsão</button>
+                            <button id="btn-precip-history" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchPrecipSubTab('history')">Histórico</button>
                         </div>
                     </div>
                 </div>
@@ -1334,10 +1332,22 @@
 
             <!-- 5. Perfil Eólico (Middle Right) -->
             <div class="grid-cell cell-wind">
-                <div class="cell-header">
-                    <div class="cell-header-title"><i data-lucide="wind"></i> Vento (24h)</div>
-                    <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-muted);">Rajada Max: <span
-                            id="val-gusts" style="font-weight:bold; color: #fff;">-- km/h</span></div>
+                <div class="cell-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <!-- Lado Esquerdo: Título e Meta -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div class="cell-header-title" id="wind-header-title" style="margin-top: 5px;">
+                            <i data-lucide="wind"></i> Vento (24h)
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: none;">
+                            Rajada Max: <span id="val-gusts" style="font-weight:bold; color: #fff;">-- km/h</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Lado Direito: Toggle -->
+                    <div class="forecast-toggle" id="wind-sub-toggle" style="margin-right: 0; padding: 2px;">
+                        <button id="btn-wind-forecast" class="active" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchWindSubTab('forecast')">Previsão</button>
+                        <button id="btn-wind-history" style="padding: 3px 8px; font-size: 0.65rem;" onclick="switchWindSubTab('history')">Histórico</button>
+                    </div>
                 </div>
 
                 <!-- Bússola e Dados Numéricos -->
@@ -1459,6 +1469,9 @@
         let globalWeatherData = null;
         let currentForecastTab = '24h';
         let currentPrecipView = 'rain';
+        let rainSubTab = 'forecast';
+        let tempSubTab = 'history';
+        let windSubTab = 'forecast';
         let searchDebounceTimer = null;
         let notificationsEnabled = localStorage.getItem('notif_enabled') === 'true';
 
@@ -1482,6 +1495,41 @@
         Chart.defaults.plugins.tooltip.cornerRadius = 8;
         Chart.defaults.plugins.tooltip.borderColor = 'rgba(0, 210, 211, 0.3)';
         Chart.defaults.plugins.tooltip.borderWidth = 1;
+
+        // Indicador de Posição Atual no Gráfico (Linha Tracejada Vermelha)
+        const currentIndicatorPlugin = {
+            id: 'currentIndicator',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx, chartArea: { top, bottom } } = chart;
+                const targetIndex = options.index;
+                if (targetIndex === undefined || targetIndex === null) return;
+
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || targetIndex < 0 || targetIndex >= meta.data.length || !meta.data[targetIndex]) return;
+
+                const xPos = meta.data[targetIndex].x;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 0, 84, 0.65)'; // Magenta/Vermelho Premium
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.moveTo(xPos, top);
+                ctx.lineTo(xPos, bottom);
+                ctx.stroke();
+
+                // Desenha um ponto brilhante vermelho no topo da linha (garantindo que não seja cortado nas bordas)
+                const circleX = Math.max(6, Math.min(chart.width - 6, xPos));
+                ctx.beginPath();
+                ctx.arc(circleX, top + 5, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ff0054';
+                ctx.shadowColor = '#ff0054';
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.restore();
+            }
+        };
+        Chart.register(currentIndicatorPlugin);
 
         // Relógio
         setInterval(() => {
@@ -1521,28 +1569,45 @@
         }
 
         function renderCharts(hourly) {
-            // Com past_days=1, o array hourly começa no dia anterior 00:00
-            // Então o índice da hora atual é 24 + hora_atual
             const startIndex = 24 + new Date().getHours();
-            const timeLabels = hourly.time.slice(startIndex, startIndex + 24).map(t => new Date(t).getHours() + 'h');
-
             const anim = { y: { duration: 1000, easing: 'easeOutQuart', delay: (ctx) => ctx.dataIndex * 30 } };
 
             // 1. Chuva (Bar & Line)
+            const rainStart = rainSubTab === 'forecast' ? startIndex : Math.max(0, startIndex - 24);
+            const rainEnd = rainStart + 24;
+            const rainLabels = hourly.time.slice(rainStart, rainEnd).map(t => new Date(t).getHours() + 'h');
+            const rainData = hourly.precipitation.slice(rainStart, rainEnd);
+            const rainProbData = hourly.precipitation_probability.slice(rainStart, rainEnd);
+
+            // Calcular acumulado de chuva no intervalo
+            const totalRain = rainData.reduce((sum, val) => sum + val, 0);
+            document.getElementById('val-precip').innerText = totalRain.toFixed(1) + ' mm';
+
+            // Atualizar o título do card de chuva/temp se estiver em chuva
+            const precipHeaderTitle = document.getElementById('precip-header-title');
+            if (currentPrecipViewState === 'rain') {
+                const label = rainSubTab === 'forecast' ? 'Chuva (Previsão 24h)' : 'Chuva (Histórico 24h)';
+                precipHeaderTitle.innerHTML = `<i data-lucide="cloud-rain"></i> ${label}`;
+            }
+
             const ctxP = document.getElementById('chart-precip').getContext('2d');
             const gradRain = ctxP.createLinearGradient(0, 0, 0, 200);
             gradRain.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
             gradRain.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
 
             createChart('chart-precip', 'bar', {
-                labels: timeLabels,
+                labels: rainLabels,
                 datasets: [
-                    { label: 'Probabilidade (%)', data: hourly.precipitation_probability.slice(startIndex, startIndex + 24), type: 'line', borderColor: '#facc15', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], tension: 0.4, pointRadius: 0, pointHoverRadius: 5, fill: false, yAxisID: 'y1' },
-                    { label: 'Volume (mm)', data: hourly.precipitation.slice(startIndex, startIndex + 24), backgroundColor: gradRain, borderRadius: 4, yAxisID: 'y' }
+                    { label: 'Probabilidade (%)', data: rainProbData, type: 'line', borderColor: '#facc15', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], tension: 0.4, pointRadius: 0, pointHoverRadius: 5, fill: false, yAxisID: 'y1' },
+                    { label: 'Volume (mm)', data: rainData, backgroundColor: gradRain, borderRadius: 4, yAxisID: 'y' }
                 ]
             }, {
                 responsive: true, maintainAspectRatio: false, animation: anim, interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { display: false } },
+                layout: { padding: { left: 6, right: 6, top: 8, bottom: 0 } },
+                plugins: {
+                    legend: { display: false },
+                    currentIndicator: { index: rainSubTab === 'forecast' ? 0 : 23 }
+                },
                 scales: {
                     x: { grid: { display: false } },
                     y: { beginAtZero: true, border: { display: false } },
@@ -1551,36 +1616,59 @@
             });
 
             // 2. Vento (Single-Line Area)
+            const windStart = windSubTab === 'forecast' ? startIndex : Math.max(0, startIndex - 24);
+            const windEnd = windStart + 24;
+            const windLabels = hourly.time.slice(windStart, windEnd).map(t => new Date(t).getHours() + 'h');
+            const windSpeedData = hourly.wind_speed_10m.slice(windStart, windEnd);
+            
+            // Rajada máxima de vento no intervalo
+            const gustsSource = hourly.wind_gusts_10m ? hourly.wind_gusts_10m : hourly.wind_speed_10m;
+            const windGustsData = gustsSource.slice(windStart, windEnd);
+            const maxGusts = Math.max(...windGustsData);
+            document.getElementById('val-gusts').innerText = Math.round(maxGusts) + ' km/h';
+
+            // Atualizar o título do card de vento
+            const windHeaderTitle = document.getElementById('wind-header-title');
+            const windLabel = windSubTab === 'forecast' ? 'Vento (Previsão 24h)' : 'Vento (Histórico 24h)';
+            windHeaderTitle.innerHTML = `<i data-lucide="wind"></i> ${windLabel}`;
+
             createChart('chart-wind', 'line', {
-                labels: timeLabels,
+                labels: windLabels,
                 datasets: [
-                    { label: 'Velocidade', data: hourly.wind_speed_10m.slice(startIndex, startIndex + 24), borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, fill: true }
+                    { label: 'Velocidade', data: windSpeedData, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, fill: true }
                 ]
             }, {
                 responsive: true, maintainAspectRatio: false, animation: anim, interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { display: false } },
+                layout: { padding: { left: 6, right: 6, top: 8, bottom: 0 } },
+                plugins: {
+                    legend: { display: false },
+                    currentIndicator: { index: windSubTab === 'forecast' ? 0 : 23 }
+                },
                 scales: { x: { display: false }, y: { display: false } }
             });
 
-            // 3. Histórico de Temperatura (24h passadas)
-            const past24End = startIndex;
-            const past24Start = Math.max(0, past24End - 24);
-            const tempData = hourly.temperature_2m.slice(past24Start, past24End);
-            const tempLabels = hourly.time.slice(past24Start, past24End).map(t => {
-                const d = new Date(t);
-                return d.getHours() + 'h';
-            });
+            // 3. Temperatura (Previsão ou Histórico)
+            const tempStart = tempSubTab === 'forecast' ? startIndex : Math.max(0, startIndex - 24);
+            const tempEnd = tempStart + 24;
+            const tempLabels = hourly.time.slice(tempStart, tempEnd).map(t => new Date(t).getHours() + 'h');
+            const tempData = hourly.temperature_2m.slice(tempStart, tempEnd);
+
+            const tempMin = Math.min(...tempData);
+            const tempMax = Math.max(...tempData);
+            const rangeEl = document.getElementById('val-temp-range');
+            if (rangeEl) rangeEl.innerText = `${tempMin.toFixed(0)}° — ${tempMax.toFixed(0)}°`;
+
+            // Atualizar o título do card de chuva/temp se estiver em temperatura
+            if (currentPrecipViewState === 'temp') {
+                const label = tempSubTab === 'forecast' ? 'Temperatura (Previsão 24h)' : 'Temperatura (Histórico 24h)';
+                precipHeaderTitle.innerHTML = `<i data-lucide="thermometer"></i> ${label}`;
+            }
 
             const ctxT = document.getElementById('chart-temp-history').getContext('2d');
             const gradTemp = ctxT.createLinearGradient(0, 0, 0, 200);
             gradTemp.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
             gradTemp.addColorStop(0.5, 'rgba(250, 204, 21, 0.15)');
             gradTemp.addColorStop(1, 'rgba(56, 189, 248, 0.05)');
-
-            const tempMin = Math.min(...tempData);
-            const tempMax = Math.max(...tempData);
-            const rangeEl = document.getElementById('val-temp-range');
-            if (rangeEl) rangeEl.innerText = `${tempMin.toFixed(0)}° — ${tempMax.toFixed(0)}°`;
 
             createChart('chart-temp-history', 'line', {
                 labels: tempLabels,
@@ -1601,19 +1689,23 @@
                 maintainAspectRatio: false,
                 animation: anim,
                 interaction: { mode: 'index', intersect: false },
+                layout: { padding: { left: 0, right: 6, top: 8, bottom: 0 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => `${ctx.parsed.y.toFixed(1)}°C`
                         }
-                    }
+                    },
+                    currentIndicator: { index: tempSubTab === 'forecast' ? 0 : 23 }
                 },
                 scales: {
                     x: { grid: { display: false } },
                     y: { border: { display: false }, ticks: { callback: v => v + '°' } }
                 }
             });
+
+            lucide.createIcons();
         }
 
         // --- SWITCH: CHUVA / TEMPERATURA ---
@@ -1625,31 +1717,65 @@
             document.getElementById('view-precip-rain').style.display = view === 'rain' ? 'block' : 'none';
             document.getElementById('view-precip-temp').style.display = view === 'temp' ? 'block' : 'none';
 
-            const headerTitle = document.getElementById('precip-header-title');
-            const typeBadge = document.getElementById('precip-type-badge');
             const metaRain = document.getElementById('meta-rain');
             const metaTemp = document.getElementById('meta-temp');
 
             if (view === 'rain') {
-                headerTitle.innerHTML = '<i data-lucide="cloud-rain"></i> Chuva (24h)';
-                typeBadge.innerHTML = 'PREVISÃO';
-                typeBadge.style.color = 'var(--accent-cyan)';
-                typeBadge.style.background = 'rgba(0,210,211,0.15)';
-                typeBadge.style.padding = '2px 8px';
-                typeBadge.style.borderRadius = '4px';
                 metaRain.style.display = 'inline';
                 metaTemp.style.display = 'none';
+
+                // Redimensiona o gráfico de chuva imediatamente para que não apareça esmagado
+                if (chartsObj['chart-precip']) {
+                    chartsObj['chart-precip'].resize();
+                    chartsObj['chart-precip'].update('none');
+                }
             } else {
-                headerTitle.innerHTML = '<i data-lucide="thermometer"></i> Temperatura (24h)';
-                typeBadge.innerHTML = 'HISTÓRICO';
-                typeBadge.style.color = 'var(--accent-yellow)';
-                typeBadge.style.background = 'rgba(250,204,21,0.15)';
-                typeBadge.style.padding = '2px 8px';
-                typeBadge.style.borderRadius = '4px';
                 metaRain.style.display = 'none';
                 metaTemp.style.display = 'inline';
+
+                // Redimensiona o gráfico de histórico de temperatura imediatamente para que não apareça esmagado
+                if (chartsObj['chart-temp-history']) {
+                    chartsObj['chart-temp-history'].resize();
+                    chartsObj['chart-temp-history'].update('none');
+                }
             }
+
+            // Atualiza os botões do sub-toggle para refletir a aba ativa do gráfico selecionado
+            updatePrecipSubToggleUI();
+
+            // Re-renderiza para atualizar os títulos e dados do gráfico
+            if (globalWeatherData) {
+                renderCharts(globalWeatherData.hourly);
+            }
+
             lucide.createIcons();
+        }
+
+        window.switchPrecipSubTab = function (subTab) {
+            if (currentPrecipViewState === 'rain') {
+                rainSubTab = subTab;
+            } else {
+                tempSubTab = subTab;
+            }
+            updatePrecipSubToggleUI();
+            if (globalWeatherData) {
+                renderCharts(globalWeatherData.hourly);
+            }
+        }
+
+        function updatePrecipSubToggleUI() {
+            const activeSubTab = currentPrecipViewState === 'rain' ? rainSubTab : tempSubTab;
+            document.getElementById('btn-precip-forecast').classList.toggle('active', activeSubTab === 'forecast');
+            document.getElementById('btn-precip-history').classList.toggle('active', activeSubTab === 'history');
+        }
+
+        window.switchWindSubTab = function (subTab) {
+            windSubTab = subTab;
+            document.getElementById('btn-wind-forecast').classList.toggle('active', subTab === 'forecast');
+            document.getElementById('btn-wind-history').classList.toggle('active', subTab === 'history');
+            if (globalWeatherData) {
+                renderCharts(globalWeatherData.hourly);
+            }
         }
 
         // --- BUSCA DE LOCALIZAÇÃO ---
@@ -2210,7 +2336,7 @@
             try {
                 // Modificado para buscar relative_humidity_2m, pressure_msl, visibility e dew_point_2m no hourly para cálculo de tendência
                 // past_days=1 garante dados das últimas 24h para o gráfico de histórico de temperatura
-                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto&past_days=1`;
+                const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto&past_days=1`;
 
                 const resW = await fetch(urlWeather, { signal: AbortSignal.timeout(8000) });
 
@@ -2249,6 +2375,20 @@
 
         fetchData();
         setInterval(fetchData, 300000); // Atualiza a cada 5 minutos
+
+        // Adiciona um listener de redimensionamento debounced para garantir o redimensionamento fluido dos gráficos no desktop/mobile
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                Object.values(chartsObj).forEach(chart => {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+            }, 150);
+        });
 
     </script>
     <script>
