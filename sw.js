@@ -1,10 +1,18 @@
-const CACHE_NAME = 'aerosky-v2';
+const CACHE_NAME = 'aerosky-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './css/style.css',
+  './js/constants.js',
+  './js/weather.js',
+  './js/charts.js',
+  './js/particles.js',
+  './js/favorites.js',
+  './js/ui.js',
+  './js/app.js'
 ];
 
 // Instalação: Cacheia os ativos estáticos essenciais
