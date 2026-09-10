@@ -18,6 +18,7 @@ const WeatherParticles = {
   windSpeed: 10, // km/h
   isDay: 1,
   lastFlashTime: 0,
+  lastFrameTime: 0,
   flashOpacity: 0,
   nextFlashInterval: 5000,
   nextShootingStarTime: 0,
@@ -238,6 +239,7 @@ const WeatherParticles = {
   start() {
     if (this.isRunning || !this.enabled || this.currentMode === 'none') return;
     this.isRunning = true;
+    this.lastFrameTime = performance.now();
     const loop = (timestamp) => {
       if (!this.isRunning) return;
       this.render(timestamp);
@@ -271,19 +273,26 @@ const WeatherParticles = {
     const w = this.displayWidth || window.innerWidth;
     const h = this.displayHeight || window.innerHeight;
 
+    // Normalização de Delta Time: garante velocidade física idêntica a 60, 90, 120 ou 144 FPS
+    const now = timestamp || performance.now();
+    const delta = this.lastFrameTime ? now - this.lastFrameTime : 16.667;
+    this.lastFrameTime = now;
+    // dt = 1.0 a 60 FPS (16.667ms), dt = 0.5 a 120 FPS (8.333ms). Limitado entre 0.1 e 3.0 para evitar saltos.
+    const dt = Math.min(Math.max(delta / 16.667, 0.1), 3.0);
+
     ctx.clearRect(0, 0, w, h);
 
     if (this.currentMode === 'rain' || this.currentMode === 'thunderstorm') {
-      this.renderRain(ctx, w, h, timestamp);
+      this.renderRain(ctx, w, h, now, dt);
     } else if (this.currentMode === 'mist') {
-      this.renderMist(ctx, w, h, timestamp);
+      this.renderMist(ctx, w, h, now, dt);
     } else if (this.currentMode === 'stars') {
-      this.renderStars(ctx, w, h, timestamp);
+      this.renderStars(ctx, w, h, now, dt);
     }
   },
 
-  renderRain(ctx, w, h, timestamp) {
-    // Flash de trovão suave para tempestade
+  renderRain(ctx, w, h, timestamp, dt = 1.0) {
+    // Flash de trovão suave para tempestade (decaimento temporal suave)
     if (this.currentMode === 'thunderstorm') {
       if (timestamp - this.lastFlashTime > this.nextFlashInterval) {
         this.flashOpacity = 0.22 + Math.random() * 0.15;
@@ -294,7 +303,7 @@ const WeatherParticles = {
       if (this.flashOpacity > 0.01) {
         ctx.fillStyle = `rgba(220, 235, 255, ${this.flashOpacity})`;
         ctx.fillRect(0, 0, w, h);
-        this.flashOpacity *= 0.88;
+        this.flashOpacity *= Math.pow(0.88, dt);
       }
     }
 
@@ -309,8 +318,8 @@ const WeatherParticles = {
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(p.x + p.speedX * 1.5, p.y + p.length);
 
-      p.x += p.speedX;
-      p.y += p.speedY;
+      p.x += p.speedX * dt;
+      p.y += p.speedY * dt;
 
       if (p.y >= h - 8) {
         this.addSplashes(p.x, h - 4);
@@ -330,10 +339,10 @@ const WeatherParticles = {
         ctx.moveTo(s.x + s.radius, s.y);
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
 
-        s.x += s.vx;
-        s.y += s.vy;
-        s.vy += 0.15;
-        s.decay += 0.01;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.vy += 0.15 * dt;
+        s.decay += 0.01 * dt;
 
         if (s.decay > 0.4) {
           this.splashes.splice(i, 1);
@@ -343,10 +352,10 @@ const WeatherParticles = {
     }
   },
 
-  renderMist(ctx, w, h) {
+  renderMist(ctx, w, h, timestamp, dt = 1.0) {
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
-      p.phase += 0.01;
+      p.phase += 0.01 * dt;
       const currentAlpha = p.alpha * (0.8 + 0.2 * Math.sin(p.phase));
 
       const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
@@ -358,8 +367,8 @@ const WeatherParticles = {
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fill();
 
-      p.x += p.speedX;
-      p.y += Math.sin(p.phase) * 0.2;
+      p.x += p.speedX * dt;
+      p.y += Math.sin(p.phase) * 0.2 * dt;
 
       if (p.x - p.radius > w) {
         p.x = -p.radius;
@@ -368,11 +377,11 @@ const WeatherParticles = {
     }
   },
 
-  renderStars(ctx, w, h, timestamp) {
+  renderStars(ctx, w, h, timestamp, dt = 1.0) {
     ctx.fillStyle = '#ffffff';
     for (let i = 0; i < this.particles.length; i++) {
       const star = this.particles[i];
-      star.twinklePhase += star.twinkleSpeed;
+      star.twinklePhase += star.twinkleSpeed * dt;
       const alpha = Math.max(
         0.1,
         star.baseAlpha + Math.sin(star.twinklePhase) * 0.35
@@ -408,9 +417,9 @@ const WeatherParticles = {
       ctx.lineTo(ss.x - ss.speedX * 3, ss.y - ss.speedY * 3);
       ctx.stroke();
 
-      ss.x += ss.speedX;
-      ss.y += ss.speedY;
-      ss.alpha -= ss.decay;
+      ss.x += ss.speedX * dt;
+      ss.y += ss.speedY * dt;
+      ss.alpha -= ss.decay * dt;
 
       if (ss.alpha <= 0 || ss.x > w || ss.y > h) {
         this.shootingStars.splice(i, 1);
