@@ -1,0 +1,1540 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        /* Paleta Neon Cyan & Deep Space Glassmorphism */
+        --bg-main: #030712;
+        --glass-bg: rgba(10, 18, 30, 0.45);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-border-hover: rgba(0, 245, 212, 0.25);
+        --glass-shadow: rgba(0, 0, 0, 0.55);
+        --text-main: #f8fafc;
+        --text-muted: #64748b;
+        --text-info: #94a3b8;
+        --accent-cyan: #00f5d4;
+        --accent-blue: #00bbf9;
+        --accent-yellow: #ffb703;
+        --accent-purple: #7209b7;
+        --accent-danger: #ff0054;
+        --divider: rgba(255, 255, 255, 0.05);
+
+        --font-family-title: "Plus Jakarta Sans", sans-serif;
+        --font-family-body: "Inter", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: var(--font-family-body);
+      }
+
+      body,
+      html {
+        width: 100%;
+        min-height: 100vh;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+      }
+
+      /* Fundo Dinâmico com Gradientes Premium */
+      #weather-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        opacity: 0.35;
+        pointer-events: none;
+        transition: background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .bg-day {
+        background: radial-gradient(
+          circle at 80% 20%,
+          rgba(0, 187, 249, 0.18) 0%,
+          rgba(3, 7, 18, 1) 100%
+        );
+      }
+
+      .bg-night {
+        background: radial-gradient(
+          circle at 80% 20%,
+          rgba(114, 9, 183, 0.15) 0%,
+          rgba(3, 7, 18, 1) 100%
+        );
+      }
+
+      .bg-rain {
+        background: radial-gradient(
+          circle at 80% 20%,
+          rgba(15, 23, 42, 0.9) 0%,
+          rgba(3, 7, 18, 1) 100%
+        );
+      }
+
+      /* Navegação Superior Flutuante */
+      .top-nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(3, 7, 18, 0.7);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 16px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .nav-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--font-family-title);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-main);
+        letter-spacing: -0.5px;
+      }
+
+      .nav-title i {
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.4));
+      }
+
+      .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .status-badge {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        border-radius: 30px;
+        background: rgba(0, 245, 212, 0.08);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(0, 245, 212, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        transition: all 0.3s ease;
+      }
+
+      .status-badge i {
+        animation: pulse-glow 2s infinite;
+      }
+
+      .refresh-btn {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        color: var(--text-info);
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .refresh-btn:hover {
+        color: var(--accent-cyan);
+        border-color: var(--accent-cyan);
+        background: rgba(0, 245, 212, 0.08);
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
+      }
+
+      .refresh-btn:active {
+        transform: scale(0.95);
+      }
+
+      .refresh-btn.spinning svg {
+        animation: spin 1s linear infinite;
+      }
+
+      /* Container Principal do Bento Dashboard */
+      .dashboard-container {
+        padding: 32px;
+        max-width: 1440px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Alertas Severos Estilizados */
+      .alert-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .weather-alert {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        border-radius: 16px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        border-left: 4px solid currentColor;
+      }
+
+      .alert-danger {
+        background: rgba(255, 0, 84, 0.08);
+        border: 1px solid rgba(255, 0, 84, 0.25);
+        border-left-width: 4px;
+        color: #ffa3c4;
+      }
+
+      .alert-warning {
+        background: rgba(255, 183, 3, 0.08);
+        border: 1px solid rgba(255, 183, 3, 0.25);
+        border-left-width: 4px;
+        color: #ffe194;
+      }
+
+      .alert-icon {
+        animation: pulse-alert 1.5s infinite ease-in-out;
+        flex-shrink: 0;
+      }
+
+      /* Painel Único (Bento Box Responsivo e Dinâmico) */
+      .dashboard-board {
+        display: grid;
+        grid-template-columns: 380px 1fr 380px;
+        gap: 24px;
+        background: transparent;
+      }
+
+      /* Cartão Glassmorphic Bento */
+      .grid-cell {
+        padding: 28px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        box-shadow: 0 15px 35px var(--glass-shadow);
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        min-width: 0;
+        /* IMPEDE QUE O CANVA DO CHART.JS QUEBRE O LAYOUT */
+        overflow: hidden;
+        /* PROTEGE A CAIXA CONTRA TRANSBORDAMENTO */
+        position: relative;
+      }
+
+      /* Efeito Hover nos Cartões Bento */
+      .grid-cell:hover {
+        transform: translateY(-5px);
+        border-color: var(--glass-border-hover);
+        box-shadow:
+          0 20px 45px rgba(0, 245, 212, 0.06),
+          0 5px 15px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Posicionamento do Grid no Desktop */
+      .cell-current {
+        grid-column: 1 / 2;
+        grid-row: 1 / 2;
+      }
+
+      .cell-hourly {
+        grid-column: 2 / 4;
+        grid-row: 1 / 2;
+      }
+
+      .cell-sun {
+        grid-column: 1 / 2;
+        grid-row: 2 / 3;
+      }
+
+      .cell-precip {
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+      }
+
+      .cell-wind {
+        grid-column: 3 / 4;
+        grid-row: 2 / 3;
+      }
+
+      .cell-atmos {
+        grid-column: 1 / -1;
+        grid-row: 3 / 4;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px;
+        padding: 24px;
+        background: rgba(10, 18, 30, 0.6);
+      }
+
+      /* Cabeçalhos Modernos nos Cartões */
+      .cell-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--font-family-title);
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--text-info);
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--divider);
+        padding-bottom: 12px;
+      }
+
+      .cell-header-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .cell-header-title i {
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 6px rgba(0, 245, 212, 0.3));
+      }
+
+      /* Toggles Modernos Estilo Floating Pill */
+      .forecast-toggle {
+        display: flex;
+        background: rgba(3, 7, 18, 0.6);
+        border-radius: 30px;
+        padding: 3px;
+        border: 1px solid var(--glass-border);
+      }
+
+      .forecast-toggle button {
+        background: transparent;
+        border: none;
+        color: var(--text-info);
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-family: var(--font-family-title);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .forecast-toggle button.active {
+        background: linear-gradient(
+          135deg,
+          var(--accent-cyan),
+          var(--accent-blue)
+        );
+        color: #030712;
+        box-shadow: 0 4px 15px rgba(0, 245, 212, 0.35);
+      }
+
+      /* Caixa de Busca Glassmorphic */
+      .search-toggle {
+        background: none;
+        border: none;
+        color: var(--text-info);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+      }
+
+      .search-toggle:hover {
+        color: var(--accent-cyan);
+        background: rgba(0, 245, 212, 0.08);
+      }
+
+      .search-location {
+        width: 100%;
+        max-width: 320px;
+        position: relative;
+      }
+
+      .search-location input {
+        width: 100%;
+        padding: 10px 16px;
+        background: rgba(3, 7, 18, 0.7);
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        color: #fff;
+        font-family: var(--font-family-body);
+        font-size: 0.9rem;
+        outline: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .search-location input:focus {
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 15px rgba(0, 245, 212, 0.2);
+        background: rgba(3, 7, 18, 0.9);
+      }
+
+      .search-location input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .search-results {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 100%;
+        background: rgba(10, 18, 30, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        max-height: 260px;
+        overflow-y: auto;
+        z-index: 200;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+        display: none;
+      }
+
+      .search-results.visible {
+        display: block;
+        animation: slideInDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .search-result-item {
+        padding: 12px 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--divider);
+        transition: background 0.2s ease;
+      }
+
+      .search-result-item:last-child {
+        border-bottom: none;
+      }
+
+      .search-result-item:hover {
+        background: rgba(0, 245, 212, 0.08);
+      }
+
+      .search-result-item .result-city {
+        font-family: var(--font-family-title);
+        font-weight: 600;
+        color: #fff;
+        font-size: 0.9rem;
+      }
+
+      .search-result-item .result-region {
+        font-size: 0.75rem;
+        color: var(--text-info);
+        margin-top: 2px;
+      }
+
+      .search-no-results {
+        padding: 18px;
+        text-align: center;
+        color: var(--text-info);
+        font-size: 0.85rem;
+      }
+
+      /* Notificações */
+      .notif-btn {
+        position: relative;
+      }
+
+      .notif-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        border: 2px solid #030712;
+        transition: background 0.3s ease;
+      }
+
+      .notif-badge.active {
+        background: #4ade80;
+        animation: pulse-notif 1.5s infinite;
+      }
+
+      /* Exibição da Temperatura Principal */
+      .temp-display {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+        width: 100%;
+      }
+
+      .huge-temp {
+        font-family: var(--font-family-title);
+        font-size: 5rem;
+        font-weight: 300;
+        letter-spacing: -3px;
+        line-height: 1;
+        color: #fff;
+      }
+
+      .huge-temp span {
+        font-size: 2rem;
+        color: var(--accent-cyan);
+        font-weight: 400;
+        vertical-align: super;
+        margin-left: 2px;
+      }
+
+      .cond-desc {
+        font-family: var(--font-family-title);
+        font-size: 1.25rem;
+        color: var(--accent-cyan);
+        font-weight: 600;
+        text-transform: capitalize;
+        margin-bottom: 6px;
+        letter-spacing: -0.2px;
+      }
+
+      .main-icon-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      #main-icon {
+        width: 90px;
+        height: 90px;
+        color: var(--accent-yellow);
+        filter: drop-shadow(0 0 25px rgba(250, 204, 21, 0.45));
+        animation: float 4s ease-in-out infinite;
+      }
+
+      .min-max-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid var(--divider);
+      }
+
+      .min-max-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      .min-max-item span:first-child {
+        color: var(--text-info);
+      }
+
+      .min-max-item span:last-child {
+        font-weight: 700;
+        font-family: var(--font-family-title);
+      }
+
+      /* Barra de Rolagem Horizontal (Previsão de Horas/Dias) */
+      .hourly-scroll {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        padding-bottom: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--divider) transparent;
+        width: 100%;
+      }
+
+      .hourly-scroll::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      .hourly-scroll::-webkit-scrollbar-thumb {
+        background-color: var(--divider);
+        border-radius: 10px;
+      }
+
+      .hour-card {
+        min-width: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.01);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .hour-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(0, 245, 212, 0.12);
+        transform: translateY(-3px);
+      }
+
+      .hour-card.now {
+        border-color: var(--accent-cyan);
+        background: rgba(0, 245, 212, 0.05);
+        box-shadow: inset 0 0 15px rgba(0, 245, 212, 0.08);
+      }
+
+      .hour-time {
+        font-size: 0.8rem;
+        color: var(--text-info);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .hour-temp {
+        font-family: var(--font-family-title);
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: #fff;
+      }
+
+      .hour-prob {
+        font-size: 0.75rem;
+        color: var(--accent-blue);
+        font-weight: 600;
+      }
+
+      /* Arco Solar */
+      .sun-arc-container {
+        position: relative;
+        height: 110px;
+        margin-top: 12px;
+        width: 100%;
+      }
+
+      .sun-arc-container svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .sun-times {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: var(--text-info);
+        width: 100%;
+      }
+
+      .sun-times div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* Bússola de Vento */
+      .compass-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        width: 100%;
+      }
+
+      .compass-dial {
+        position: relative;
+        width: 85px;
+        height: 85px;
+        border-radius: 50%;
+        border: 2px solid var(--divider);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(3, 7, 18, 0.4);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .compass-dial span {
+        position: absolute;
+        font-size: 0.65rem;
+        color: var(--text-info);
+        font-weight: 700;
+        font-family: var(--font-family-title);
+      }
+
+      .c-n {
+        top: 6px;
+        color: var(--accent-danger) !important;
+      }
+
+      .c-s {
+        bottom: 6px;
+      }
+
+      .c-e {
+        right: 8px;
+      }
+
+      .c-w {
+        left: 8px;
+      }
+
+      .compass-dial::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #fff;
+        border-radius: 50%;
+        z-index: 2;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+      }
+
+      .compass-needle {
+        position: absolute;
+        width: 8px;
+        height: 54px;
+        transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+      }
+
+      .needle-head {
+        width: 0;
+        height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-bottom: 27px solid var(--accent-danger);
+        filter: drop-shadow(0 0 4px var(--accent-danger));
+      }
+
+      .needle-tail {
+        width: 4px;
+        height: 27px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 0 0 3px 3px;
+      }
+
+      .wind-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+      }
+
+      /* Gráficos Responsivos */
+      .chart-container {
+        width: 100%;
+        flex-grow: 1;
+        min-height: 140px;
+        position: relative;
+      }
+
+      .chart-container canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      /* Atmosfera Sub-Items */
+      .atmos-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 12px;
+        border-right: 1px solid var(--divider);
+        padding: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .atmos-item:last-child {
+        border-right: none;
+      }
+
+      .atmos-label {
+        font-size: 0.8rem;
+        color: var(--text-info);
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+
+      .atmos-val {
+        font-family: var(--font-family-title);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        width: 100%;
+        display: flex;
+        align-items: center;
+      }
+
+      .atmos-val.premium-center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        position: relative;
+      }
+
+      .atmos-val.premium-center .main-num {
+        font-size: 1.45rem;
+        color: #fff;
+        white-space: nowrap;
+        line-height: 1;
+      }
+
+      .atmos-val.premium-center .suffix-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-info);
+        margin-left: 4px;
+        white-space: nowrap;
+      }
+
+      .atmos-item > div {
+        width: 100%;
+      }
+
+      /* Mini Medidor UV Circular */
+      .uv-mini-gauge {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .uv-mini-gauge svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Loader */
+      #loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #030712;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        transition: opacity 0.5s ease;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(0, 245, 212, 0.08);
+        border-top-color: var(--accent-cyan);
+        border-radius: 50%;
+        animation: spin 0.8s infinite linear;
+        margin-bottom: 20px;
+        box-shadow: 0 0 15px rgba(0, 245, 212, 0.1);
+      }
+
+      /* Animações Keyframes */
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.9;
+        }
+
+        50% {
+          transform: scale(1.1);
+          opacity: 1;
+          filter: drop-shadow(0 0 10px var(--accent-cyan));
+        }
+      }
+
+      @keyframes pulse-alert {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+
+        50% {
+          transform: scale(1.18);
+        }
+      }
+
+      @keyframes pulse-notif {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+        }
+
+        50% {
+          box-shadow: 0 0 0 5px rgba(74, 222, 128, 0.1);
+        }
+      }
+
+      @keyframes slideInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-16px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* =======================================================
+           ================ RESPONSIVIDADE TOTAL =================
+           ======================================================= */
+
+      /* 1. Telas Médias / Tablets (máx: 1200px) */
+      @media (max-width: 1200px) {
+        .top-nav {
+          padding: 14px 24px;
+        }
+
+        .dashboard-container {
+          padding: 24px;
+        }
+
+        /* Remodelagem do Bento Grid para 2 colunas */
+        .dashboard-board {
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .cell-current {
+          grid-column: 1 / 2;
+          grid-row: auto;
+        }
+
+        .cell-hourly {
+          grid-column: 1 / -1;
+          /* Espalha as 2 colunas para melhor visualização */
+          grid-row: auto;
+        }
+
+        .cell-sun {
+          grid-column: 1 / 2;
+          grid-row: auto;
+        }
+
+        .cell-precip {
+          grid-column: 2 / 3;
+          grid-row: auto;
+        }
+
+        .cell-wind {
+          grid-column: 1 / 2;
+          grid-row: auto;
+        }
+
+        /* Atmosfera toma todo o fundo */
+        .cell-atmos {
+          grid-column: 1 / -1;
+          grid-row: auto;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+
+        .atmos-item:nth-child(3) {
+          border-right: none;
+        }
+
+        .chart-container {
+          min-height: 220px;
+        }
+      }
+
+      /* 2. Celulares Grandes e Tablets em Retrato (máx: 768px) */
+      @media (max-width: 768px) {
+        .top-nav {
+          flex-direction: column;
+          gap: 12px;
+          padding: 14px 16px;
+          border-radius: 0 0 16px 16px;
+        }
+
+        .nav-controls {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        #season-indicator {
+          border-right: none !important;
+          padding-right: 0 !important;
+          margin-right: 0 !important;
+        }
+
+        .search-location {
+          max-width: 100%;
+        }
+
+        .dashboard-container {
+          padding: 16px;
+        }
+
+        /* Coluna única vertical para cartões Bento */
+        .dashboard-board {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .grid-cell {
+          grid-column: 1 / -1 !important;
+          padding: 20px 18px;
+        }
+
+        /* Ajuste de Temperatura no Mobile */
+        .huge-temp {
+          font-size: 4rem;
+        }
+
+        #main-icon {
+          width: 76px;
+          height: 76px;
+        }
+
+        /* Atmosfera reorganizada */
+        .cell-atmos {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+          padding: 20px 14px;
+        }
+
+        .atmos-item {
+          border-right: none;
+          border-bottom: 1px solid var(--divider);
+          padding-bottom: 14px;
+        }
+
+        .atmos-item:nth-child(4),
+        .atmos-item:nth-child(5) {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .atmos-val.premium-center .main-num {
+          font-size: 1.25rem;
+        }
+
+        .chart-container {
+          min-height: 200px;
+        }
+      }
+
+      /* 3. Celulares Pequenos (máx: 480px) */
+      @media (max-width: 480px) {
+        .nav-controls {
+          gap: 8px;
+        }
+
+        #season-indicator {
+          display: none !important;
+          /* Esconde a estação em telas minúsculas para caber relógio */
+        }
+
+        .huge-temp {
+          font-size: 3.4rem;
+        }
+
+        #main-icon {
+          width: 65px;
+          height: 65px;
+        }
+
+        .grid-cell {
+          padding: 18px 14px;
+        }
+
+        .cell-atmos {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .atmos-item {
+          border-bottom: 1px solid var(--divider);
+          padding-bottom: 12px;
+        }
+
+        .atmos-item:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+      }
+
+      /* =======================================================
+           =========== CONSULTOR DE BEM-ESTAR (AEROSKY) ==========
+           ======================================================= */
+
+      .wellbeing-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(3, 7, 18, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .wellbeing-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .wellbeing-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 440px;
+        height: 100%;
+        background: rgba(10, 20, 38, 0.75);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border-left: 1px solid var(--glass-border);
+        z-index: 1001;
+        box-shadow: -15px 0 45px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 32px;
+        overflow-y: auto;
+      }
+
+      .wellbeing-panel.active {
+        transform: translateX(0);
+      }
+
+      .wellbeing-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--divider);
+        padding-bottom: 20px;
+        margin-bottom: 24px;
+      }
+
+      .wellbeing-header h2 {
+        font-family: var(--font-family-title);
+        font-size: 1.4rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+      }
+
+      .wellbeing-header h2 i {
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.4));
+      }
+
+      .wellbeing-close {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        color: var(--text-info);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .wellbeing-close:hover {
+        color: var(--accent-danger);
+        border-color: rgba(255, 0, 84, 0.3);
+        background: rgba(255, 0, 84, 0.08);
+        transform: rotate(90deg);
+      }
+
+      .wellbeing-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .wellbeing-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .wellbeing-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-cyan);
+      }
+
+      .wellbeing-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--glass-border-hover);
+        transform: translateY(-2px);
+      }
+
+      .wellbeing-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-family-title);
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .wellbeing-card-desc {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--text-info);
+      }
+
+      .wellbeing-card.uv::before {
+        background: var(--accent-yellow);
+      }
+
+      .wellbeing-card.hydration::before {
+        background: var(--accent-blue);
+      }
+
+      .wellbeing-card.activity::before {
+        background: #4ade80;
+      }
+
+      .wellbeing-card.wind::before {
+        background: #a855f7;
+      }
+
+      .wellbeing-card.alert::before {
+        background: var(--accent-danger);
+      }
+
+      .wellbeing-card.uv .wellbeing-card-title {
+        color: var(--accent-yellow);
+      }
+
+      .wellbeing-card.hydration .wellbeing-card-title {
+        color: var(--accent-blue);
+      }
+
+      .wellbeing-card.activity .wellbeing-card-title {
+        color: #4ade80;
+      }
+
+      .wellbeing-card.wind .wellbeing-card-title {
+        color: #a855f7;
+      }
+
+      .wellbeing-card.alert .wellbeing-card-title {
+        color: var(--accent-danger);
+      }
+
+      /* Botão de Localização Atual */
+      .btn-locate {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        color: var(--text-info);
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-locate:hover {
+        color: var(--accent-cyan);
+        border-color: var(--accent-cyan);
+        background: rgba(0, 245, 212, 0.08);
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
+      }
+
+      /* Botão Coração Pulsante */
+      .pulse-heart-btn i {
+        color: #ff0054;
+        filter: drop-shadow(0 0 5px rgba(255, 0, 84, 0.4));
+        animation: heart-beat 1.8s infinite ease-in-out;
+      }
+
+      @keyframes heart-beat {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+
+        50% {
+          transform: scale(1.12);
+        }
+      }
+
+      /* Responsividade do Painel de Bem-Estar no Mobile */
+      @media (max-width: 480px) {
+        .wellbeing-panel {
+          width: 100%;
+          border-left: none;
+          border-top: 1px solid var(--glass-border);
+          transform: translateY(100%);
+          height: 80%;
+          top: auto;
+          bottom: 0;
+          border-radius: 30px 30px 0 0;
+          padding: 24px 20px;
+        }
+
+        .wellbeing-panel.active {
+          transform: translateY(0);
+        }
+      }
+
+      /* Radar Map Overlay */
+      .map-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(3, 7, 18, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 2000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .map-overlay.active {
+        display: flex;
+        opacity: 1;
+      }
+
+      .map-modal {
+        width: 100%;
+        max-width: 1000px;
+        height: 80vh;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 32px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+      }
+
+      #weather-map-container {
+        flex-grow: 1;
+        width: 100%;
+        z-index: 1;
+      }
+
+      .map-close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1010;
+        background: rgba(3, 7, 18, 0.8);
+        border: 1px solid var(--glass-border);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .map-close-btn:hover {
+        background: var(--accent-danger);
+        transform: rotate(90deg);
+      }
+
+      .leaflet-container {
+        background: #030712 !important;
+      }
+
+/* --- AEROSKY: EFEITOS DE PARTÍCULAS CANVAS --- */
+#weather-particles-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- AEROSKY: BARRA DE CIDADES FAVORITAS --- */
+.favorites-bar-container {
+  width: 100%;
+  max-width: 1380px;
+  margin: 0 auto 16px;
+  padding: 0 16px;
+  transition: all 0.3s ease;
+}
+.favorites-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px 2px;
+}
+.favorites-bar::-webkit-scrollbar {
+  display: none;
+}
+.favorite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  color: var(--text-info);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+  backdrop-filter: blur(8px);
+}
+.favorite-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+.favorite-chip.active {
+  background: rgba(0, 245, 212, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 245, 212, 0.25);
+}
+.favorite-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-left: 2px;
+  transition: all 0.15s ease;
+}
+.favorite-chip-remove:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+/* --- BOTÕES DE AÇÃO NO CABEÇALHO --- */
+.header-icon-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.header-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  transform: scale(1.05);
+}
+.header-icon-btn.is-favorite {
+  color: #facc15 !important;
+  background: rgba(250, 204, 21, 0.12);
+  border-color: rgba(250, 204, 21, 0.35);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.25);
+}
+.header-icon-btn.particles-active {
+  color: var(--accent-cyan) !important;
+  background: rgba(0, 245, 212, 0.12);
+  border-color: rgba(0, 245, 212, 0.35);
+  box-shadow: 0 0 10px rgba(0, 245, 212, 0.25);
+}
