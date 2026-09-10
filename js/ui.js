@@ -132,9 +132,13 @@ async function initRadarMap() {
 
     L.control.zoom({ position: 'bottomright' }).addTo(weatherMap);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(weatherMap);
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '&copy; Esri &copy; OpenStreetMap contributors',
+        maxZoom: 16
+      }
+    ).addTo(weatherMap);
   } else {
     weatherMap.setView([currentLat, currentLon], 8);
     weatherMap.invalidateSize();
@@ -503,6 +507,145 @@ function checkAlerts(current, daily) {
     });
   }
 }
+
+// --- PREVISÃO DO TEMPO (24H E 7 DIAS) ---
+function renderForecast() {
+  if (!globalWeatherData) return;
+  const container = document.getElementById('forecast-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const c = globalWeatherData.current;
+  const h = globalWeatherData.hourly;
+  const d = globalWeatherData.daily;
+  if (!h || !h.time) return;
+
+  const startIndex = typeof getCurrentHourlyIndex === 'function' ? getCurrentHourlyIndex(h, c) : 0;
+
+  if (currentForecastTab === '24h') {
+    let startLoop, endLoop;
+    if (selectedDayIndex === 0) {
+      startLoop = startIndex + 1;
+      endLoop = startIndex + 24;
+    } else {
+      startLoop = selectedDayIndex * 24;
+      endLoop = startLoop + 23;
+    }
+
+    for (let i = startLoop; i <= endLoop && i < h.time.length; i++) {
+      if (!h.time[i]) continue;
+      const hDate = new Date(h.time[i]);
+      const isHDay = hDate.getHours() > 5 && hDate.getHours() < 18;
+      const hwmo = typeof parseWMO === 'function' ? parseWMO(h.weather_code[i], isHDay) : { t: '', i: 'cloud', c: '#fff' };
+      const displayTemp = Math.round(h.temperature_2m[i]);
+      const prob = h.precipitation_probability ? h.precipitation_probability[i] : 0;
+
+      const card = document.createElement('div');
+      card.className = 'hour-card';
+      card.innerHTML = `
+        <div class="hour-time">${hDate.getHours()}:00</div>
+        <i data-lucide="${hwmo.i}" size="26" style="color:${hwmo.c};"></i>
+        <div class="hour-temp">${displayTemp}°</div>
+        <div class="hour-prob">${prob}%</div>
+      `;
+      container.appendChild(card);
+    }
+  } else {
+    if (!d || !d.time) return;
+    const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    for (let i = 1; i < Math.min(8, d.time.length); i++) {
+      const dDate = new Date(d.time[i] + 'T00:00:00');
+      const dwmo = typeof parseWMO === 'function' ? parseWMO(d.weather_code[i], true) : { t: '', i: 'cloud', c: '#fff' };
+      const isToday = i === 1;
+      const maxT = d.temperature_2m_max && d.temperature_2m_max[i] != null ? Math.round(d.temperature_2m_max[i]) : '--';
+      const minT = d.temperature_2m_min && d.temperature_2m_min[i] != null ? Math.round(d.temperature_2m_min[i]) : '--';
+      const rainSum = d.precipitation_sum && d.precipitation_sum[i] != null ? Math.round(d.precipitation_sum[i]) : 0;
+
+      const card = document.createElement('div');
+      card.className = `hour-card ${isToday ? 'now' : ''}`;
+      card.style.cssText = 'min-width: 90px; cursor: pointer; transition: transform 0.2s;';
+      card.setAttribute('title', 'Ver previsão de 24h deste dia');
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.onclick = () => viewDayForecast(i);
+      card.innerHTML = `
+        <div class="hour-time" style="font-weight: 600;">${isToday ? 'Hoje' : daysOfWeek[dDate.getDay()]}</div>
+        <i data-lucide="${dwmo.i}" size="26" style="color:${dwmo.c};"></i>
+        <div class="hour-temp" style="font-size: 0.95rem; display: flex; gap:5px;">
+            <span style="color:var(--accent-yellow);">${maxT}°</span> 
+            <span style="color:var(--accent-cyan);">${minT}°</span>
+        </div>
+        <div class="hour-prob">${rainSum}mm</div>
+      `;
+      container.appendChild(card);
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderForecast = renderForecast;
+
+window.switchForecast = function (tab) {
+  currentForecastTab = tab;
+  const titleEl = document.getElementById('forecast-header-title');
+  if (tab === '24h') {
+    selectedDayIndex = 0;
+    if (titleEl) {
+      titleEl.innerHTML = '<i data-lucide="calendar-clock"></i> Previsão (Próximas 24h)';
+    }
+  } else {
+    if (titleEl) {
+      titleEl.innerHTML = '<i data-lucide="calendar-clock"></i> Previsão (7 Dias)';
+    }
+  }
+  const btn24h = document.getElementById('btn-24h');
+  const btn7d = document.getElementById('btn-7d');
+  if (btn24h) btn24h.classList.toggle('active', tab === '24h');
+  if (btn7d) btn7d.classList.toggle('active', tab === '7d');
+  renderForecast();
+};
+
+window.viewDayForecast = function (dayIndex) {
+  currentForecastTab = '24h';
+  selectedDayIndex = dayIndex;
+  const btn24h = document.getElementById('btn-24h');
+  const btn7d = document.getElementById('btn-7d');
+  if (btn24h) btn24h.classList.add('active');
+  if (btn7d) btn7d.classList.remove('active');
+
+  const daysOfWeek = [
+    'Domingo',
+    'Segunda',
+    'Terça',
+    'Quarta',
+    'Quinta',
+    'Sexta',
+    'Sábado'
+  ];
+  if (globalWeatherData && globalWeatherData.daily && globalWeatherData.daily.time) {
+    const d = globalWeatherData.daily;
+    const dDate = new Date(d.time[dayIndex] + 'T00:00:00');
+    const dayName = dayIndex === 1 ? 'Hoje' : daysOfWeek[dDate.getDay()];
+    const titleEl = document.getElementById('forecast-header-title');
+    if (titleEl) {
+      titleEl.innerHTML = `<i data-lucide="calendar-clock"></i> 24h (${dayName})`;
+    }
+  }
+  renderForecast();
+};
+
+// --- ALTERNADOR SOLAR / LUNAR (CICLOS CELESTES) ---
+window.switchAstro = function (tab) {
+  const btnSolar = document.getElementById('btn-solar');
+  const btnLunar = document.getElementById('btn-lunar');
+  const viewSolar = document.getElementById('astro-solar-view');
+  const viewLunar = document.getElementById('astro-lunar-view');
+
+  if (btnSolar) btnSolar.classList.toggle('active', tab === 'solar');
+  if (btnLunar) btnLunar.classList.toggle('active', tab === 'lunar');
+  if (viewSolar) viewSolar.style.display = tab === 'solar' ? 'block' : 'none';
+  if (viewLunar) viewLunar.style.display = tab === 'lunar' ? 'flex' : 'none';
+};
 
 // --- ATUALIZAÇÃO GERAL DA INTERFACE (POPULATE UI) ---
 function populateUI() {

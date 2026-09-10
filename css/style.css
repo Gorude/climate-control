@@ -1438,6 +1438,23 @@
   height: 100vh;
   pointer-events: none;
   z-index: 1;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+#city-name {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@media (min-width: 600px) {
+  #city-name {
+    max-width: 380px;
+  }
 }
 
 /* --- AEROSKY: BARRA DE CIDADES FAVORITAS --- */
@@ -1456,6 +1473,7 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding: 4px 2px;
+  -webkit-overflow-scrolling: touch;
 }
 .favorites-bar::-webkit-scrollbar {
   display: none;
@@ -1537,4 +1555,41 @@
   background: rgba(0, 245, 212, 0.12);
   border-color: rgba(0, 245, 212, 0.35);
   box-shadow: 0 0 10px rgba(0, 245, 212, 0.25);
+}
+
+@media (max-width: 480px) {
+  .top-nav {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .nav-title {
+    font-size: 1.1rem;
+    gap: 6px;
+  }
+  .header-icon-btn, .search-toggle {
+    width: 32px;
+    height: 32px;
+  }
+  .nav-controls {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+  #clock {
+    font-size: 0.95rem !important;
+  }
+  .nav-buttons-group {
+    gap: 6px !important;
+  }
+  .refresh-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .grid-cell {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
