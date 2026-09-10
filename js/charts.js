@@ -421,23 +421,14 @@ window.switchWindSubTab = function (subTab) {
   }
 };
 
-// Redimensionamento debounced garantindo resize dos gráficos e do mapa radar
-let resizeTimeout;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    Object.values(chartsObj).forEach((chart) => {
-      if (chart) {
-        chart.resize();
-        chart.update("none");
-      }
-    });
-    if (
-      weatherMap &&
-      document.getElementById("map-overlay") &&
-      document.getElementById("map-overlay").classList.contains("active")
-    ) {
-      weatherMap.invalidateSize();
+// Redimensionamento de gráficos
+function resizeAllCharts() {
+  Object.values(chartsObj).forEach((chart) => {
+    if (chart) {
+      chart.resize();
+      chart.update("none");
     }
-  }, 150);
-});
+  });
+}
+window.resizeAllCharts = resizeAllCharts;
+

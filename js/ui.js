@@ -4,26 +4,31 @@
  * recomendações de bem-estar, integração com radar e notificações.
  */
 
-// --- UTILITÁRIOS DE SEGURANÇA E TEMPO ---
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function getCurrentHourlyIndex(hourly, current) {
-  if (!hourly || !hourly.time || hourly.time.length === 0) return 24;
-  if (current && current.time) {
-    const targetPrefix = current.time.slice(0, 13);
-    const idx = hourly.time.findIndex((t) => t.startsWith(targetPrefix));
-    if (idx !== -1) return idx;
+// --- CONTROLE DO LOADER GLOBAL ---
+function hideLoader() {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.opacity = '0';
+    setTimeout(() => {
+      loader.style.display = 'none';
+    }, 400);
   }
-  return Math.min(24, hourly.time.length - 1);
 }
+window.hideLoader = hideLoader;
+
+function showLoader(message = 'Sincronizando dados...') {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    const p = loader.querySelector('p');
+    if (p) p.innerText = message;
+    loader.style.display = 'flex';
+    requestAnimationFrame(() => {
+      loader.style.opacity = '1';
+    });
+  }
+}
+window.showLoader = showLoader;
+
 
 // --- NOTIFICAÇÕES TOAST VISUAIS ---
 function showToast(message) {
@@ -401,60 +406,7 @@ function sendWeatherNotification(
   }
 }
 
-// --- MAPEAMENTO WMO E DIREÇÃO DO VENTO ---
-function parseWMO(code, isDay = true) {
-  const map = {
-    0: { t: 'Céu Limpo', i: isDay ? 'sun' : 'moon', c: '#facc15' },
-    1: { t: 'Quase Limpo', i: isDay ? 'sun' : 'moon', c: '#facc15' },
-    2: {
-      t: 'Parcialmente Nublado',
-      i: isDay ? 'cloud-sun' : 'cloud-moon',
-      c: '#94a3b8'
-    },
-    3: { t: 'Nublado', i: 'cloud', c: '#64748b' },
-    45: { t: 'Neblina', i: 'cloud-fog', c: '#94a3b8' },
-    48: { t: 'Névoa', i: 'cloud-fog', c: '#94a3b8' },
-    51: { t: 'Chuvisco Leve', i: 'cloud-drizzle', c: '#38bdf8' },
-    53: { t: 'Chuvisco', i: 'cloud-drizzle', c: '#38bdf8' },
-    55: { t: 'Chuvisco Forte', i: 'cloud-drizzle', c: '#38bdf8' },
-    61: { t: 'Chuva Leve', i: 'cloud-rain', c: '#3b82f6' },
-    63: { t: 'Chuva', i: 'cloud-rain', c: '#3b82f6' },
-    65: { t: 'Chuva Forte', i: 'cloud-rain', c: '#3b82f6' },
-    80: { t: 'Pancadas', i: 'cloud-rain', c: '#3b82f6' },
-    81: { t: 'Pancadas Fortes', i: 'cloud-rain', c: '#3b82f6' },
-    82: { t: 'Pancadas Violentas', i: 'cloud-rain', c: '#3b82f6' },
-    95: { t: 'Tempestade', i: 'cloud-lightning', c: '#a855f7' },
-    96: { t: 'Tempestade', i: 'cloud-lightning', c: '#a855f7' },
-    99: { t: 'Tempestade Severa', i: 'cloud-lightning', c: '#a855f7' }
-  };
-  let res = map[code];
-  if (!res) res = code < 50 ? map[3] : code < 80 ? map[61] : map[95];
-  return res;
-}
-
-function getWindDirectionStr(degrees) {
-  const points = [
-    'Norte',
-    'Nordeste',
-    'Leste',
-    'Sudeste',
-    'Sul',
-    'Sudoeste',
-    'Oeste',
-    'Noroeste'
-  ];
-  const index =
-    Math.round(((degrees %= 360) < 0 ? degrees + 360 : degrees) / 45) % 8;
-  return points[index];
-}
-
 // --- SISTEMA DE ALERTAS SEVEROS ---
-const ALERT_THRESHOLDS = {
-  tempMax: 38,
-  tempMin: 15,
-  windGusts: 40,
-  uvIndex: 11
-};
 
 function checkAlerts(current, daily) {
   const container = document.getElementById('alert-container');
@@ -962,13 +914,5 @@ function populateUI() {
   }
 
   // Oculta loader
-  const loader = document.getElementById('loader');
-  if (loader) {
-    setTimeout(() => {
-      loader.style.opacity = '0';
-    }, 300);
-    setTimeout(() => {
-      loader.style.display = 'none';
-    }, 800);
-  }
+  hideLoader();
 }

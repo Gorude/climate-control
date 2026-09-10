@@ -1,6 +1,6 @@
 /**
  * AeroSky Weather - Ponto de Entrada Principal da Aplicação (App Entrypoint)
- * Gerencia ciclo de vida, estado global, geolocalização, busca de cidades,
+ * Gerencia ciclo de vida, estado global, geolocalização não-bloqueante, busca de cidades,
  * requisições à API Open-Meteo, atalhos de teclado e inicialização dos subsistemas.
  */
 
@@ -24,59 +24,19 @@ if (typeof CONFIG !== 'undefined' && CONFIG.CITY) {
   currentCityName = CONFIG.CITY.name;
 }
 
-// --- AEROSKY: GEOLOCALIZAÇÃO INTELIGENTE & NOMINATIM ---
-async function reverseGeocode(lat, lon) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
-      {
-        headers: { 'Accept-Language': 'pt-BR' },
-        signal: AbortSignal.timeout(6000)
-      }
-    );
-    if (!res.ok) throw new Error('Erro no Nominatim');
-    const data = await res.json();
-
-    const addr = (data && data.address) || {};
-    const city =
-      addr.city ||
-      addr.town ||
-      addr.village ||
-      addr.municipality ||
-      addr.suburb ||
-      addr.city_district ||
-      'Sua Localização';
-    const state = addr.state ? addr.state : '';
-
-    const finalName = state ? `${city} - ${state}` : city;
-    return finalName;
-  } catch (e) {
-    console.warn('Erro ao obter geocodificação reversa:', e);
-    return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-  }
-}
-
+// --- AEROSKY: GEOLOCALIZAÇÃO INTELIGENTE (MOBILE-FRIENDLY & NÃO BLOQUEANTE) ---
 async function performGeolocation(isAutomatic = false) {
-  const loader = document.getElementById('loader');
-  if (!isAutomatic && loader) {
-    loader.style.display = 'flex';
-    loader.style.opacity = '1';
-    const p = loader.querySelector('p');
-    if (p) p.innerText = 'Detectando sua localização...';
-  }
-
   if (!navigator.geolocation) {
-    console.warn('Geolocalização não suportada.');
+    console.warn('Geolocalização não suportada neste dispositivo.');
     if (!isAutomatic) {
       alert('Seu navegador não suporta geolocalização.');
-      if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => (loader.style.display = 'none'), 800);
-      }
-    } else {
-      fetchData();
     }
     return;
+  }
+
+  // Se acionado manualmente pelo usuário, mostra feedback
+  if (!isAutomatic && typeof showLoader === 'function') {
+    showLoader('Detectando sua localização...');
   }
 
   navigator.geolocation.getCurrentPosition(
@@ -84,32 +44,45 @@ async function performGeolocation(isAutomatic = false) {
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
 
-      const resolvedCity = await reverseGeocode(lat, lon);
-      setLocation(lat, lon, resolvedCity);
+      // Atualiza coordenadas e dispara a busca de clima imediatamente
+      LAT = lat;
+      LON = lon;
+      fetchData();
 
-      if (isAutomatic && loader) {
-        const p = loader.querySelector('p');
-        if (p) p.innerText = `Carregando clima de ${resolvedCity}...`;
+      // Resolve o nome da cidade em segundo plano sem travar a interface
+      let resolvedCity = '';
+      if (typeof WeatherService !== 'undefined' && WeatherService.reverseGeocode) {
+        resolvedCity = await WeatherService.reverseGeocode(lat, lon);
+      }
+
+      if (resolvedCity) {
+        currentCityName = resolvedCity;
+        if (typeof CONFIG !== 'undefined') {
+          CONFIG.CITY = { name: resolvedCity, lat, lon };
+        }
+        const cityEl = document.getElementById('city-name');
+        if (cityEl) cityEl.innerText = resolvedCity;
+        document.title = `AeroSky - ${resolvedCity}`;
+
+        if (typeof FavoritesManager !== 'undefined') {
+          FavoritesManager.updateFavoriteStar();
+          FavoritesManager.highlightActiveChip(resolvedCity);
+        }
       }
     },
     (error) => {
-      console.warn('Erro ou permissão negada de geolocalização:', error);
+      console.warn('Geolocalização não disponível ou negada:', error.message);
       if (!isAutomatic) {
+        if (typeof hideLoader === 'function') hideLoader();
         alert(
-          'Não foi possível acessar sua localização. Verifique as permissões de geolocalização do seu navegador.'
+          'Não foi possível acessar sua localização GPS. Verifique as permissões de localização do seu celular.'
         );
-      }
-      if (isAutomatic) {
-        fetchData();
-      } else if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => (loader.style.display = 'none'), 800);
       }
     },
     {
-      enableHighAccuracy: !isAutomatic,
-      timeout: isAutomatic ? 6000 : 8000,
-      maximumAge: 60000
+      enableHighAccuracy: false, // Evita travar o GPS e economiza bateria em celulares
+      timeout: 6000,
+      maximumAge: 300000 // 5 minutos de cache
     }
   );
 }
@@ -145,12 +118,8 @@ window.setLocation = function (lat, lon, name) {
     FavoritesManager.highlightActiveChip(name);
   }
 
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = 'flex';
-    loader.style.opacity = '1';
-    const p = loader.querySelector('p');
-    if (p) p.innerText = `Conectando satélites para ${name}`;
+  if (typeof showLoader === 'function') {
+    showLoader(`Conectando satélites para ${name}...`);
   }
 
   fetchData();
@@ -232,22 +201,27 @@ async function searchCity(query) {
 // --- BUSCA DE DADOS METEOROLÓGICOS (API OPEN-METEO) ---
 async function fetchData() {
   try {
-    const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto&past_days=1`;
+    let data;
+    if (typeof WeatherService !== 'undefined' && WeatherService.fetchForecast) {
+      data = await WeatherService.fetchForecast(LAT, LON);
+    } else {
+      const urlWeather = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,relative_humidity_2m,pressure_msl,visibility,dew_point_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum&timezone=auto&past_days=1`;
+      const resW = await fetch(urlWeather, { signal: AbortSignal.timeout(8000) });
+      if (!resW.ok) throw new Error('API Failure: Status ' + resW.status);
+      data = await resW.json();
+    }
 
-    const resW = await fetch(urlWeather, {
-      signal: AbortSignal.timeout(8000)
-    });
-
-    if (!resW.ok) throw new Error('API Failure: Status ' + resW.status);
-
-    globalWeatherData = await resW.json();
+    globalWeatherData = data;
 
     if (typeof populateUI === 'function') {
       populateUI();
+    } else if (typeof hideLoader === 'function') {
+      hideLoader();
     }
     return true;
   } catch (e) {
     console.error('Erro ao obter dados meteorológicos:', e);
+    if (typeof hideLoader === 'function') hideLoader();
     const loader = document.getElementById('loader');
     if (loader) {
       loader.style.display = 'flex';
@@ -294,7 +268,7 @@ window.forceUpdate = async function () {
 document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) lucide.createIcons();
 
-  // Inicializa subsistemas
+  // 1. Inicializa subsistemas imediatos
   if (typeof WeatherParticles !== 'undefined') {
     WeatherParticles.init();
   }
@@ -310,7 +284,19 @@ document.addEventListener('DOMContentLoaded', () => {
   updateSeason();
   updateNotifBadge();
 
-  // Configura campo de busca
+  // 2. Dispara a carga de dados imediatamente para a cidade padrão (Naviraí ou favorito)
+  // Isso garante que no celular o app abre imediatamente e NUNCA fica travado em "Sincronizando Dados"!
+  fetchData();
+
+  // 3. Failsafe: se por qualquer razão a rede estiver lenta, oculta o loader após 6 segundos
+  setTimeout(() => {
+    if (typeof hideLoader === 'function') hideLoader();
+  }, 6000);
+
+  // 4. Inicia geolocalização em segundo plano de forma não-bloqueante
+  initGeolocation();
+
+  // 5. Configura campo de busca
   const input = document.getElementById('search-input');
   const resultsContainer = document.getElementById('search-results');
 
@@ -330,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Delegação de eventos segura para clique em cidades pesquisadas
+  // Delegação de eventos para clique em cidades pesquisadas
   if (resultsContainer) {
     resultsContainer.addEventListener('click', (e) => {
       const item = e.target.closest('.search-result-item');
@@ -375,9 +361,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Inicializa geolocalização e busca meteorológica
-  initGeolocation();
-
   // Atualização periódica a cada 5 minutos
   setInterval(fetchData, 300000);
 });
@@ -387,13 +370,8 @@ let resizeTimeout;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
-    if (typeof chartsObj !== 'undefined') {
-      Object.values(chartsObj).forEach((chart) => {
-        if (chart) {
-          chart.resize();
-          chart.update('none');
-        }
-      });
+    if (typeof resizeAllCharts === 'function') {
+      resizeAllCharts();
     }
     if (
       weatherMap &&
