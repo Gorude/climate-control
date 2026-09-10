@@ -98,11 +98,12 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        justify-content: flex-start;
         gap: 8px;
         font-family: var(--font-family-title);
         letter-spacing: -0.5px;
         min-width: 0;
-        flex: 1 1 auto;
+        margin-right: auto;
       }
 
       .nav-city-btn {
@@ -159,6 +160,8 @@
         flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
+        justify-content: flex-end;
+        margin-left: auto;
         gap: 12px;
         flex-shrink: 0;
       }
@@ -1082,18 +1085,32 @@
       /* 2. Celulares Grandes e Tablets em Retrato (máx: 768px) */
       @media (max-width: 768px) {
         .top-nav {
-          flex-direction: column;
-          gap: 12px;
-          padding: 14px 16px;
-          border-radius: 0 0 16px 16px;
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          padding: 10px 16px;
+          gap: 8px;
+        }
+
+        .nav-title {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          margin-right: auto !important;
+          gap: 6px !important;
+          min-width: 0 !important;
         }
 
         .nav-controls {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: flex-end !important;
+          margin-left: auto !important;
+          gap: 6px !important;
+          flex-shrink: 0 !important;
         }
 
         #season-indicator {
@@ -1161,8 +1178,19 @@
 
       /* 3. Celulares Pequenos (máx: 480px) */
       @media (max-width: 480px) {
+        .top-nav {
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+        }
         .nav-controls {
-          gap: 8px;
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: flex-end !important;
+          margin-left: auto !important;
+          gap: 6px;
         }
 
         #season-indicator {
