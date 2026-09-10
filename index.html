@@ -48,9 +48,28 @@
       </p>
     </div>
 
-    <nav class="top-nav">
+    <nav
+      class="top-nav"
+      style="
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: center;
+      "
+    >
       <!-- LADO ESQUERDO: Localização e Favorito -->
-      <div class="nav-title" id="location-display">
+      <div
+        class="nav-title"
+        id="location-display"
+        style="
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 6px;
+          min-width: 0;
+        "
+      >
         <button
           class="nav-city-btn"
           onclick="toggleSearch()"
@@ -112,7 +131,16 @@
       </div>
 
       <!-- LADO DIREITO: Controles e Ações -->
-      <div class="nav-controls">
+      <div
+        class="nav-controls"
+        style="
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        "
+      >
         <!-- Elementos Exclusivos do Desktop (> 820px) -->
         <div class="nav-desktop-elements">
           <div id="api-status" class="status-badge" style="cursor: default">
@@ -144,8 +172,17 @@
           </button>
         </div>
 
-        <!-- Grupo de Ações Primárias -->
-        <div class="nav-buttons-group">
+        <!-- Grupo de Ações Primárias (Linha Horizontal Estrita) -->
+        <div
+          class="nav-buttons-group"
+          style="
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+          "
+        >
           <button
             class="refresh-btn nav-btn-search"
             id="btn-search-toggle"
