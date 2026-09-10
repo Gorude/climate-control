@@ -49,9 +49,19 @@
     </div>
 
     <nav class="top-nav">
+      <!-- LADO ESQUERDO: Localização e Favorito -->
       <div class="nav-title" id="location-display">
-        <i data-lucide="map-pin"></i>
-        <span id="city-name">Naviraí - MS</span>
+        <button
+          class="nav-city-btn"
+          onclick="toggleSearch()"
+          title="Alterar cidade"
+          aria-label="Buscar cidade"
+        >
+          <i data-lucide="map-pin" class="pin-icon"></i>
+          <span id="city-name">Naviraí - MS</span>
+          <i data-lucide="chevron-down" size="14" class="city-chevron"></i>
+        </button>
+
         <button
           class="header-icon-btn"
           id="btn-favorite"
@@ -61,29 +71,15 @@
         >
           <i data-lucide="star" size="16"></i>
         </button>
-
-        <button
-          class="search-toggle"
-          onclick="toggleSearch()"
-          title="Buscar cidade"
-        >
-          <i data-lucide="search" size="16"></i>
-        </button>
-        <button
-          class="search-toggle"
-          onclick="requestGeolocation()"
-          title="Usar localização atual"
-          style="margin-left: -4px"
-        >
-          <i data-lucide="locate" size="16"></i>
-        </button>
       </div>
+
+      <!-- PAINEL DE BUSCA COM AUTOCOMPLETE -->
       <div
         class="search-location"
         id="search-panel"
-        style="display: none; width: 100%; max-width: 320px"
+        style="display: none; width: 100%; max-width: 360px"
       >
-        <div style="display: flex; gap: 8px; width: 100%">
+        <div style="display: flex; gap: 8px; width: 100%; align-items: center">
           <input
             type="text"
             id="search-input"
@@ -99,6 +95,14 @@
           >
             <i data-lucide="locate" size="18"></i>
           </button>
+          <button
+            class="header-icon-btn"
+            onclick="toggleSearch()"
+            title="Fechar busca"
+            style="flex-shrink: 0"
+          >
+            <i data-lucide="x" size="18"></i>
+          </button>
         </div>
         <div
           class="search-results"
@@ -106,80 +110,88 @@
           style="width: 100%"
         ></div>
       </div>
+
+      <!-- LADO DIREITO: Controles e Ações -->
       <div class="nav-controls">
-        <div id="api-status" class="status-badge" style="cursor: default">
-          <i data-lucide="check" size="14"></i> Conectado
-        </div>
-        <div
-          id="season-indicator"
-          style="
-            font-size: 0.9rem;
-            color: var(--text-info);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border-right: 1px solid var(--divider);
-            padding-right: 15px;
-            margin-right: -5px;
-          "
-        >
-          --
-        </div>
-        <div
-          id="clock"
-          style="
-            font-family: monospace;
-            font-size: 1.1rem;
-            color: var(--text-info);
-          "
-        >
-          --:--
-        </div>
-        <div
-          class="nav-buttons-group"
-          style="display: flex; align-items: center; gap: 10px"
-        >
-                    <button
+        <!-- Elementos Exclusivos do Desktop (> 820px) -->
+        <div class="nav-desktop-elements">
+          <div id="api-status" class="status-badge" style="cursor: default">
+            <i data-lucide="check" size="14"></i> Conectado
+          </div>
+          <div id="season-indicator" class="season-badge">
+            --
+          </div>
+          <div id="clock" class="clock-badge">
+            --:--
+          </div>
+          <button
             class="refresh-btn header-icon-btn particles-active"
             id="btn-particles"
-            onclick="WeatherParticles.toggle()"
+            onclick="WeatherParticles.toggle(); if(typeof updateMenuStates === 'function') updateMenuStates();"
             title="Alternar efeitos climáticos dinâmicos"
             aria-label="Alternar efeitos climáticos"
           >
             <i data-lucide="sparkles" size="18"></i>
           </button>
-<button
-            class="refresh-btn pulse-heart-btn"
-            id="btn-wellbeing"
-            onclick="toggleWellbeing(true)"
-            title="Recomendações de Bem-Estar e Saúde"
+          <button
+            class="refresh-btn notif-btn"
+            id="btn-notifications"
+            onclick="toggleNotifications(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+            title="Ativar notificações de alerta"
           >
-            <i data-lucide="heart" size="18"></i>
+            <i data-lucide="bell" size="18"></i>
+            <span class="notif-badge" id="notif-badge"></span>
+          </button>
+        </div>
+
+        <!-- Grupo de Ações Primárias -->
+        <div class="nav-buttons-group">
+          <button
+            class="refresh-btn nav-btn-search"
+            id="btn-search-toggle"
+            onclick="toggleSearch()"
+            title="Buscar cidade"
+            aria-label="Buscar cidade"
+          >
+            <i data-lucide="search" size="17"></i>
           </button>
           <button
             class="refresh-btn"
             id="btn-map"
             onclick="toggleWeatherMap(true)"
             title="Ver Mapa de Radar de Chuva"
+            aria-label="Radar de chuva"
           >
-            <i data-lucide="map" size="18"></i>
+            <i data-lucide="map" size="17"></i>
           </button>
           <button
-            class="refresh-btn notif-btn"
-            id="btn-notifications"
-            onclick="toggleNotifications()"
-            title="Ativar notificações de alerta"
+            class="refresh-btn pulse-heart-btn"
+            id="btn-wellbeing"
+            onclick="toggleWellbeing(true)"
+            title="Recomendações de Bem-Estar e Saúde"
+            aria-label="Bem-estar"
           >
-            <i data-lucide="bell" size="18"></i>
-            <span class="notif-badge" id="notif-badge"></span>
+            <i data-lucide="heart" size="17"></i>
           </button>
           <button
             id="btn-refresh"
             class="refresh-btn"
             onclick="forceUpdate()"
             title="Atualizar agora"
+            aria-label="Atualizar dados"
           >
-            <i data-lucide="refresh-cw" size="18"></i>
+            <i data-lucide="refresh-cw" size="17"></i>
+          </button>
+
+          <!-- Botão de Menu Mais Opções (Mobile <= 820px) -->
+          <button
+            class="refresh-btn mobile-menu-btn"
+            id="btn-more-menu"
+            onclick="toggleMoreMenu()"
+            title="Mais opções e configurações"
+            aria-label="Menu de opções"
+          >
+            <i data-lucide="more-vertical" size="18"></i>
           </button>
         </div>
       </div>
@@ -818,6 +830,113 @@
         </div>
       </div>
     </main>
+
+    <!-- MENU DROPDOWN DE CONFIGURAÇÕES E MAIS OPÇÕES (AEROSKY QUICK MENU) -->
+    <div
+      class="more-menu-overlay"
+      id="more-menu-overlay"
+      onclick="toggleMoreMenu(false)"
+    ></div>
+    <div class="more-menu-panel" id="more-menu-panel">
+      <div class="more-menu-header">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <i data-lucide="sliders" size="18" style="color: var(--accent-cyan)"></i>
+          <span
+            style="
+              font-weight: 600;
+              font-size: 0.95rem;
+              font-family: var(--font-family-title);
+            "
+            >Opções & Satélites</span
+          >
+        </div>
+        <button
+          class="more-menu-close"
+          onclick="toggleMoreMenu(false)"
+          aria-label="Fechar menu"
+        >
+          <i data-lucide="x" size="18"></i>
+        </button>
+      </div>
+
+      <div class="more-menu-body">
+        <!-- Ação 1: Atualizar Dados -->
+        <button
+          class="menu-action-item"
+          onclick="forceUpdate(); toggleMoreMenu(false);"
+        >
+          <div class="menu-action-icon">
+            <i data-lucide="refresh-cw" size="18"></i>
+          </div>
+          <div class="menu-action-text">
+            <div class="menu-action-title">Atualizar Dados Agora</div>
+            <div class="menu-action-sub" id="menu-last-update">
+              Sincronizar satélites em tempo real
+            </div>
+          </div>
+        </button>
+
+        <!-- Ação 2: GPS Localização Atual -->
+        <button
+          class="menu-action-item"
+          onclick="requestGeolocation(); toggleMoreMenu(false);"
+        >
+          <div class="menu-action-icon">
+            <i data-lucide="locate" size="18"></i>
+          </div>
+          <div class="menu-action-text">
+            <div class="menu-action-title">Minha Localização GPS</div>
+            <div class="menu-action-sub">Detectar coordenadas automáticas</div>
+          </div>
+        </button>
+
+        <!-- Ação 3: Efeitos Climáticos Dinâmicos (Partículas) -->
+        <div
+          class="menu-action-item menu-toggle-item"
+          onclick="WeatherParticles.toggle(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+        >
+          <div class="menu-action-icon">
+            <i data-lucide="sparkles" size="18" id="menu-particles-icon"></i>
+          </div>
+          <div class="menu-action-text">
+            <div class="menu-action-title">Efeitos Climáticos</div>
+            <div class="menu-action-sub">Chuva, raios e estrelas na tela</div>
+          </div>
+          <div class="menu-toggle-badge" id="menu-particles-status">Ativo</div>
+        </div>
+
+        <!-- Ação 4: Notificações de Alerta -->
+        <div
+          class="menu-action-item menu-toggle-item"
+          onclick="toggleNotifications(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+        >
+          <div class="menu-action-icon">
+            <i data-lucide="bell" size="18" id="menu-notif-icon"></i>
+          </div>
+          <div class="menu-action-text">
+            <div class="menu-action-title">Notificações de Alerta</div>
+            <div class="menu-action-sub">Avisos de tempestades e calor</div>
+          </div>
+          <div class="menu-toggle-badge" id="menu-notif-status">Inativo</div>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <!-- Status do Sistema e Estação -->
+        <div class="menu-info-footer">
+          <div class="menu-info-row">
+            <span class="menu-dot-status"></span>
+            <span>Satélites Open-Meteo & Radar Ativos</span>
+          </div>
+          <div
+            class="menu-info-row"
+            style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px"
+          >
+            <span id="menu-season-text">--</span> • <span id="menu-clock-text">--:--</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- CONSULTOR DE BEM-ESTAR (AEROSKY SIDEBAR DRAWER) -->
     <div

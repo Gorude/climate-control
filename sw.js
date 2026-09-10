@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aerosky-v4';
+const CACHE_NAME = 'aerosky-v5';
 const ASSETS = [
   './',
   './index.html',

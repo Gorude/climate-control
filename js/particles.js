@@ -84,15 +84,19 @@ const WeatherParticles = {
 
   updateToggleButton() {
     const btn = document.getElementById('btn-particles');
-    if (!btn) return;
-    if (this.enabled) {
-      btn.classList.add('particles-active');
-      btn.title = 'Desativar efeitos climáticos dinâmicos';
-      btn.setAttribute('aria-label', 'Desativar efeitos climáticos');
-    } else {
-      btn.classList.remove('particles-active');
-      btn.title = 'Ativar efeitos climáticos dinâmicos';
-      btn.setAttribute('aria-label', 'Ativar efeitos climáticos');
+    if (btn) {
+      if (this.enabled) {
+        btn.classList.add('particles-active');
+        btn.title = 'Desativar efeitos climáticos dinâmicos';
+        btn.setAttribute('aria-label', 'Desativar efeitos climáticos');
+      } else {
+        btn.classList.remove('particles-active');
+        btn.title = 'Ativar efeitos climáticos dinâmicos';
+        btn.setAttribute('aria-label', 'Ativar efeitos climáticos');
+      }
+    }
+    if (typeof updateMenuStates === 'function') {
+      updateMenuStates();
     }
   },
 

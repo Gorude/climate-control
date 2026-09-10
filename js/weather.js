@@ -37,7 +37,11 @@ const WeatherService = {
         addr.city_district ||
         'Sua Localização';
       const state = addr.state ? addr.state : '';
-      return state ? `${city} - ${state}` : city;
+      const uf =
+        typeof BRAZIL_UF !== 'undefined' && BRAZIL_UF[state]
+          ? BRAZIL_UF[state]
+          : state;
+      return uf ? `${city} - ${uf}` : city;
     } catch (e) {
       console.warn('Erro na geocodificação reversa:', e);
       return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;

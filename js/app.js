@@ -175,11 +175,16 @@ async function searchCity(query) {
     container.innerHTML = data.results
       .map((r) => {
         const cityName = escapeHtml(r.name);
+        const stateName = r.admin1 || '';
+        const uf =
+          typeof BRAZIL_UF !== 'undefined' && BRAZIL_UF[stateName]
+            ? BRAZIL_UF[stateName]
+            : stateName;
         const region = escapeHtml(
-          [r.admin1, r.country].filter(Boolean).join(', ')
+          [uf, r.country].filter(Boolean).join(', ')
         );
         const fullName = escapeHtml(
-          r.name + (r.admin1 ? ' - ' + r.admin1 : '')
+          r.name + (uf ? ' - ' + uf : '')
         );
         return `<div class="search-result-item" data-lat="${r.latitude}" data-lon="${r.longitude}" data-name="${fullName}">
                   <div>
@@ -355,6 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const mapOverlay = document.getElementById('map-overlay');
       if (mapOverlay && mapOverlay.classList.contains('active'))
         toggleWeatherMap(false);
+      const moreMenu = document.getElementById('more-menu-panel');
+      if (moreMenu && moreMenu.classList.contains('active'))
+        toggleMoreMenu(false);
     } else if (e.key === '/' && document.activeElement !== input) {
       e.preventDefault();
       toggleSearch();

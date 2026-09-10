@@ -58,14 +58,15 @@ function showToast(message) {
 
 // --- RELÓGIO EM TEMPO REAL ---
 function updateClock() {
+  const timeStr = new Date().toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
   const clockEl = document.getElementById('clock');
-  if (clockEl) {
-    clockEl.innerText = new Date().toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  }
+  if (clockEl) clockEl.innerText = timeStr;
+  const menuClock = document.getElementById('menu-clock-text');
+  if (menuClock) menuClock.innerText = timeStr;
 }
 
 // --- ESTAÇÃO DO ANO (Sensível à latitude Norte vs Sul) ---
@@ -97,9 +98,60 @@ function updateSeason() {
   const seasonEl = document.getElementById('season-indicator');
   if (seasonEl) {
     seasonEl.innerHTML = `<i data-lucide="${iconName}" size="16" style="color: ${iconColor};"></i> <span style="font-weight: 500;">${seasonName}</span>`;
-    if (window.lucide) lucide.createIcons();
   }
+  const menuSeason = document.getElementById('menu-season-text');
+  if (menuSeason) {
+    menuSeason.innerText = `${seasonName} no Hemisfério ${isSouth ? 'Sul' : 'Norte'}`;
+  }
+  if (window.lucide) lucide.createIcons();
 }
+
+// --- MENU DE OPÇÕES RÁPIDAS MOBILE ---
+window.toggleMoreMenu = function (show) {
+  const panel = document.getElementById('more-menu-panel');
+  const overlay = document.getElementById('more-menu-overlay');
+  if (!panel || !overlay) return;
+
+  const willShow =
+    typeof show === 'boolean' ? show : !panel.classList.contains('active');
+  if (willShow) {
+    updateMenuStates();
+    panel.classList.add('active');
+    overlay.classList.add('active');
+  } else {
+    panel.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+};
+
+function updateMenuStates() {
+  const pStatus = document.getElementById('menu-particles-status');
+  const pIcon = document.getElementById('menu-particles-icon');
+  const pEnabled =
+    typeof WeatherParticles !== 'undefined' ? WeatherParticles.enabled : true;
+  if (pStatus) {
+    pStatus.innerText = pEnabled ? 'Ativo' : 'Desativado';
+    pStatus.classList.toggle('active', pEnabled);
+  }
+  if (pIcon) {
+    pIcon.style.color = pEnabled ? 'var(--accent-cyan)' : 'var(--text-muted)';
+  }
+
+  const nStatus = document.getElementById('menu-notif-status');
+  const nIcon = document.getElementById('menu-notif-icon');
+  const nEnabled =
+    typeof notificationsEnabled !== 'undefined' ? notificationsEnabled : false;
+  if (nStatus) {
+    nStatus.innerText = nEnabled ? 'Ativo' : 'Desativado';
+    nStatus.classList.toggle('active', nEnabled);
+  }
+  if (nIcon) {
+    nIcon.style.color = nEnabled ? 'var(--accent-yellow)' : 'var(--text-muted)';
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+window.updateMenuStates = updateMenuStates;
 
 // --- LÓGICA DO MAPA DE CHUVA RADAR ---
 window.toggleWeatherMap = function (show) {
@@ -376,6 +428,9 @@ function updateNotifBadge() {
     btn.title = notificationsEnabled
       ? 'Notificações ativas (clique para desativar)'
       : 'Ativar notificações de alerta';
+  }
+  if (typeof updateMenuStates === 'function') {
+    updateMenuStates();
   }
 }
 
