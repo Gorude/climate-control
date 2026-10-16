@@ -780,6 +780,23 @@ h3 {
   color: var(--text-info);
 }
 
+/* O card de gráfico tem título + seletor + botão: em cards estreitos o seletor
+   já identifica o gráfico, então o texto do título fica só para leitores de tela */
+.cell-precip {
+  container-type: inline-size;
+}
+
+@container (max-width: 380px) {
+  .cell-precip .title-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 .cell-header-title svg {
   width: 18px;
   height: 18px;
@@ -1407,92 +1424,212 @@ h3 {
 #astro-solar-view {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 12px;
 }
 
-.sun-arc-container {
+/* Curva solar do dia */
+.sun-chart {
+  display: block;
   width: 100%;
-  max-width: 320px;
-  height: 96px;
-  margin: 4px auto 0;
-}
-
-.sun-arc-container svg {
-  width: 100%;
-  height: 100%;
+  height: auto;
+  max-height: 150px;
   overflow: visible;
 }
 
-#sun-clip-rect {
-  transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+.sun-curve-night {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1.5;
 }
 
-#sun-dot {
-  transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 6px var(--accent-yellow));
+.sun-curve-day {
+  fill: none;
+  stroke: rgba(255, 183, 3, 0.45);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.sun-curve-traveled {
+  fill: none;
+  stroke: var(--accent-yellow);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.sun-horizon {
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1;
+}
+
+.sun-marker {
+  fill: #0b1320;
+  stroke: var(--accent-yellow);
+  stroke-width: 1.5;
+}
+
+.sun-peak,
+.sun-axis {
+  font-family: var(--font-family-body);
+  font-size: 9.5px;
+  fill: var(--text-muted);
+}
+
+.sun-peak {
+  font-weight: 600;
+  fill: var(--text-info);
+}
+
+.sun-now {
+  fill: #ffd166;
+  stroke: #030712;
+  stroke-width: 2;
+}
+
+.sun-now-glow {
+  fill: rgba(255, 183, 3, 0.75);
+}
+
+.sun-now.night {
+  fill: #64748b;
+}
+
+.sun-now-glow.night {
+  fill: rgba(100, 116, 139, 0.35);
 }
 
 .sun-times {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 360px;
-  margin: 6px auto 0;
-  font-size: 0.75rem;
-  color: var(--text-info);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .sun-times > div {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 2px;
+  text-align: center;
+  min-width: 0;
+}
+
+.sun-times > div:first-child {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.sun-times > div:last-child {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.sky-label {
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .sun-times strong {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-family-title);
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #fff;
 }
 
-.sun-times span svg {
-  vertical-align: -2px;
+.sky-delta {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-.sun-times .daylight {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--accent-cyan);
+.sky-delta.up {
+  color: #4ade80;
 }
 
-.lunar-view {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.sky-delta.down {
+  color: #fb923c;
+}
+
+/* Lista de fatos (Sol e Lua) */
+.sky-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-#moon-svg {
-  filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.2));
-  transition: transform 0.3s ease;
+.sky-facts > div {
+  min-width: 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--surface-soft-border);
+}
+
+.sky-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.sky-facts dt svg {
+  flex-shrink: 0;
+  color: var(--text-info);
+}
+
+.sky-facts dd {
+  margin-top: 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lua */
+.lunar-view {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.moon-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.moon-svg {
+  flex-shrink: 0;
+  width: 112px;
+  height: 112px;
+  transition: filter 0.6s ease;
+}
+
+.moon-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
 .moon-phase {
   font-family: var(--font-family-title);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--accent-cyan);
 }
 
 .moon-stats {
   display: flex;
-  gap: 16px;
-  padding: 6px 14px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--surface-soft-border);
-  font-size: 0.82rem;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
@@ -1500,8 +1637,14 @@ h3 {
   color: #fff;
 }
 
+.moon-next {
+  font-size: 0.76rem;
+  color: var(--text-info);
+}
+
 .lunar-view .pill-row {
-  margin-top: 4px;
+  margin-top: 0;
+  justify-content: flex-start;
 }
 
 /* ---------- 15. Alertas ---------- */
@@ -2564,10 +2707,6 @@ h3 {
 
   .chart-wind {
     min-height: 170px;
-  }
-
-  .sun-arc-container {
-    height: 110px;
   }
 
   .weather-alert {

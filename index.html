@@ -284,7 +284,7 @@
           <div class="cell-header cell-header-stack">
             <div class="cell-header-row">
               <h2 class="cell-header-title" id="precip-header-title">
-                <i data-lucide="cloud-rain"></i> Chuva
+                <i data-lucide="cloud-rain"></i> <span class="title-text">Chuva</span>
               </h2>
               <div class="header-actions">
                 <div class="seg" role="group" aria-label="Tipo de gráfico">
@@ -511,87 +511,106 @@
 
           <!-- Visão Solar -->
           <div id="astro-solar-view" class="astro-view">
-            <div class="sun-arc-container">
-              <svg viewBox="0 12 200 64" aria-hidden="true">
-                <defs>
-                  <clipPath id="sun-clip">
-                    <rect id="sun-clip-rect" x="0" y="-30" width="20" height="120" />
-                  </clipPath>
-                </defs>
-                <path
-                  d="M 20 70 Q 100 -20 180 70"
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.1)"
-                  stroke-width="2"
-                  stroke-dasharray="4 4"
-                />
-                <path
-                  id="sun-path-active"
-                  d="M 20 70 Q 100 -20 180 70"
-                  fill="none"
-                  stroke="var(--accent-yellow)"
-                  stroke-width="2.5"
-                  clip-path="url(#sun-clip)"
-                />
-                <circle id="sun-dot" cx="20" cy="70" r="5" fill="var(--accent-yellow)" />
-              </svg>
-            </div>
+            <svg id="sun-chart" class="sun-chart" viewBox="0 0 320 132" role="img" aria-label="Trajetória do Sol hoje"></svg>
             <div class="sun-times">
               <div>
+                <span class="sky-label"><i data-lucide="sunrise" width="14" height="14" color="#f97316"></i> Nascer</span>
                 <strong id="val-sunrise">--:--</strong>
-                <span><i data-lucide="sunrise" width="14" height="14" color="#f97316"></i> Nascer</span>
               </div>
               <div>
-                <strong class="daylight">
-                  <span id="val-daylight">--h --m</span>
-                  <span id="daylight-trend"></span>
-                </strong>
-                <span>Luz do dia</span>
+                <span class="sky-label">Luz do dia</span>
+                <strong id="val-daylight">--</strong>
+                <span id="daylight-trend" class="sky-delta"></span>
               </div>
               <div>
+                <span class="sky-label"><i data-lucide="sunset" width="14" height="14" color="#a855f7"></i> Pôr do sol</span>
                 <strong id="val-sunset">--:--</strong>
-                <span><i data-lucide="sunset" width="14" height="14" color="#a855f7"></i> Pôr do sol</span>
               </div>
             </div>
-            <div class="pill-row">
-              <div class="pill pill-yellow">
-                <i data-lucide="camera" width="12" height="12"></i> Golden Hour:
-                <span id="val-golden-hour">--:--</span>
+            <dl class="sky-facts">
+              <div>
+                <dt><i data-lucide="sun" width="13" height="13"></i> Meio-dia solar</dt>
+                <dd id="val-solar-noon">--</dd>
               </div>
-            </div>
+              <div>
+                <dt><i data-lucide="camera" width="13" height="13"></i> Golden hour</dt>
+                <dd id="val-golden-hour">--</dd>
+              </div>
+              <div>
+                <dt><i data-lucide="compass" width="13" height="13"></i> Sol agora</dt>
+                <dd id="val-sun-now">--</dd>
+              </div>
+              <div>
+                <dt>
+                  <i data-lucide="hourglass" width="13" height="13"></i>
+                  <span id="val-sun-countdown-label">Próximo evento</span>
+                </dt>
+                <dd id="val-sun-countdown">--</dd>
+              </div>
+            </dl>
           </div>
 
           <!-- Visão Lunar -->
           <div id="astro-lunar-view" class="astro-view lunar-view" style="display: none">
-            <svg id="moon-svg" viewBox="0 0 100 100" width="64" height="64" aria-hidden="true">
-              <circle
-                cx="50"
-                cy="50"
-                r="48"
-                fill="rgba(255, 255, 255, 0.05)"
-                stroke="rgba(255, 255, 255, 0.1)"
-                stroke-width="1"
-              />
-              <path id="moon-lit-path" fill="var(--accent-yellow)" d="" />
-            </svg>
-            <div class="moon-phase" id="val-moon-phase">--</div>
-            <div class="moon-stats">
-              <div>Iluminação: <strong id="val-moon-ill">--%</strong></div>
-              <div>Idade: <strong id="val-moon-age">-- dias</strong></div>
-            </div>
-            <div class="pill-row">
-              <div
-                class="pill pill-cyan"
-                title="Ponto Sublunar (onde a Lua está a pino na Terra agora)"
-              >
-                <i data-lucide="map-pin" width="12" height="12"></i> Vertical em:
-                <span id="val-moon-location">--</span>
+            <div class="moon-hero">
+              <svg id="moon-svg" class="moon-svg" viewBox="0 0 100 100" role="img" aria-label="Fase da Lua">
+                <defs>
+                  <clipPath id="moon-clip"><circle cx="50" cy="50" r="48" /></clipPath>
+                  <filter id="moon-terminator" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur stdDeviation="1.3" />
+                  </filter>
+                  <!-- Branco = sombra; o trecho iluminado (preto) recorta a sombra -->
+                  <mask id="moon-shadow-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+                    <rect width="100" height="100" fill="white" />
+                    <path id="moon-lit-path" fill="black" filter="url(#moon-terminator)" d="" />
+                  </mask>
+                  <radialGradient id="moon-limb" cx="50%" cy="50%" r="50%">
+                    <stop offset="72%" stop-color="#000" stop-opacity="0" />
+                    <stop offset="100%" stop-color="#000" stop-opacity="0.38" />
+                  </radialGradient>
+                </defs>
+                <g id="moon-body">
+                  <image
+                    href="assets/moon.webp"
+                    x="2"
+                    y="2"
+                    width="96"
+                    height="96"
+                    clip-path="url(#moon-clip)"
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                  <circle cx="50" cy="50" r="48" fill="url(#moon-limb)" />
+                  <!-- Lado noturno: escurece sem apagar (luz cinérea / earthshine) -->
+                  <circle cx="50" cy="50" r="48.6" fill="#02040a" fill-opacity="0.9" mask="url(#moon-shadow-mask)" />
+                </g>
+              </svg>
+              <div class="moon-summary">
+                <div class="moon-phase" id="val-moon-phase">--</div>
+                <div class="moon-stats">
+                  <span>Iluminação <strong id="val-moon-ill">--%</strong></span>
+                  <span>Idade <strong id="val-moon-age">--</strong></span>
+                </div>
+                <div class="moon-next" id="val-moon-next"></div>
               </div>
+            </div>
+            <dl class="sky-facts">
+              <div>
+                <dt><i data-lucide="moon" width="13" height="13"></i> Nascer da Lua</dt>
+                <dd id="val-moonrise">--</dd>
+              </div>
+              <div>
+                <dt><i data-lucide="moon" width="13" height="13"></i> Pôr da Lua</dt>
+                <dd id="val-moonset">--</dd>
+              </div>
+            </dl>
+            <div class="pill-row">
               <div id="badge-moon-vis" class="moon-vis-badge">
-                <span id="moon-vis-icon-holder"
-                  ><i data-lucide="eye" width="12" height="12"></i
-                ></span>
+                <span id="moon-vis-icon-holder"><i data-lucide="eye" width="12" height="12"></i></span>
                 <span id="val-moon-vis">--</span>
+              </div>
+              <div class="pill pill-cyan" title="Ponto sublunar (onde a Lua está a pino na Terra agora)">
+                <i data-lucide="map-pin" width="12" height="12"></i> A pino sobre:
+                <span id="val-moon-location">--</span>
               </div>
             </div>
           </div>
@@ -804,6 +823,7 @@
     <script defer src="./js/particles.js"></script>
     <script defer src="./js/favorites.js"></script>
     <script defer src="./js/radar.js"></script>
+    <script defer src="./js/sky.js"></script>
     <script defer src="./js/ui.js"></script>
     <script defer src="./js/app.js"></script>
   </body>

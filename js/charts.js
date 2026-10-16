@@ -637,7 +637,7 @@ function updatePrecipHeader(model) {
   const f = model.future;
 
   if (currentPrecipViewState === "rain") {
-    if (title) title.innerHTML = '<i data-lucide="cloud-rain"></i> Chuva';
+    if (title) title.innerHTML = '<i data-lucide="cloud-rain"></i> <span class="title-text">Chuva</span>';
     const total = f.precip.reduce((s, v) => s + (v || 0), 0);
     const maxProb = maxOf(f.prob) || 0;
     if (meta) {
@@ -654,7 +654,7 @@ function updatePrecipHeader(model) {
     // Um painel por série: as legendas de cada painel ficam dentro do gráfico
     if (legend) legend.innerHTML = "";
   } else {
-    if (title) title.innerHTML = '<i data-lucide="thermometer"></i> Temperatura';
+    if (title) title.innerHTML = '<i data-lucide="thermometer"></i> <span class="title-text">Temperatura</span>';
     if (meta) {
       meta.innerHTML = `Próx. 24h: <strong>${fmtNum(minOf(f.temp))}°</strong> a <strong>${fmtNum(maxOf(f.temp))}°</strong>`;
     }

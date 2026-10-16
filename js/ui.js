@@ -691,9 +691,6 @@ window.switchAstro = function (tab) {
 };
 
 // --- FORMATADORES ---
-const formatClockTime = (date) =>
-  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-
 function getTrend(current, previous) {
   let icon = 'minus';
   let color = 'var(--text-muted)';
@@ -801,152 +798,8 @@ function populateUI() {
     iconWrapper.innerHTML = `<i data-lucide="${wmo.i}" id="main-icon" stroke-width="1.5" style="color:${wmo.c}; filter: drop-shadow(0 0 22px ${wmo.c}66);" aria-label="${escapeHtml(wmo.t)}"></i>`;
   }
 
-  // Sol e Crepúsculo (horários locais da cidade, sem conversão de fuso)
-  const sr = new Date(d.sunrise[1]);
-  const ss = new Date(d.sunset[1]);
-  const localNow = new Date(c.time);
-
-  const valSunrise = document.getElementById('val-sunrise');
-  if (valSunrise) valSunrise.innerText = formatHourLabel(d.sunrise[1]);
-  const valSunset = document.getElementById('val-sunset');
-  if (valSunset) valSunset.innerText = formatHourLabel(d.sunset[1]);
-
-  // Golden Hour (45 min antes do pôr do sol)
-  const ghStart = new Date(ss.getTime() - 45 * 60000);
-  const valGoldenHour = document.getElementById('val-golden-hour');
-  if (valGoldenHour) {
-    valGoldenHour.innerText = `${formatClockTime(ghStart)} às ${formatHourLabel(d.sunset[1])}`;
-  }
-
-  const diffMs = ss - sr;
-  const daylightMinutes = Math.round(diffMs / 60000);
-  const valDaylight = document.getElementById('val-daylight');
-  if (valDaylight) {
-    valDaylight.innerText = `${Math.floor(daylightMinutes / 60)}h ${daylightMinutes % 60}m`;
-  }
-
-  // Comparação de duração da luz solar (hoje vs ontem)
-  if (d.sunrise[0] && d.sunset[0]) {
-    const yesterdayDaylight = new Date(d.sunset[0]) - new Date(d.sunrise[0]);
-    const isLengthening = diffMs >= yesterdayDaylight;
-    const trendDaylightEl = document.getElementById('daylight-trend');
-    if (trendDaylightEl) {
-      trendDaylightEl.title = isLengthening
-        ? 'Dias ficando mais longos'
-        : 'Dias ficando mais curtos';
-      trendDaylightEl.innerHTML = isLengthening
-        ? '<i data-lucide="trending-up" width="14" height="14" color="#4ade80"></i>'
-        : '<i data-lucide="trending-down" width="14" height="14" color="#fb923c"></i>';
-    }
-  }
-
-  const isSunUp = localNow >= sr && localNow <= ss;
-  const t = Math.min(1, Math.max(0, (localNow - sr) / diffMs));
-
-  const p0 = { x: 20, y: 70 },
-    p1 = { x: 100, y: -20 },
-    p2 = { x: 180, y: 70 };
-  const sunX = Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x;
-  const sunY = Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y;
-
-  const sunDot = document.getElementById('sun-dot');
-  if (sunDot) {
-    sunDot.setAttribute('cx', sunX);
-    sunDot.setAttribute('cy', sunY);
-    sunDot.style.opacity = isSunUp ? '1' : '0.3';
-  }
-  const sunClip = document.getElementById('sun-clip-rect');
-  if (sunClip) sunClip.setAttribute('width', sunX);
-
-  // Ciclo Lunar (usa o instante real; c.time está no fuso da cidade, não em UTC)
-  const nowMs = Date.now();
-  const LUNAR_MONTH = 29.53058867;
-  const KNOWN_NEW_MOON = 1704974220000; // 11/01/2024 11:57 UTC
-  const diffDaysMoon = (nowMs - KNOWN_NEW_MOON) / 86400000;
-  let phaseFraction = (diffDaysMoon % LUNAR_MONTH) / LUNAR_MONTH;
-  if (phaseFraction < 0) phaseFraction += 1;
-
-  let phaseName;
-  if (phaseFraction < 0.03 || phaseFraction >= 0.97) phaseName = 'Lua Nova';
-  else if (phaseFraction < 0.22) phaseName = 'Crescente';
-  else if (phaseFraction < 0.28) phaseName = 'Quarto Crescente';
-  else if (phaseFraction < 0.47) phaseName = 'Crescente Gibosa';
-  else if (phaseFraction < 0.53) phaseName = 'Lua Cheia';
-  else if (phaseFraction < 0.72) phaseName = 'Minguante Gibosa';
-  else if (phaseFraction < 0.78) phaseName = 'Quarto Minguante';
-  else phaseName = 'Minguante';
-
-  const illumination = Math.round((0.5 - Math.cos(phaseFraction * Math.PI * 2) * 0.5) * 100);
-  const ageDays = Math.floor(phaseFraction * LUNAR_MONTH);
-
-  const sweepOut = phaseFraction <= 0.5 ? 1 : 0;
-  let sweepRet;
-  if (phaseFraction < 0.25) sweepRet = 0;
-  else if (phaseFraction <= 0.5) sweepRet = 1;
-  else if (phaseFraction < 0.75) sweepRet = 0;
-  else sweepRet = 1;
-
-  const rxMoon = 48 * Math.abs(Math.cos(phaseFraction * 2 * Math.PI));
-  const litPath = `M 50 2 A 48 48 0 0 ${sweepOut} 50 98 A ${rxMoon} 48 0 0 ${sweepRet} 50 2`;
-  const moonLitPath = document.getElementById('moon-lit-path');
-  if (moonLitPath) moonLitPath.setAttribute('d', litPath);
-  // No Hemisfério Sul a face iluminada aparece espelhada (crescente iluminada à esquerda)
-  const moonSvg = document.getElementById('moon-svg');
-  if (moonSvg) moonSvg.style.transform = LAT < 0 ? 'scaleX(-1)' : '';
-
-  const valMoonPhase = document.getElementById('val-moon-phase');
-  if (valMoonPhase) valMoonPhase.innerText = phaseName;
-  const valMoonIll = document.getElementById('val-moon-ill');
-  if (valMoonIll) valMoonIll.innerText = illumination + '%';
-  const valMoonAge = document.getElementById('val-moon-age');
-  if (valMoonAge) valMoonAge.innerText = ageDays + (ageDays === 1 ? ' dia' : ' dias');
-
-  // Ponto Sublunar: a Lua cruza o meridiano ~phase × 24h depois do Sol,
-  // portanto fica phase × 360° a leste do ponto subsolar
-  const utcNow = new Date(nowMs);
-  const utcHour = utcNow.getUTCHours() + utcNow.getUTCMinutes() / 60;
-  const sunLon = (12 - utcHour) * 15;
-  let moonLon = sunLon + phaseFraction * 360;
-  moonLon = ((((moonLon + 180) % 360) + 360) % 360) - 180;
-
-  let region;
-  if (moonLon <= -130) region = 'Oceano Pacífico';
-  else if (moonLon <= -80) region = 'América do Norte / Pacífico';
-  else if (moonLon <= -35) region = 'América do Sul / Atlântico';
-  else if (moonLon <= 20) region = 'Oceano Atlântico / África';
-  else if (moonLon <= 60) region = 'África / Oriente Médio';
-  else if (moonLon <= 120) region = 'Ásia / Oceano Índico';
-  else region = 'Austrália / Pacífico';
-
-  const valMoonLoc = document.getElementById('val-moon-location');
-  if (valMoonLoc) valMoonLoc.innerText = region;
-
-  // Visibilidade Local (aproximação pelo ângulo horário)
-  let diffLon = moonLon - LON;
-  diffLon = ((((diffLon + 180) % 360) + 360) % 360) - 180;
-
-  const badgeVis = document.getElementById('badge-moon-vis');
-  const textVis = document.getElementById('val-moon-vis');
-
-  if (badgeVis) {
-    badgeVis.setAttribute('title', `Visibilidade calculada para ${currentCityName}`);
-  }
-
-  if (Math.abs(diffLon) < 85) {
-    let direcao = 'Alta no céu';
-    if (diffLon > 15) direcao = 'Leste';
-    else if (diffLon < -15) direcao = 'Oeste';
-
-    if (badgeVis) badgeVis.className = 'moon-vis-badge visible';
-    if (textVis) {
-      textVis.innerHTML = `<span style="color: #fff;">Visível agora:</span> ${direcao}`;
-    }
-    setMoonVisIcon('eye');
-  } else {
-    if (badgeVis) badgeVis.className = 'moon-vis-badge';
-    if (textVis) textVis.innerText = 'Abaixo do horizonte';
-    setMoonVisIcon('eye-off');
-  }
+  // Céu: curva solar do dia, fase e posição da Lua
+  renderSky();
 
   // Bússola de Vento
   const originDir = c.wind_direction_10m || 0;
@@ -1031,9 +884,4 @@ function populateUI() {
   }
 
   hideLoader();
-}
-
-function setMoonVisIcon(name) {
-  const holder = document.getElementById('moon-vis-icon-holder');
-  if (holder) holder.innerHTML = `<i data-lucide="${name}" width="12" height="12"></i>`;
 }
