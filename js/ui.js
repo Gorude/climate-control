@@ -553,20 +553,11 @@ function populateUI() {
   updateClock();
   checkAlerts(c, d);
 
-  // Background dinâmico
-  const bg = document.getElementById('weather-bg');
-  if (bg) {
-    if (c.precipitation > 0) bg.className = 'bg-rain';
-    else bg.className = isDay ? 'bg-day' : 'bg-night';
-  }
-
-  // Atualiza motor de partículas dinâmicas
-  WeatherParticles.setWeatherCondition(
-    c.weather_code,
-    c.is_day,
-    c.wind_speed_10m,
-    c.wind_direction_10m
-  );
+  // Céu de fundo e efeitos climáticos dinâmicos
+  WeatherParticles.setWeatherCondition(c.weather_code, c.is_day, c.wind_speed_10m, c.wind_direction_10m, {
+    precip: c.precipitation,
+    cloudCover: c.cloud_cover
+  });
 
   // Atualiza favoritos (barra e estrela)
   FavoritesManager.renderFavoritesBar();

@@ -121,26 +121,119 @@ h3 {
   outline-offset: 2px;
 }
 
-/* ---------- 3. Fundo dinâmico e partículas ---------- */
+/* ---------- 3. Céu dinâmico e partículas ---------- */
+/* Cores registradas como <color> para que a troca de céu seja uma transição suave */
+@property --sky-top {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #071a30;
+}
+@property --sky-mid {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #050f1f;
+}
+@property --sky-horizon {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #030712;
+}
+@property --sky-glow {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: rgba(0, 187, 249, 0.16);
+}
+
 #weather-bg {
+  --sky-top: #071a30;
+  --sky-mid: #050f1f;
+  --sky-horizon: #030712;
+  --sky-glow: rgba(0, 187, 249, 0.16);
   position: fixed;
   inset: 0;
   z-index: 0;
-  opacity: 0.35;
   pointer-events: none;
-  transition: background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background:
+    radial-gradient(120% 70% at 85% 0%, var(--sky-glow) 0%, transparent 60%),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-horizon) 100%);
+  transition:
+    --sky-top 2.5s ease,
+    --sky-mid 2.5s ease,
+    --sky-horizon 2.5s ease,
+    --sky-glow 2.5s ease;
 }
 
-.bg-day {
-  background: radial-gradient(circle at 80% 20%, rgba(0, 187, 249, 0.18) 0%, rgba(3, 7, 18, 1) 100%);
+#weather-bg.sky-clear-day {
+  --sky-top: #0b2b4c;
+  --sky-mid: #071a30;
+  --sky-horizon: #040b18;
+  --sky-glow: rgba(0, 187, 249, 0.2);
 }
-
-.bg-night {
-  background: radial-gradient(circle at 80% 20%, rgba(114, 9, 183, 0.15) 0%, rgba(3, 7, 18, 1) 100%);
+#weather-bg.sky-clear-night {
+  --sky-top: #0b0f2b;
+  --sky-mid: #060a1c;
+  --sky-horizon: #030712;
+  --sky-glow: rgba(114, 9, 183, 0.16);
 }
-
-.bg-rain {
-  background: radial-gradient(circle at 80% 20%, rgba(15, 23, 42, 0.9) 0%, rgba(3, 7, 18, 1) 100%);
+#weather-bg.sky-cloudy-day {
+  --sky-top: #142538;
+  --sky-mid: #0b1727;
+  --sky-horizon: #050a14;
+  --sky-glow: rgba(150, 185, 225, 0.12);
+}
+#weather-bg.sky-cloudy-night {
+  --sky-top: #0d1324;
+  --sky-mid: #080c19;
+  --sky-horizon: #030712;
+  --sky-glow: rgba(95, 105, 170, 0.1);
+}
+#weather-bg.sky-overcast {
+  --sky-top: #161d28;
+  --sky-mid: #0d121a;
+  --sky-horizon: #05080e;
+  --sky-glow: rgba(165, 175, 195, 0.08);
+}
+#weather-bg.sky-fog {
+  --sky-top: #1b2029;
+  --sky-mid: #11151c;
+  --sky-horizon: #080b10;
+  --sky-glow: rgba(205, 212, 222, 0.1);
+}
+#weather-bg.sky-rain-day {
+  --sky-top: #111c2b;
+  --sky-mid: #0a121e;
+  --sky-horizon: #04080f;
+  --sky-glow: rgba(80, 130, 200, 0.12);
+}
+#weather-bg.sky-rain-night {
+  --sky-top: #0b1220;
+  --sky-mid: #070c16;
+  --sky-horizon: #03060c;
+  --sky-glow: rgba(60, 95, 160, 0.1);
+}
+#weather-bg.sky-storm {
+  --sky-top: #130f24;
+  --sky-mid: #0a0a17;
+  --sky-horizon: #04040a;
+  --sky-glow: rgba(125, 95, 210, 0.14);
+}
+#weather-bg.sky-snow-day {
+  --sky-top: #1a2335;
+  --sky-mid: #101724;
+  --sky-horizon: #070b13;
+  --sky-glow: rgba(205, 225, 255, 0.15);
+}
+#weather-bg.sky-snow-night {
+  --sky-top: #111829;
+  --sky-mid: #0a0f1b;
+  --sky-horizon: #04070d;
+  --sky-glow: rgba(160, 185, 235, 0.1);
+}
+/* Nascer/pôr do sol: brilho quente e horizonte rosado */
+#weather-bg.is-twilight {
+  --sky-mid: #160f22;
+  --sky-horizon: #1e0f1c;
+  --sky-glow: rgba(255, 140, 90, 0.18);
 }
 
 #weather-particles-canvas {
@@ -150,6 +243,8 @@ h3 {
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.7s ease;
   transform: translateZ(0);
 }
 
