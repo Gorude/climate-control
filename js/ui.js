@@ -39,6 +39,19 @@ function showLoaderError() {
 }
 window.showLoaderError = showLoaderError;
 
+// --- HORÁRIOS NO FUSO DA CIDADE EXIBIDA ---
+function formatTimeInCity(ms, withSeconds = false) {
+  const options = { hour: '2-digit', minute: '2-digit' };
+  if (withSeconds) options.second = '2-digit';
+  if (globalWeatherData && globalWeatherData.timezone) options.timeZone = globalWeatherData.timezone;
+  try {
+    return new Date(ms).toLocaleTimeString('pt-BR', options);
+  } catch (e) {
+    delete options.timeZone;
+    return new Date(ms).toLocaleTimeString('pt-BR', options);
+  }
+}
+
 // --- STATUS DA CONEXÃO COM A API ---
 function setApiStatus(ok) {
   const badge = document.getElementById('api-status');
@@ -51,14 +64,7 @@ function setApiStatus(ok) {
 
   const lastUpdate = document.getElementById('menu-last-update');
   if (lastUpdate && lastFetchTime) {
-    const options = { hour: '2-digit', minute: '2-digit' };
-    if (globalWeatherData && globalWeatherData.timezone) options.timeZone = globalWeatherData.timezone;
-    let time;
-    try {
-      time = new Date(lastFetchTime).toLocaleTimeString('pt-BR', options);
-    } catch (e) {
-      time = formatClockTime(new Date(lastFetchTime));
-    }
+    const time = formatTimeInCity(lastFetchTime);
     lastUpdate.innerText = ok ? `Última atualização às ${time}` : `Offline • dados de ${time}`;
   }
 
@@ -92,17 +98,7 @@ function showToast(message) {
 
 // --- RELÓGIO EM TEMPO REAL (no fuso horário da cidade exibida) ---
 function updateClock() {
-  const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-  if (globalWeatherData && globalWeatherData.timezone) {
-    options.timeZone = globalWeatherData.timezone;
-  }
-  let timeStr;
-  try {
-    timeStr = new Date().toLocaleTimeString('pt-BR', options);
-  } catch (e) {
-    delete options.timeZone;
-    timeStr = new Date().toLocaleTimeString('pt-BR', options);
-  }
+  const timeStr = formatTimeInCity(Date.now(), true);
   const clockEl = document.getElementById('clock');
   if (clockEl) clockEl.innerText = timeStr;
   const menuClock = document.getElementById('menu-clock-text');
@@ -157,6 +153,12 @@ window.toggleMoreMenu = function (show) {
   overlay.classList.toggle('active', willShow);
   if (btn) btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
 };
+
+// O menu rápido só existe abaixo de 1024px: fecha-o se a tela crescer com ele aberto
+const desktopHeaderQuery = window.matchMedia('(min-width: 1024px)');
+desktopHeaderQuery.addEventListener('change', (e) => {
+  if (e.matches) toggleMoreMenu(false);
+});
 
 function updateMenuStates() {
   const pStatus = document.getElementById('menu-particles-status');
@@ -269,8 +271,8 @@ function updateWellbeingRecommendations() {
   if (!container) return;
   if (!globalWeatherData) {
     container.innerHTML = `
-      <div style="text-align: center; color: var(--text-info); margin-top: 40px;">
-          <i data-lucide="cloud-off" width="24" height="24" style="margin-bottom: 12px; opacity: 0.7;"></i>
+      <div class="wellbeing-empty">
+          <i data-lucide="cloud-off" width="24" height="24"></i>
           <p>Nenhum dado meteorológico disponível para análise.</p>
       </div>
     `;
@@ -633,6 +635,7 @@ function renderForecast() {
   if (!h || !h.time) return;
 
   container.innerHTML = '';
+  container.classList.toggle('is-daily', currentForecastTab === '7d');
   const startIndex = getCurrentHourlyIndex(h, c);
 
   if (currentForecastTab === '24h') {
@@ -681,14 +684,14 @@ function renderForecast() {
       card.title = `${dwmo.t} — ver previsão de 24h deste dia`;
       card.addEventListener('click', () => viewDayForecast(i));
       card.innerHTML = `
-        <div class="hour-time" style="font-weight: 600;">${isToday ? 'Hoje' : daysOfWeek[dDate.getDay()]}</div>
-        <i data-lucide="${dwmo.i}" width="26" height="26" style="color:${dwmo.c};"></i>
-        <div class="hour-temp day-temp">
-            <span style="color:var(--accent-yellow);">${maxT}°</span>
-            <span style="color:var(--accent-cyan);">${minT}°</span>
-        </div>
-        <div class="hour-prob">${probMax != null ? probMax + '%' : '--'}</div>
+        <div class="hour-time day-name">${isToday ? 'Hoje' : daysOfWeek[dDate.getDay()]}</div>
+        <i data-lucide="${dwmo.i}" width="26" height="26" class="day-icon" style="color:${dwmo.c};"></i>
+        <div class="hour-prob day-prob">${probMax != null ? probMax + '%' : '--'}</div>
         <div class="day-rain">${rainSum.toFixed(1)} mm</div>
+        <div class="hour-temp day-temp">
+            <span class="t-max">${maxT}°</span>
+            <span class="t-min">${minT}°</span>
+        </div>
       `;
       container.appendChild(card);
     }
@@ -721,7 +724,7 @@ function setForecastTabButtons(tab) {
 window.switchForecast = function (tab) {
   currentForecastTab = tab;
   if (tab === '24h') selectedDayIndex = 0;
-  setForecastTitle(tab === '24h' ? 'Previsão (Próximas 24h)' : 'Previsão (7 Dias)');
+  setForecastTitle(tab === '24h' ? 'Próximas 24h' : 'Próximos 7 dias');
   setForecastTabButtons(tab);
   renderForecast();
   const container = document.getElementById('forecast-container');
@@ -738,7 +741,7 @@ window.viewDayForecast = function (dayIndex) {
     const d = globalWeatherData.daily;
     const dDate = new Date(d.time[dayIndex] + 'T12:00:00');
     const dayName = dayIndex === 1 ? 'Hoje' : daysOfWeek[dDate.getDay()];
-    setForecastTitle(`24h (${dayName})`);
+    setForecastTitle(dayIndex === 1 ? 'Hoje' : dayName);
   }
   renderForecast();
   const container = document.getElementById('forecast-container');
@@ -754,7 +757,7 @@ window.switchAstro = function (tab) {
 
   if (btnSolar) btnSolar.classList.toggle('active', tab === 'solar');
   if (btnLunar) btnLunar.classList.toggle('active', tab === 'lunar');
-  if (viewSolar) viewSolar.style.display = tab === 'solar' ? 'block' : 'none';
+  if (viewSolar) viewSolar.style.display = tab === 'solar' ? 'flex' : 'none';
   if (viewLunar) viewLunar.style.display = tab === 'lunar' ? 'flex' : 'none';
 };
 
@@ -829,16 +832,19 @@ function populateUI() {
       : c.temperature_2m;
   const diffTemp = Math.round((c.temperature_2m - prevTemp) * 10) / 10;
 
-  let trendTempHtml;
-  if (diffTemp > 0) {
-    trendTempHtml = `<i data-lucide="trending-up" width="16" height="16" color="#ef4444"></i> <span style="color: #ef4444;">+${diffTemp.toFixed(1)}°</span>`;
-  } else if (diffTemp < 0) {
-    trendTempHtml = `<i data-lucide="trending-down" width="16" height="16" color="#3b82f6"></i> <span style="color: #3b82f6;">${diffTemp.toFixed(1)}°</span>`;
-  } else {
-    trendTempHtml = `<i data-lucide="minus" width="16" height="16" color="var(--text-muted)"></i> <span style="color: var(--text-muted);">0.0°</span>`;
-  }
   const trendTempEl = document.getElementById('trend-temp');
-  if (trendTempEl) trendTempEl.innerHTML = trendTempHtml;
+  if (trendTempEl) {
+    const dir = diffTemp > 0 ? 'up' : diffTemp < 0 ? 'down' : 'flat';
+    const icon = { up: 'trending-up', down: 'trending-down', flat: 'minus' }[dir];
+    const text = (diffTemp > 0 ? '+' : '') + diffTemp.toFixed(1) + '° em 1h';
+    trendTempEl.className = `trend-chip ${dir}`;
+    trendTempEl.innerHTML = `<i data-lucide="${icon}" width="14" height="14"></i><span>${text}</span>`;
+  }
+
+  const valUpdated = document.getElementById('val-updated');
+  if (valUpdated && lastFetchTime) {
+    valUpdated.innerText = `Atualizado às ${formatTimeInCity(lastFetchTime)}`;
+  }
 
   const valFeels = document.getElementById('val-feels');
   if (valFeels) {
@@ -863,7 +869,7 @@ function populateUI() {
   // O ícone principal precisa ser recriado: o lucide substitui o <i> por <svg>
   const iconWrapper = document.querySelector('.main-icon-wrapper');
   if (iconWrapper) {
-    iconWrapper.innerHTML = `<i data-lucide="${wmo.i}" id="main-icon" stroke-width="1.5" style="color:${wmo.c}; filter: drop-shadow(0 0 25px ${wmo.c});" aria-label="${escapeHtml(wmo.t)}"></i>`;
+    iconWrapper.innerHTML = `<i data-lucide="${wmo.i}" id="main-icon" stroke-width="1.5" style="color:${wmo.c}; filter: drop-shadow(0 0 22px ${wmo.c}66);" aria-label="${escapeHtml(wmo.t)}"></i>`;
   }
 
   // Sol e Crepúsculo (horários locais da cidade, sem conversão de fuso)
@@ -1066,6 +1072,14 @@ function populateUI() {
   const uvPct = Math.max(0, Math.min(1, currentUv / 11));
   const uvRing = document.getElementById('uv-ring-mini');
   if (uvRing) uvRing.style.strokeDashoffset = 200 - 200 * uvPct;
+
+  // Nebulosidade
+  const valCloud = document.getElementById('val-cloud');
+  if (valCloud) valCloud.innerText = c.cloud_cover != null ? c.cloud_cover : '--';
+  const trendCloud = document.getElementById('trend-cloud');
+  if (trendCloud) {
+    trendCloud.innerHTML = getTrend(c.cloud_cover, h.cloud_cover ? h.cloud_cover[prevIndex] : null);
+  }
 
   // Ponto de Orvalho Atual
   const currentDew =

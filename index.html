@@ -208,58 +208,33 @@
     </nav>
     <!-- BARRA DE CIDADES FAVORITAS -->
     <div class="favorites-bar-container">
-      <div class="favorites-bar" id="favorites-bar"></div>
+      <div class="favorites-bar" id="favorites-bar" aria-label="Cidades favoritas"></div>
     </div>
-
 
     <main class="dashboard-container">
       <!-- Recipiente Dinâmico para Alertas Severos -->
       <div id="alert-container" class="alert-container"></div>
 
-      <!-- PAINEL UNIFICADO (BENTO BOX) -->
+      <!--
+        PAINEL UNIFICADO (BENTO BOX)
+        A ordem no DOM é a ordem ideal no celular (do mais consultado ao menos consultado).
+        Em telas maiores, o posicionamento é feito por grid-template-areas no CSS.
+      -->
       <div class="dashboard-board">
-        <!-- 1. Visão Geral (Top Left) -->
-        <div class="grid-cell cell-current">
+        <!-- 1. Agora -->
+        <section class="grid-cell cell-current" aria-labelledby="title-current">
           <div class="cell-header">
-            <div class="cell-header-title">
-              <i data-lucide="thermometer"></i> Visão Geral
-              <div
-                id="trend-temp"
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 4px;
-                  font-size: 1rem;
-                  font-weight: 600;
-                  padding: 4px 10px;
-                  border-radius: 20px;
-                  background: rgba(0, 0, 0, 0.3);
-                  border: 1px solid rgba(255, 255, 255, 0.05);
-                "
-                title="Variação na última hora"
-              >
-                <i data-lucide="minus" width="16" height="16" color="var(--text-muted)"></i>
-                <span style="color: var(--text-muted)">--°</span>
-              </div>
-            </div>
+            <h2 class="cell-header-title" id="title-current">
+              <i data-lucide="thermometer"></i> Agora
+            </h2>
+            <span class="cell-header-meta" id="val-updated"></span>
           </div>
-          <div class="temp-display">
-            <div>
-              <div style="display: flex; align-items: center; gap: 15px">
-                <div class="huge-temp" id="val-temp">--<span>°</span></div>
-              </div>
-              <div class="cond-desc" id="val-desc" style="margin-top: 5px">
-                Processando...
-              </div>
-              <div
-                style="
-                  color: var(--text-muted);
-                  font-size: 0.9rem;
-                  margin-bottom: 15px;
-                "
-              >
-                Sensação Térmica:
-                <span id="val-feels" style="color: #fff">--°C</span>
+          <div class="current-main">
+            <div class="current-info">
+              <div class="huge-temp" id="val-temp">--<span>°</span></div>
+              <div class="cond-desc" id="val-desc">Processando...</div>
+              <div class="feels-like">
+                Sensação térmica <span id="val-feels">--°C</span>
               </div>
             </div>
             <div class="main-icon-wrapper">
@@ -268,23 +243,24 @@
           </div>
           <div class="min-max-row">
             <div class="min-max-item">
-              <span>Máxima:</span
-              ><span id="val-max" style="color: var(--accent-yellow)">--°</span>
+              <span>Máx</span><strong id="val-max" class="t-max">--°</strong>
             </div>
             <div class="min-max-item">
-              <span>Mínima:</span
-              ><span id="val-min" style="color: var(--accent-cyan)">--°</span>
+              <span>Mín</span><strong id="val-min" class="t-min">--°</strong>
+            </div>
+            <div class="trend-chip" id="trend-temp" title="Variação na última hora">
+              <i data-lucide="minus" width="14" height="14"></i><span>--°</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- 2. Previsão (Top Right - Spans 2 Cols) -->
-        <div class="grid-cell cell-hourly">
+        <!-- 2. Previsão 24h / 7 dias -->
+        <section class="grid-cell cell-hourly" aria-labelledby="forecast-header-title">
           <div class="cell-header">
-            <div class="cell-header-title" id="forecast-header-title">
-              <i data-lucide="calendar-clock"></i> Previsão (Próximas 24h)
-            </div>
-            <div class="forecast-toggle">
+            <h2 class="cell-header-title" id="forecast-header-title">
+              <i data-lucide="calendar-clock"></i> Próximas 24h
+            </h2>
+            <div class="seg" role="group" aria-label="Período da previsão">
               <button
                 id="btn-24h"
                 class="active"
@@ -301,40 +277,233 @@
           <div class="hourly-scroll" id="forecast-container">
             <!-- Gerado pelo JS -->
           </div>
-        </div>
+        </section>
 
-        <!-- 3. Ciclos Celestes (Middle Left) -->
-        <div class="grid-cell cell-sun">
-          <div class="cell-header">
-            <div class="cell-header-title">
-              <i data-lucide="compass"></i> Ciclos Celestes
+        <!-- 3. Chuva / Temperatura (gráfico) -->
+        <section class="grid-cell cell-precip" aria-labelledby="precip-header-title">
+          <div class="cell-header cell-header-stack">
+            <div class="cell-header-row">
+              <h2 class="cell-header-title" id="precip-header-title">
+                <i data-lucide="cloud-rain"></i> Chuva
+              </h2>
+              <div class="seg" role="group" aria-label="Tipo de gráfico">
+                <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">
+                  Chuva
+                </button>
+                <button id="btn-precip-temp" onclick="switchPrecipView('temp')">
+                  Temperatura
+                </button>
+              </div>
             </div>
-            <div class="forecast-toggle" style="margin-left: auto">
-              <button
-                id="btn-solar"
-                class="active"
-                onclick="switchAstro('solar')"
-              >
-                Sol
-              </button>
+            <div class="cell-header-row">
+              <div class="cell-header-meta">
+                <span id="meta-rain"
+                  >Acumulado: <strong id="val-precip">-- mm</strong></span
+                >
+                <span id="meta-temp" class="meta-temp" style="display: none"
+                  >Variação: <strong id="val-temp-range">--° — --°</strong></span
+                >
+              </div>
+              <div class="seg seg-sm" id="precip-sub-toggle" role="group" aria-label="Período do gráfico">
+                <button
+                  id="btn-precip-forecast"
+                  class="active"
+                  onclick="switchPrecipSubTab('forecast')"
+                >
+                  Previsão
+                </button>
+                <button id="btn-precip-history" onclick="switchPrecipSubTab('history')">
+                  Histórico
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" id="view-precip-rain">
+            <canvas id="chart-precip" aria-label="Gráfico de chuva" role="img"></canvas>
+          </div>
+          <div class="chart-container" id="view-precip-temp" style="display: none">
+            <canvas id="chart-temp-history" aria-label="Gráfico de temperatura" role="img"></canvas>
+          </div>
+        </section>
+
+        <!-- 4. Detalhes atmosféricos -->
+        <section class="grid-cell cell-atmos" aria-label="Detalhes atmosféricos">
+          <div class="atmos-item">
+            <div class="atmos-icon">
+              <i data-lucide="droplets" width="22" height="22" color="var(--accent-blue)"></i>
+            </div>
+            <div class="atmos-text">
+              <div class="atmos-label">Umidade</div>
+              <div class="atmos-val">
+                <span id="val-humidity" class="main-num">--</span>
+                <span class="unit">%</span>
+                <span id="trend-humidity"></span>
+              </div>
+            </div>
+          </div>
+          <div class="atmos-item">
+            <div class="atmos-icon">
+              <div class="uv-mini-gauge">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="uvGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#4ade80" />
+                      <stop offset="50%" stop-color="#facc15" />
+                      <stop offset="100%" stop-color="#ef4444" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M 20 80 A 42.4 42.4 0 1 1 80 80"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    id="uv-ring-mini"
+                    d="M 20 80 A 42.4 42.4 0 1 1 80 80"
+                    fill="none"
+                    stroke="url(#uvGrad)"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                    stroke-dasharray="200"
+                    stroke-dashoffset="200"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div class="atmos-text">
+              <div class="atmos-label">Índice UV</div>
+              <div class="atmos-val">
+                <span id="val-uv" class="main-num">--</span>
+                <span id="trend-uv"></span>
+              </div>
+            </div>
+          </div>
+          <div class="atmos-item">
+            <div class="atmos-icon">
+              <i data-lucide="gauge" width="22" height="22" color="#a855f7"></i>
+            </div>
+            <div class="atmos-text">
+              <div class="atmos-label">Pressão</div>
+              <div class="atmos-val">
+                <span id="val-pressure" class="main-num">--</span>
+                <span class="unit">hPa</span>
+                <span id="trend-pressure"></span>
+              </div>
+            </div>
+          </div>
+          <div class="atmos-item">
+            <div class="atmos-icon">
+              <i data-lucide="thermometer" width="22" height="22" color="#38bdf8"></i>
+            </div>
+            <div class="atmos-text">
+              <div class="atmos-label" title="Ponto de orvalho">Orvalho</div>
+              <div class="atmos-val">
+                <span id="val-dew" class="main-num">--</span>
+                <span class="unit">°C</span>
+                <span id="trend-dew"></span>
+              </div>
+            </div>
+          </div>
+          <div class="atmos-item">
+            <div class="atmos-icon">
+              <i data-lucide="eye" width="22" height="22" color="#4ade80"></i>
+            </div>
+            <div class="atmos-text">
+              <div class="atmos-label">Visibilidade</div>
+              <div class="atmos-val">
+                <span id="val-vis" class="main-num">--</span>
+                <span class="unit">km</span>
+                <span id="trend-vis"></span>
+              </div>
+            </div>
+          </div>
+          <div class="atmos-item">
+            <div class="atmos-icon">
+              <i data-lucide="cloud" width="22" height="22" color="#94a3b8"></i>
+            </div>
+            <div class="atmos-text">
+              <div class="atmos-label">Nebulosidade</div>
+              <div class="atmos-val">
+                <span id="val-cloud" class="main-num">--</span>
+                <span class="unit">%</span>
+                <span id="trend-cloud"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Vento -->
+        <section class="grid-cell cell-wind" aria-labelledby="wind-header-title">
+          <div class="cell-header cell-header-stack">
+            <div class="cell-header-row">
+              <h2 class="cell-header-title" id="wind-header-title">
+                <i data-lucide="wind"></i> Vento
+              </h2>
+              <div class="seg seg-sm" id="wind-sub-toggle" role="group" aria-label="Período do vento">
+                <button
+                  id="btn-wind-forecast"
+                  class="active"
+                  onclick="switchWindSubTab('forecast')"
+                >
+                  Previsão
+                </button>
+                <button id="btn-wind-history" onclick="switchWindSubTab('history')">
+                  Histórico
+                </button>
+              </div>
+            </div>
+            <div class="cell-header-meta">
+              Rajada máx. em 24h: <strong id="val-gusts">-- km/h</strong>
+            </div>
+          </div>
+
+          <div class="compass-wrapper">
+            <div class="compass-dial" aria-hidden="true">
+              <span class="c-n">N</span><span class="c-e">L</span
+              ><span class="c-s">S</span><span class="c-w">O</span>
+              <div class="compass-needle" id="wind-needle">
+                <div class="needle-head"></div>
+                <div class="needle-tail"></div>
+              </div>
+            </div>
+            <div class="wind-info">
+              <div class="wind-speed">
+                <span id="val-wind-sfc">--</span>
+                <span class="unit">km/h</span>
+              </div>
+              <div class="wind-dir">
+                Soprando em direção ao
+                <strong id="val-wind-dest">--</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-container chart-wind">
+            <canvas id="chart-wind" aria-label="Gráfico de vento" role="img"></canvas>
+          </div>
+        </section>
+
+        <!-- 6. Ciclos Celestes -->
+        <section class="grid-cell cell-sun" aria-labelledby="title-sun">
+          <div class="cell-header">
+            <h2 class="cell-header-title" id="title-sun">
+              <i data-lucide="compass"></i> Céu
+            </h2>
+            <div class="seg" role="group" aria-label="Sol ou Lua">
+              <button id="btn-solar" class="active" onclick="switchAstro('solar')">Sol</button>
               <button id="btn-lunar" onclick="switchAstro('lunar')">Lua</button>
             </div>
           </div>
 
           <!-- Visão Solar -->
-          <div id="astro-solar-view">
+          <div id="astro-solar-view" class="astro-view">
             <div class="sun-arc-container">
-              <svg viewBox="0 0 200 80">
+              <svg viewBox="0 12 200 64" aria-hidden="true">
                 <defs>
                   <clipPath id="sun-clip">
-                    <rect
-                      id="sun-clip-rect"
-                      x="0"
-                      y="-30"
-                      width="20"
-                      height="120"
-                      style="transition: width 2s cubic-bezier(0.4, 0, 0.2, 1)"
-                    />
+                    <rect id="sun-clip-rect" x="0" y="-30" width="20" height="120" />
                   </clipPath>
                 </defs>
                 <path
@@ -352,179 +521,60 @@
                   stroke-width="2.5"
                   clip-path="url(#sun-clip)"
                 />
-                <circle
-                  id="sun-dot"
-                  cx="20"
-                  cy="70"
-                  r="5"
-                  fill="var(--accent-yellow)"
-                  style="
-                    transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
-                    filter: drop-shadow(0 0 6px var(--accent-yellow));
-                  "
-                />
+                <circle id="sun-dot" cx="20" cy="70" r="5" fill="var(--accent-yellow)" />
               </svg>
             </div>
             <div class="sun-times">
               <div>
-                <span style="color: #fff; font-weight: 600" id="val-sunrise"
-                  >--:--</span
-                ><span
-                  ><i
-                    data-lucide="sunrise"
-                    width="14" height="14"
-                    color="#f97316"
-                    style="vertical-align: middle"
-                  ></i>
-                  Nascer</span
-                >
+                <strong id="val-sunrise">--:--</strong>
+                <span><i data-lucide="sunrise" width="14" height="14" color="#f97316"></i> Nascer</span>
               </div>
               <div>
-                <span
-                  style="
-                    color: var(--accent-cyan);
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 4px;
-                  "
-                >
+                <strong class="daylight">
                   <span id="val-daylight">--h --m</span>
                   <span id="daylight-trend"></span>
-                </span>
-                <span>Luz do Dia</span>
+                </strong>
+                <span>Luz do dia</span>
               </div>
               <div>
-                <span style="color: #fff; font-weight: 600" id="val-sunset"
-                  >--:--</span
-                ><span
-                  ><i
-                    data-lucide="sunset"
-                    width="14" height="14"
-                    color="#a855f7"
-                    style="vertical-align: middle"
-                  ></i>
-                  Pôr do sol</span
-                >
+                <strong id="val-sunset">--:--</strong>
+                <span><i data-lucide="sunset" width="14" height="14" color="#a855f7"></i> Pôr do sol</span>
               </div>
             </div>
-
-            <!-- Indicador Golden Hour -->
-            <div style="text-align: center; margin-top: 15px">
-              <div
-                style="
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  background: rgba(250, 204, 21, 0.1);
-                  border: 1px solid rgba(250, 204, 21, 0.2);
-                  padding: 4px 12px;
-                  border-radius: 20px;
-                  font-size: 0.75rem;
-                  color: var(--accent-yellow);
-                  font-weight: 500;
-                "
-              >
+            <div class="pill-row">
+              <div class="pill pill-yellow">
                 <i data-lucide="camera" width="12" height="12"></i> Golden Hour:
-                <span id="val-golden-hour" style="color: #fff">--:--</span>
+                <span id="val-golden-hour">--:--</span>
               </div>
             </div>
           </div>
 
           <!-- Visão Lunar -->
-          <div
-            id="astro-lunar-view"
-            style="
-              display: none;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 100%;
-              gap: 8px;
-              margin-top: 5px;
-            "
-          >
-            <div style="margin-bottom: 5px">
-              <svg
-                id="moon-svg"
-                viewBox="0 0 100 100"
-                width="65"
-                height="65"
-                style="filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.2))"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="48"
-                  fill="rgba(255, 255, 255, 0.05)"
-                  stroke="rgba(255, 255, 255, 0.1)"
-                  stroke-width="1"
-                />
-                <path id="moon-lit-path" fill="var(--accent-yellow)" d="" />
-              </svg>
+          <div id="astro-lunar-view" class="astro-view lunar-view" style="display: none">
+            <svg id="moon-svg" viewBox="0 0 100 100" width="64" height="64" aria-hidden="true">
+              <circle
+                cx="50"
+                cy="50"
+                r="48"
+                fill="rgba(255, 255, 255, 0.05)"
+                stroke="rgba(255, 255, 255, 0.1)"
+                stroke-width="1"
+              />
+              <path id="moon-lit-path" fill="var(--accent-yellow)" d="" />
+            </svg>
+            <div class="moon-phase" id="val-moon-phase">--</div>
+            <div class="moon-stats">
+              <div>Iluminação: <strong id="val-moon-ill">--%</strong></div>
+              <div>Idade: <strong id="val-moon-age">-- dias</strong></div>
             </div>
-            <div
-              style="
-                font-size: 1.2rem;
-                font-weight: 700;
-                color: var(--accent-cyan);
-              "
-              id="val-moon-phase"
-            >
-              --
-            </div>
-            <div
-              style="
-                display: flex;
-                gap: 20px;
-                font-size: 0.85rem;
-                color: var(--text-muted);
-                margin-top: 5px;
-                background: rgba(0, 0, 0, 0.2);
-                padding: 6px 15px;
-                border-radius: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.05);
-              "
-            >
-              <div>
-                Iluminação:
-                <span id="val-moon-ill" style="color: #fff; font-weight: 600"
-                  >--%</span
-                >
-              </div>
-              <div>
-                Idade:
-                <span id="val-moon-age" style="color: #fff; font-weight: 600"
-                  >-- dias</span
-                >
-              </div>
-            </div>
-
-            <!-- Indicador Ponto Sublunar -->
-            <div style="text-align: center; margin-top: 5px">
+            <div class="pill-row">
               <div
-                style="
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  background: rgba(0, 210, 211, 0.1);
-                  border: 1px solid rgba(0, 210, 211, 0.2);
-                  padding: 4px 12px;
-                  border-radius: 20px;
-                  font-size: 0.75rem;
-                  color: var(--accent-cyan);
-                  font-weight: 500;
-                "
-                title="Ponto Sublunar (Onde a lua está a pino na Terra agora)"
+                class="pill pill-cyan"
+                title="Ponto Sublunar (onde a Lua está a pino na Terra agora)"
               >
                 <i data-lucide="map-pin" width="12" height="12"></i> Vertical em:
-                <span id="val-moon-location" style="color: #fff">--</span>
+                <span id="val-moon-location">--</span>
               </div>
-            </div>
-
-            <!-- Indicador de Visibilidade Local -->
-            <div style="text-align: center; margin-top: 2px">
               <div id="badge-moon-vis" class="moon-vis-badge">
                 <span id="moon-vis-icon-holder"
                   ><i data-lucide="eye" width="12" height="12"></i
@@ -533,304 +583,7 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- 4. Precipitação / Histórico de Temperatura (Middle Center) -->
-        <div class="grid-cell cell-precip">
-          <div
-            class="cell-header"
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-            "
-          >
-            <!-- Lado Esquerdo: Título e Meta -->
-            <div style="display: flex; flex-direction: column; gap: 4px">
-              <div
-                class="cell-header-title"
-                id="precip-header-title"
-                style="margin-top: 5px"
-              >
-                <i data-lucide="cloud-rain"></i> Chuva (24h)
-              </div>
-              <div
-                id="precip-header-meta"
-                style="
-                  font-size: 0.8rem;
-                  color: var(--accent-cyan);
-                  text-transform: none;
-                "
-              >
-                <span id="meta-rain"
-                  >Acumulado:
-                  <span id="val-precip" style="font-weight: bold"
-                    >-- mm</span
-                  ></span
-                >
-                <span
-                  id="meta-temp"
-                  style="
-                    display: none;
-                    font-size: 0.7rem;
-                    color: var(--accent-yellow);
-                  "
-                  >Variação:
-                  <span id="val-temp-range" style="font-weight: bold"
-                    >--° — --°</span
-                  ></span
-                >
-              </div>
-            </div>
-
-            <!-- Lado Direito: Switch e Indicador -->
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 6px;
-              "
-            >
-              <div class="forecast-toggle" style="margin-right: 0">
-                <button
-                  id="btn-precip-rain"
-                  class="active"
-                  onclick="switchPrecipView('rain')"
-                >
-                  Chuva
-                </button>
-                <button id="btn-precip-temp" onclick="switchPrecipView('temp')">
-                  Temperatura
-                </button>
-              </div>
-              <div
-                class="forecast-toggle"
-                id="precip-sub-toggle"
-                style="margin-right: 0; padding: 2px"
-              >
-                <button
-                  id="btn-precip-forecast"
-                  class="active"
-                  style="padding: 3px 8px; font-size: 0.65rem"
-                  onclick="switchPrecipSubTab('forecast')"
-                >
-                  Previsão
-                </button>
-                <button
-                  id="btn-precip-history"
-                  style="padding: 3px 8px; font-size: 0.65rem"
-                  onclick="switchPrecipSubTab('history')"
-                >
-                  Histórico
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="chart-container" id="view-precip-rain">
-            <canvas id="chart-precip"></canvas>
-          </div>
-          <div
-            class="chart-container"
-            id="view-precip-temp"
-            style="display: none"
-          >
-            <canvas id="chart-temp-history"></canvas>
-          </div>
-        </div>
-
-        <!-- 5. Perfil Eólico (Middle Right) -->
-        <div class="grid-cell cell-wind">
-          <div
-            class="cell-header"
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-            "
-          >
-            <!-- Lado Esquerdo: Título e Meta -->
-            <div style="display: flex; flex-direction: column; gap: 4px">
-              <div
-                class="cell-header-title"
-                id="wind-header-title"
-                style="margin-top: 5px"
-              >
-                <i data-lucide="wind"></i> Vento (24h)
-              </div>
-              <div
-                style="
-                  font-size: 0.8rem;
-                  color: var(--text-muted);
-                  text-transform: none;
-                "
-              >
-                Rajada Max:
-                <span id="val-gusts" style="font-weight: bold; color: #fff"
-                  >-- km/h</span
-                >
-              </div>
-            </div>
-
-            <!-- Lado Direito: Toggle -->
-            <div
-              class="forecast-toggle"
-              id="wind-sub-toggle"
-              style="margin-right: 0; padding: 2px"
-            >
-              <button
-                id="btn-wind-forecast"
-                class="active"
-                style="padding: 3px 8px; font-size: 0.65rem"
-                onclick="switchWindSubTab('forecast')"
-              >
-                Previsão
-              </button>
-              <button
-                id="btn-wind-history"
-                style="padding: 3px 8px; font-size: 0.65rem"
-                onclick="switchWindSubTab('history')"
-              >
-                Histórico
-              </button>
-            </div>
-          </div>
-
-          <!-- Bússola e Dados Numéricos -->
-          <div class="compass-wrapper">
-            <div class="compass-dial">
-              <span class="c-n">N</span><span class="c-e">L</span
-              ><span class="c-s">S</span><span class="c-w">O</span>
-              <div class="compass-needle" id="wind-needle">
-                <div class="needle-head"></div>
-                <div class="needle-tail"></div>
-              </div>
-            </div>
-            <div class="wind-info">
-              <div style="font-size: 1.8rem; font-weight: 700; color: #fff">
-                <span id="val-wind-sfc">--</span>
-                <span
-                  style="
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    color: var(--text-muted);
-                  "
-                  >km/h</span
-                >
-              </div>
-              <div style="font-size: 0.8rem; color: var(--text-muted)">
-                Soprando em direção ao <br /><span
-                  id="val-wind-dest"
-                  style="color: var(--accent-cyan); font-weight: 600"
-                  >--</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="chart-container"
-            style="min-height: 80px; margin-top: 5px"
-          >
-            <canvas id="chart-wind"></canvas>
-          </div>
-        </div>
-
-        <!-- 6. Atmosfera (Bottom Horizontal Strip) -->
-        <div class="grid-cell cell-atmos">
-          <div class="atmos-item">
-            <i data-lucide="droplets" width="32" height="32" color="var(--accent-blue)"></i>
-            <div>
-              <div class="atmos-label">Umidade Relativa</div>
-              <div class="atmos-val premium-center">
-                <span id="val-humidity" class="main-num">--</span>
-                <div class="suffix-wrapper">
-                  <span>%</span>
-                  <span id="trend-humidity"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="atmos-item">
-            <i data-lucide="gauge" width="32" height="32" color="#a855f7"></i>
-            <div>
-              <div class="atmos-label">Pressão (Nível do Mar)</div>
-              <div class="atmos-val premium-center">
-                <span id="val-pressure" class="main-num">--</span>
-                <div class="suffix-wrapper">
-                  <span>hPa</span>
-                  <span id="trend-pressure"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="atmos-item">
-            <i data-lucide="eye" width="32" height="32" color="#4ade80"></i>
-            <div>
-              <div class="atmos-label">Visibilidade</div>
-              <div class="atmos-val premium-center">
-                <span id="val-vis" class="main-num">--</span>
-                <div class="suffix-wrapper">
-                  <span>km</span>
-                  <span id="trend-vis"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="atmos-item">
-            <div class="uv-mini-gauge">
-              <svg viewBox="0 0 100 100">
-                <defs>
-                  <linearGradient id="uvGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#4ade80" />
-                    <stop offset="50%" stop-color="#facc15" />
-                    <stop offset="100%" stop-color="#ef4444" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M 20 80 A 42.4 42.4 0 1 1 80 80"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.05)"
-                  stroke-width="12"
-                  stroke-linecap="round"
-                />
-                <path
-                  id="uv-ring-mini"
-                  d="M 20 80 A 42.4 42.4 0 1 1 80 80"
-                  fill="none"
-                  stroke="url(#uvGrad)"
-                  stroke-width="12"
-                  stroke-linecap="round"
-                  stroke-dasharray="200"
-                  stroke-dashoffset="200"
-                  style="transition: stroke-dashoffset 1.5s ease"
-                />
-              </svg>
-            </div>
-            <div>
-              <div class="atmos-label">Índice UV Atual</div>
-              <div class="atmos-val premium-center">
-                <span id="val-uv" class="main-num">--</span>
-                <div class="suffix-wrapper">
-                  <span id="trend-uv"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="atmos-item">
-            <i data-lucide="thermometer" width="32" height="32" color="#38bdf8"></i>
-            <div>
-              <div class="atmos-label">Ponto de Orvalho</div>
-              <div class="atmos-val premium-center">
-                <span id="val-dew" class="main-num">--</span>
-                <div class="suffix-wrapper">
-                  <span>°C</span>
-                  <span id="trend-dew"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </main>
 
@@ -842,16 +595,9 @@
     ></div>
     <div class="more-menu-panel" id="more-menu-panel" role="dialog" aria-label="Opções">
       <div class="more-menu-header">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <i data-lucide="sliders" width="18" height="18" style="color: var(--accent-cyan)"></i>
-          <span
-            style="
-              font-weight: 600;
-              font-size: 0.95rem;
-              font-family: var(--font-family-title);
-            "
-            >Opções & Satélites</span
-          >
+        <div class="more-menu-title">
+          <i data-lucide="sliders" width="18" height="18"></i>
+          <span>Opções</span>
         </div>
         <button
           class="more-menu-close"
@@ -931,10 +677,7 @@
             <span class="menu-dot-status"></span>
             <span>Satélites Open-Meteo & Radar Ativos</span>
           </div>
-          <div
-            class="menu-info-row"
-            style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px"
-          >
+          <div class="menu-info-row menu-info-muted">
             <span id="menu-season-text">--</span> • <span id="menu-clock-text">--:--</span>
           </div>
         </div>
@@ -966,15 +709,8 @@
         </button>
       </div>
       <div class="wellbeing-content" id="wellbeing-content">
-        <div
-          style="text-align: center; color: var(--text-info); margin-top: 40px"
-        >
-          <i
-            data-lucide="loader"
-            class="spin"
-            width="24" height="24"
-            style="margin-bottom: 12px; opacity: 0.7"
-          ></i>
+        <div class="wellbeing-empty">
+          <i data-lucide="loader" class="spin" width="24" height="24"></i>
           <p>Analisando dados atmosféricos...</p>
         </div>
       </div>
@@ -998,9 +734,7 @@
         </button>
         <div class="map-header">
           <i data-lucide="map" color="var(--accent-cyan)"></i>
-          <h3 style="font-family: var(--font-family-title); font-size: 1.1rem">
-            Radar de Precipitação em Tempo Real
-          </h3>
+          <h3>Radar de Chuva em Tempo Real</h3>
         </div>
         <div id="weather-map-container"></div>
       </div>

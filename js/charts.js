@@ -3,6 +3,8 @@
  */
 
 let chartsObj = {};
+// Rótulos do eixo X sempre na horizontal e espaçados (legíveis em telas estreitas)
+const X_TICKS = { maxRotation: 0, autoSkip: true, autoSkipPadding: 12 };
 let currentPrecipViewState = "rain";
 let rainSubTab = "forecast";
 let tempSubTab = "history";
@@ -123,11 +125,7 @@ function renderCharts(hourly) {
 
   const precipHeaderTitle = document.getElementById("precip-header-title");
   if (precipHeaderTitle && currentPrecipViewState === "rain") {
-    const label =
-      rainSubTab === "forecast"
-        ? "Chuva (Previsão 24h)"
-        : "Chuva (Histórico 24h)";
-    precipHeaderTitle.innerHTML = `<i data-lucide="cloud-rain"></i> ${label}`;
+    precipHeaderTitle.innerHTML = `<i data-lucide="cloud-rain"></i> Chuva`;
   }
 
   const precipCanvas = document.getElementById("chart-precip");
@@ -177,11 +175,12 @@ function renderCharts(hourly) {
           currentIndicator: { index: rainWin.nowIndex },
         },
         scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true, border: { display: false } },
+          x: { grid: { display: false }, ticks: X_TICKS },
+          y: { beginAtZero: true, border: { display: false }, ticks: { maxTicksLimit: 6 } },
           y1: {
             beginAtZero: true,
             max: 100,
+            ticks: { maxTicksLimit: 6, callback: (v) => v + "%" },
             position: "right",
             border: { display: false },
             grid: { display: false },
@@ -210,14 +209,6 @@ function renderCharts(hourly) {
   const valGustsEl = document.getElementById("val-gusts");
   if (valGustsEl) valGustsEl.innerText = Math.round(maxGusts) + " km/h";
 
-  const windHeaderTitle = document.getElementById("wind-header-title");
-  if (windHeaderTitle) {
-    const windLabel =
-      windSubTab === "forecast"
-        ? "Vento (Previsão 24h)"
-        : "Vento (Histórico 24h)";
-    windHeaderTitle.innerHTML = `<i data-lucide="wind"></i> ${windLabel}`;
-  }
 
   const windCanvas = document.getElementById("chart-wind");
   if (windCanvas) {
@@ -283,11 +274,7 @@ function renderCharts(hourly) {
   }
 
   if (precipHeaderTitle && currentPrecipViewState === "temp") {
-    const label =
-      tempSubTab === "forecast"
-        ? "Temperatura (Previsão 24h)"
-        : "Temperatura (Histórico 24h)";
-    precipHeaderTitle.innerHTML = `<i data-lucide="thermometer"></i> ${label}`;
+    precipHeaderTitle.innerHTML = `<i data-lucide="thermometer"></i> Temperatura`;
   }
 
   const tempCanvas = document.getElementById("chart-temp-history");
@@ -335,10 +322,10 @@ function renderCharts(hourly) {
           currentIndicator: { index: tempWin.nowIndex },
         },
         scales: {
-          x: { grid: { display: false } },
+          x: { grid: { display: false }, ticks: X_TICKS },
           y: {
             border: { display: false },
-            ticks: { callback: (v) => v + "°" },
+            ticks: { maxTicksLimit: 6, callback: (v) => v + "°" },
           },
         },
       },
