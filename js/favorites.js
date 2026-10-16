@@ -1,25 +1,28 @@
 /**
  * AeroSky Weather - Gerenciador de Cidades Favoritas
  * Permite salvar, remover e alternar rapidamente entre cidades favoritas com persistência no LocalStorage.
+ * As cidades são identificadas pelas coordenadas, já que nomes podem se repetir entre estados.
  */
 
 const FavoritesManager = {
   STORAGE_KEY: 'aerosky_favorites',
+  MAX_FAVORITES: 10,
   DEFAULT_FAVORITES: [
-    { name: 'São Paulo, SP', lat: -23.5505, lon: -46.6333 },
-    { name: 'Rio de Janeiro, RJ', lat: -22.9068, lon: -43.1729 },
-    { name: 'Curitiba, PR', lat: -25.4284, lon: -49.2733 },
-    { name: 'Brasília, DF', lat: -15.7975, lon: -47.8919 },
-    { name: 'Naviraí, MS', lat: -23.0647, lon: -54.1983 }
+    { name: 'São Paulo - SP', lat: -23.5505, lon: -46.6333 },
+    { name: 'Rio de Janeiro - RJ', lat: -22.9068, lon: -43.1729 },
+    { name: 'Curitiba - PR', lat: -25.4284, lon: -49.2733 },
+    { name: 'Brasília - DF', lat: -15.7975, lon: -47.8919 },
+    { name: 'Naviraí - MS', lat: -23.065, lon: -54.1906 }
   ],
 
   getFavorites() {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+        // Uma lista vazia é uma escolha válida do usuário: não restaura os padrões
+        if (Array.isArray(parsed)) {
+          return parsed.filter((f) => f && f.name && typeof f.lat === 'number' && typeof f.lon === 'number');
         }
       }
     } catch (e) {
@@ -36,51 +39,32 @@ const FavoritesManager = {
     }
   },
 
-  isFavorite(cityName) {
-    if (!cityName) return false;
-    const cleanTarget = cityName.trim().toLowerCase();
-    const favs = this.getFavorites();
-    return favs.some((f) => {
-      const fName = f.name.trim().toLowerCase();
-      return (
-        fName === cleanTarget ||
-        fName.split(',')[0].trim() === cleanTarget.split(',')[0].trim() ||
-        cleanTarget.includes(fName.split(',')[0].trim())
-      );
-    });
+  getCurrentCity() {
+    return { name: currentCityName, lat: LAT, lon: LON };
   },
 
-  toggleFavorite(currentCityObj) {
-    if (!currentCityObj || !currentCityObj.name) return false;
-    const favs = this.getFavorites();
-    const cleanTarget = currentCityObj.name.trim().toLowerCase();
-    const index = favs.findIndex((f) => {
-      const fName = f.name.trim().toLowerCase();
-      return (
-        fName === cleanTarget ||
-        fName.split(',')[0].trim() === cleanTarget.split(',')[0].trim()
-      );
-    });
+  isFavorite(city) {
+    return this.getFavorites().some((f) => isSameLocation(f, city));
+  },
 
-    let isFavNow = false;
+  toggleFavorite(city = this.getCurrentCity()) {
+    if (!city || !city.name) return false;
+    const favs = this.getFavorites();
+    const index = favs.findIndex((f) => isSameLocation(f, city));
+
+    let isFavNow;
     if (index >= 0) {
       favs.splice(index, 1);
       isFavNow = false;
-      if (typeof showToast === 'function') {
-        showToast(`"${currentCityObj.name}" removida dos favoritos`);
-      }
+      showToast(`"${city.name}" removida dos favoritos`);
     } else {
-      favs.unshift({
-        name: currentCityObj.name,
-        lat: currentCityObj.lat,
-        lon: currentCityObj.lon
-      });
-      // Limita a 10 cidades favoritas
-      if (favs.length > 10) favs.pop();
-      isFavNow = true;
-      if (typeof showToast === 'function') {
-        showToast(`"${currentCityObj.name}" adicionada aos favoritos! ⭐`);
+      if (favs.length >= this.MAX_FAVORITES) {
+        showToast(`Limite de ${this.MAX_FAVORITES} favoritos atingido. Remova uma cidade antes.`);
+        return false;
       }
+      favs.unshift({ name: city.name, lat: city.lat, lon: city.lon });
+      isFavNow = true;
+      showToast(`"${city.name}" adicionada aos favoritos! ⭐`);
     }
 
     this.saveFavorites(favs);
@@ -89,42 +73,30 @@ const FavoritesManager = {
     return isFavNow;
   },
 
-  removeFavorite(name, event) {
+  removeFavorite(city, event) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
     }
-    const favs = this.getFavorites().filter(
-      (f) => f.name.trim().toLowerCase() !== name.trim().toLowerCase()
-    );
+    const favs = this.getFavorites().filter((f) => !isSameLocation(f, city));
     this.saveFavorites(favs);
     this.renderFavoritesBar();
-    if (typeof CONFIG !== 'undefined' && CONFIG.CITY) {
-      this.updateFavoriteStar(this.isFavorite(CONFIG.CITY.name));
-    }
-    if (typeof showToast === 'function') {
-      showToast(`Cidade removida dos favoritos`);
-    }
+    this.updateFavoriteStar();
+    showToast(`"${city.name}" removida dos favoritos`);
   },
 
-  renderFavoritesBar(
-    containerEl = document.getElementById('favorites-bar'),
-    onSelect = selectFavoriteCity
-  ) {
+  renderFavoritesBar(containerEl = document.getElementById('favorites-bar')) {
     if (!containerEl) return;
     const favs = this.getFavorites();
     containerEl.innerHTML = '';
 
     if (favs.length === 0) {
       containerEl.innerHTML =
-        '<span style="font-size:0.8rem; color:var(--text-muted); padding:4px 8px;">Nenhuma cidade favorita salva. Clique na estrela ao lado do nome da cidade para adicionar.</span>';
+        '<span class="favorites-empty">Nenhuma cidade favorita salva. Toque na estrela ao lado do nome da cidade para adicionar.</span>';
       return;
     }
 
-    const currentCityName =
-      typeof CONFIG !== 'undefined' && CONFIG.CITY && CONFIG.CITY.name
-        ? CONFIG.CITY.name.trim().toLowerCase()
-        : '';
+    const current = this.getCurrentCity();
 
     favs.forEach((city) => {
       const chip = document.createElement('div');
@@ -132,47 +104,32 @@ const FavoritesManager = {
       chip.setAttribute('role', 'button');
       chip.setAttribute('tabindex', '0');
       chip.setAttribute('title', `Ver clima em ${city.name}`);
-
-      const chipCityName = city.name.trim().toLowerCase();
-      if (
-        currentCityName &&
-        (chipCityName === currentCityName ||
-          chipCityName.split(',')[0].trim() ===
-            currentCityName.split(',')[0].trim())
-      ) {
-        chip.classList.add('active');
-      }
+      chip.dataset.lat = city.lat;
+      chip.dataset.lon = city.lon;
+      if (isSameLocation(city, current)) chip.classList.add('active');
 
       const label = document.createElement('span');
       label.textContent = city.name;
 
-      const removeBtn = document.createElement('span');
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
       removeBtn.className = 'favorite-chip-remove';
       removeBtn.innerHTML = '&times;';
       removeBtn.setAttribute('title', `Remover ${city.name} dos favoritos`);
-      removeBtn.setAttribute('role', 'button');
-      removeBtn.setAttribute('aria-label', `Remover ${city.name}`);
-      removeBtn.addEventListener('click', (e) =>
-        this.removeFavorite(city.name, e)
-      );
+      removeBtn.setAttribute('aria-label', `Remover ${city.name} dos favoritos`);
+      removeBtn.addEventListener('click', (e) => this.removeFavorite(city, e));
+      removeBtn.addEventListener('keydown', (e) => e.stopPropagation());
 
       chip.appendChild(label);
       chip.appendChild(removeBtn);
 
-      const handleSelect = (e) => {
-        if (e.target === removeBtn) return;
-        if (typeof onSelect === 'function') {
-          onSelect(city);
-        } else if (typeof setLocation === 'function') {
-          setLocation(city.lat, city.lon, city.name);
-        }
-      };
+      const handleSelect = () => setLocation(city.lat, city.lon, city.name, 'manual');
 
       chip.addEventListener('click', handleSelect);
       chip.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          handleSelect(e);
+          handleSelect();
         }
       });
 
@@ -183,64 +140,27 @@ const FavoritesManager = {
   updateFavoriteStar(isFav) {
     const btn = document.getElementById('btn-favorite');
     if (!btn) return;
-    if (typeof isFav === 'undefined') {
-      isFav =
-        typeof CONFIG !== 'undefined' && CONFIG.CITY
-          ? this.isFavorite(CONFIG.CITY.name)
-          : false;
-    }
+    if (typeof isFav === 'undefined') isFav = this.isFavorite(this.getCurrentCity());
 
-    if (isFav) {
-      btn.classList.add('is-favorite');
-      btn.title = 'Remover dos favoritos';
-      btn.setAttribute('aria-label', 'Remover dos favoritos');
-      btn.innerHTML =
-        '<i data-lucide="star" style="fill:#facc15; stroke:#facc15;" size="16"></i>';
-    } else {
-      btn.classList.remove('is-favorite');
-      btn.title = 'Adicionar aos favoritos';
-      btn.setAttribute('aria-label', 'Adicionar aos favoritos');
-      btn.innerHTML = '<i data-lucide="star" size="16"></i>';
-    }
+    const label = isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos';
+    btn.classList.toggle('is-favorite', isFav);
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+    btn.innerHTML = isFav
+      ? '<i data-lucide="star" style="fill:#facc15; stroke:#facc15;" width="16" height="16"></i>'
+      : '<i data-lucide="star" width="16" height="16"></i>';
 
-    if (window.lucide) {
-      window.lucide.createIcons({
-        attrs: { class: ['lucide'] },
-        nameAttr: 'data-lucide',
-        elements: [btn]
-      });
-    }
+    if (window.lucide) lucide.createIcons({ root: btn });
   },
 
-  highlightActiveChip(currentCityName) {
+  highlightActiveChip() {
     const container = document.getElementById('favorites-bar');
     if (!container) return;
-    const chips = container.querySelectorAll('.favorite-chip');
-    const target = currentCityName ? currentCityName.trim().toLowerCase() : '';
-    chips.forEach((chip) => {
-      const text =
-        chip.querySelector('span')?.textContent?.trim()?.toLowerCase() || '';
-      if (
-        target &&
-        (text === target || text.split(',')[0].trim() === target.split(',')[0].trim())
-      ) {
-        chip.classList.add('active');
-      } else {
-        chip.classList.remove('active');
-      }
+    const current = this.getCurrentCity();
+    container.querySelectorAll('.favorite-chip').forEach((chip) => {
+      const chipCity = { lat: parseFloat(chip.dataset.lat), lon: parseFloat(chip.dataset.lon) };
+      chip.classList.toggle('active', isSameLocation(chipCity, current));
     });
   }
 };
-
-/**
- * Função global chamada ao clicar em uma cidade favorita
- */
-function selectFavoriteCity(city) {
-  if (!city) return;
-  if (typeof setLocation === 'function') {
-    setLocation(city.lat, city.lon, city.name);
-  } else if (typeof CONFIG !== 'undefined') {
-    CONFIG.CITY = { name: city.name, lat: city.lat, lon: city.lon };
-    if (typeof forceUpdate === 'function') forceUpdate();
-  }
-}

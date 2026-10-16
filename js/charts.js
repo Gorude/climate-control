@@ -13,7 +13,6 @@ if (typeof Chart !== "undefined") {
   Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.color = "rgba(255, 255, 255, 0.5)";
   Chart.defaults.scale.grid.color = "rgba(255, 255, 255, 0.03)";
-  Chart.defaults.scale.grid.borderColor = "transparent";
 
   Chart.defaults.plugins.tooltip.backgroundColor = "rgba(11, 21, 36, 0.9)";
   Chart.defaults.plugins.tooltip.titleColor = "#ffffff";
@@ -77,6 +76,20 @@ function createChart(canvasId, type, data, options) {
   chartsObj[canvasId] = new Chart(ctx, { type, data, options });
 }
 
+/**
+ * Janela de 24 pontos do gráfico. A previsão começa na hora atual; o histórico
+ * termina nela (inclusive), para que o indicador "agora" marque o horário correto.
+ */
+function getChartWindow(subTab, startIndex, totalCount) {
+  if (subTab === "forecast") {
+    const end = Math.min(totalCount, startIndex + 24);
+    return { start: startIndex, end, nowIndex: 0 };
+  }
+  const end = Math.min(totalCount, startIndex + 1);
+  const start = Math.max(0, end - 24);
+  return { start, end, nowIndex: startIndex - start };
+}
+
 function renderCharts(hourly) {
   if (!hourly || !hourly.time) return;
   const c = globalWeatherData ? globalWeatherData.current : null;
@@ -92,12 +105,12 @@ function renderCharts(hourly) {
   };
 
   // 1. Chuva (Bar & Line)
-  const rainStart =
-    rainSubTab === "forecast" ? startIndex : Math.max(0, startIndex - 24);
-  const rainEnd = Math.min(totalCount, rainStart + 24);
+  const rainWin = getChartWindow(rainSubTab, startIndex, totalCount);
+  const rainStart = rainWin.start;
+  const rainEnd = rainWin.end;
   const rainLabels = hourly.time
     .slice(rainStart, rainEnd)
-    .map((t) => new Date(t).getHours() + "h");
+    .map((t) => parseInt(t.slice(11, 13), 10) + "h");
   const rainData = (hourly.precipitation || []).slice(rainStart, rainEnd);
   const rainProbData = (hourly.precipitation_probability || []).slice(
     rainStart,
@@ -161,12 +174,7 @@ function renderCharts(hourly) {
         layout: { padding: { left: 6, right: 6, top: 8, bottom: 0 } },
         plugins: {
           legend: { display: false },
-          currentIndicator: {
-            index:
-              rainSubTab === "forecast"
-                ? 0
-                : Math.max(0, rainLabels.length - 1),
-          },
+          currentIndicator: { index: rainWin.nowIndex },
         },
         scales: {
           x: { grid: { display: false } },
@@ -184,12 +192,12 @@ function renderCharts(hourly) {
   }
 
   // 2. Vento (Single-Line Area)
-  const windStart =
-    windSubTab === "forecast" ? startIndex : Math.max(0, startIndex - 24);
-  const windEnd = Math.min(totalCount, windStart + 24);
+  const windWin = getChartWindow(windSubTab, startIndex, totalCount);
+  const windStart = windWin.start;
+  const windEnd = windWin.end;
   const windLabels = hourly.time
     .slice(windStart, windEnd)
-    .map((t) => new Date(t).getHours() + "h");
+    .map((t) => parseInt(t.slice(11, 13), 10) + "h");
   const windSpeedData = (hourly.wind_speed_10m || []).slice(
     windStart,
     windEnd,
@@ -197,8 +205,8 @@ function renderCharts(hourly) {
 
   const gustsSource = hourly.wind_gusts_10m || hourly.wind_speed_10m || [];
   const windGustsData = gustsSource.slice(windStart, windEnd);
-  const maxGusts =
-    windGustsData.length > 0 ? Math.max(...windGustsData) : 0;
+  const validGusts = windGustsData.filter((v) => v != null);
+  const maxGusts = validGusts.length > 0 ? Math.max(...validGusts) : 0;
   const valGustsEl = document.getElementById("val-gusts");
   if (valGustsEl) valGustsEl.innerText = Math.round(maxGusts) + " km/h";
 
@@ -240,12 +248,13 @@ function renderCharts(hourly) {
         layout: { padding: { left: 6, right: 6, top: 8, bottom: 0 } },
         plugins: {
           legend: { display: false },
-          currentIndicator: {
-            index:
-              windSubTab === "forecast"
-                ? 0
-                : Math.max(0, windLabels.length - 1),
+          tooltip: {
+            callbacks: {
+              label: (ctx) =>
+                `${ctx.parsed.y != null ? Math.round(ctx.parsed.y) : "--"} km/h`,
+            },
           },
+          currentIndicator: { index: windWin.nowIndex },
         },
         scales: { x: { display: false }, y: { display: false } },
       },
@@ -253,20 +262,21 @@ function renderCharts(hourly) {
   }
 
   // 3. Temperatura (Previsão ou Histórico)
-  const tempStart =
-    tempSubTab === "forecast" ? startIndex : Math.max(0, startIndex - 24);
-  const tempEnd = Math.min(totalCount, tempStart + 24);
+  const tempWin = getChartWindow(tempSubTab, startIndex, totalCount);
+  const tempStart = tempWin.start;
+  const tempEnd = tempWin.end;
   const tempLabels = hourly.time
     .slice(tempStart, tempEnd)
-    .map((t) => new Date(t).getHours() + "h");
+    .map((t) => parseInt(t.slice(11, 13), 10) + "h");
   const tempData = (hourly.temperature_2m || []).slice(
     tempStart,
     tempEnd,
   );
 
-  if (tempData.length > 0) {
-    const tempMin = Math.min(...tempData);
-    const tempMax = Math.max(...tempData);
+  const validTemps = tempData.filter((v) => v != null);
+  if (validTemps.length > 0) {
+    const tempMin = Math.min(...validTemps);
+    const tempMax = Math.max(...validTemps);
     const rangeEl = document.getElementById("val-temp-range");
     if (rangeEl)
       rangeEl.innerText = `${tempMin.toFixed(0)}° — ${tempMax.toFixed(0)}°`;
@@ -322,12 +332,7 @@ function renderCharts(hourly) {
                 `${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : "--"}°C`,
             },
           },
-          currentIndicator: {
-            index:
-              tempSubTab === "forecast"
-                ? 0
-                : Math.max(0, tempLabels.length - 1),
-          },
+          currentIndicator: { index: tempWin.nowIndex },
         },
         scales: {
           x: { grid: { display: false } },

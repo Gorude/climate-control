@@ -5,30 +5,65 @@
  */
 
 // --- CONTROLE DO LOADER GLOBAL ---
+let loaderHideTimer = null;
+
 function hideLoader() {
   const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.opacity = '0';
-    setTimeout(() => {
-      loader.style.display = 'none';
-    }, 400);
-  }
+  if (!loader) return;
+  loader.style.opacity = '0';
+  clearTimeout(loaderHideTimer);
+  loaderHideTimer = setTimeout(() => {
+    loader.style.display = 'none';
+  }, 500);
 }
 window.hideLoader = hideLoader;
 
 function showLoader(message = 'Sincronizando dados...') {
   const loader = document.getElementById('loader');
-  if (loader) {
-    const p = loader.querySelector('p');
-    if (p) p.innerText = message;
-    loader.style.display = 'flex';
-    requestAnimationFrame(() => {
-      loader.style.opacity = '1';
-    });
-  }
+  if (!loader) return;
+  clearTimeout(loaderHideTimer);
+  loader.classList.remove('has-error');
+  const msg = document.getElementById('loader-message');
+  if (msg) msg.innerText = message;
+  loader.style.display = 'flex';
+  requestAnimationFrame(() => {
+    loader.style.opacity = '1';
+  });
 }
 window.showLoader = showLoader;
 
+function showLoaderError() {
+  showLoader();
+  const loader = document.getElementById('loader');
+  if (loader) loader.classList.add('has-error');
+}
+window.showLoaderError = showLoaderError;
+
+// --- STATUS DA CONEXÃO COM A API ---
+function setApiStatus(ok) {
+  const badge = document.getElementById('api-status');
+  if (badge) {
+    badge.classList.toggle('offline', !ok);
+    badge.innerHTML = ok
+      ? '<i data-lucide="check" width="14" height="14"></i> Conectado'
+      : '<i data-lucide="wifi-off" width="14" height="14"></i> Offline';
+  }
+
+  const lastUpdate = document.getElementById('menu-last-update');
+  if (lastUpdate && lastFetchTime) {
+    const options = { hour: '2-digit', minute: '2-digit' };
+    if (globalWeatherData && globalWeatherData.timezone) options.timeZone = globalWeatherData.timezone;
+    let time;
+    try {
+      time = new Date(lastFetchTime).toLocaleTimeString('pt-BR', options);
+    } catch (e) {
+      time = formatClockTime(new Date(lastFetchTime));
+    }
+    lastUpdate.innerText = ok ? `Última atualização às ${time}` : `Offline • dados de ${time}`;
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
 
 // --- NOTIFICAÇÕES TOAST VISUAIS ---
 function showToast(message) {
@@ -36,72 +71,75 @@ function showToast(message) {
   if (!container) {
     container = document.createElement('div');
     container.id = 'toast-container';
-    container.style.cssText =
-      'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none;';
+    container.className = 'toast-container';
+    container.setAttribute('role', 'status');
+    container.setAttribute('aria-live', 'polite');
     document.body.appendChild(container);
   }
+  // Evita empilhar a mesma mensagem repetidas vezes
+  if ([...container.children].some((t) => t.textContent === message)) return;
+
   const toast = document.createElement('div');
-  toast.style.cssText =
-    'background:rgba(10, 20, 38, 0.9); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); color:#fff; border:1px solid rgba(0, 245, 212, 0.35); border-radius:9999px; padding:9px 20px; font-size:0.86rem; font-weight:500; box-shadow:0 12px 30px rgba(0,0,0,0.6); opacity:0; transform:translateY(12px); transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);';
-  toast.innerText = message;
+  toast.className = 'toast';
+  toast.textContent = message;
   container.appendChild(toast);
-  requestAnimationFrame(() => {
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0)';
-  });
+  requestAnimationFrame(() => toast.classList.add('visible'));
   setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-10px)';
+    toast.classList.remove('visible');
     setTimeout(() => toast.remove(), 300);
   }, 2800);
 }
 
-// --- RELÓGIO EM TEMPO REAL ---
+// --- RELÓGIO EM TEMPO REAL (no fuso horário da cidade exibida) ---
 function updateClock() {
-  const timeStr = new Date().toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+  const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+  if (globalWeatherData && globalWeatherData.timezone) {
+    options.timeZone = globalWeatherData.timezone;
+  }
+  let timeStr;
+  try {
+    timeStr = new Date().toLocaleTimeString('pt-BR', options);
+  } catch (e) {
+    delete options.timeZone;
+    timeStr = new Date().toLocaleTimeString('pt-BR', options);
+  }
   const clockEl = document.getElementById('clock');
   if (clockEl) clockEl.innerText = timeStr;
   const menuClock = document.getElementById('menu-clock-text');
   if (menuClock) menuClock.innerText = timeStr;
 }
 
-// --- ESTAÇÃO DO ANO (Sensível à latitude Norte vs Sul) ---
+// --- ESTAÇÃO DO ANO (datas astronômicas aproximadas, sensível ao hemisfério) ---
 function updateSeason() {
-  const month = new Date().getMonth();
-  const isSouth = typeof LAT === 'number' ? LAT < 0 : true;
-  let seasonName = '';
-  let iconName = '';
-  let iconColor = '';
+  const now = new Date();
+  const monthDay = (now.getMonth() + 1) * 100 + now.getDate();
+  const isSouth = LAT < 0;
 
-  if (month === 11 || month === 0 || month === 1) {
-    seasonName = isSouth ? 'Verão' : 'Inverno';
-    iconName = isSouth ? 'sun' : 'snowflake';
-    iconColor = isSouth ? '#facc15' : '#38bdf8';
-  } else if (month >= 2 && month <= 4) {
-    seasonName = isSouth ? 'Outono' : 'Primavera';
-    iconName = isSouth ? 'leaf' : 'flower-2';
-    iconColor = isSouth ? '#fb923c' : '#f472b6';
-  } else if (month >= 5 && month <= 7) {
-    seasonName = isSouth ? 'Inverno' : 'Verão';
-    iconName = isSouth ? 'snowflake' : 'sun';
-    iconColor = isSouth ? '#38bdf8' : '#facc15';
-  } else {
-    seasonName = isSouth ? 'Primavera' : 'Outono';
-    iconName = isSouth ? 'flower-2' : 'leaf';
-    iconColor = isSouth ? '#f472b6' : '#fb923c';
-  }
+  // Estação no Hemisfério Norte: equinócios ~20/03 e ~22/09, solstícios ~21/06 e ~21/12
+  let north;
+  if (monthDay >= 1221 || monthDay < 320) north = 'winter';
+  else if (monthDay < 621) north = 'spring';
+  else if (monthDay < 922) north = 'summer';
+  else north = 'autumn';
+
+  const opposite = { winter: 'summer', summer: 'winter', spring: 'autumn', autumn: 'spring' };
+  const season = isSouth ? opposite[north] : north;
+
+  const seasons = {
+    summer: { name: 'Verão', icon: 'sun', color: '#facc15' },
+    autumn: { name: 'Outono', icon: 'leaf', color: '#fb923c' },
+    winter: { name: 'Inverno', icon: 'snowflake', color: '#38bdf8' },
+    spring: { name: 'Primavera', icon: 'flower-2', color: '#f472b6' }
+  };
+  const { name, icon, color } = seasons[season];
 
   const seasonEl = document.getElementById('season-indicator');
   if (seasonEl) {
-    seasonEl.innerHTML = `<i data-lucide="${iconName}" size="16" style="color: ${iconColor};"></i> <span style="font-weight: 500;">${seasonName}</span>`;
+    seasonEl.innerHTML = `<i data-lucide="${icon}" width="16" height="16" style="color: ${color};"></i> <span style="font-weight: 500;">${name}</span>`;
   }
   const menuSeason = document.getElementById('menu-season-text');
   if (menuSeason) {
-    menuSeason.innerText = `${seasonName} no Hemisfério ${isSouth ? 'Sul' : 'Norte'}`;
+    menuSeason.innerText = `${name} no Hemisfério ${isSouth ? 'Sul' : 'Norte'}`;
   }
   if (window.lucide) lucide.createIcons();
 }
@@ -110,25 +148,20 @@ function updateSeason() {
 window.toggleMoreMenu = function (show) {
   const panel = document.getElementById('more-menu-panel');
   const overlay = document.getElementById('more-menu-overlay');
+  const btn = document.getElementById('btn-more-menu');
   if (!panel || !overlay) return;
 
-  const willShow =
-    typeof show === 'boolean' ? show : !panel.classList.contains('active');
-  if (willShow) {
-    updateMenuStates();
-    panel.classList.add('active');
-    overlay.classList.add('active');
-  } else {
-    panel.classList.remove('active');
-    overlay.classList.remove('active');
-  }
+  const willShow = typeof show === 'boolean' ? show : !panel.classList.contains('active');
+  if (willShow) updateMenuStates();
+  panel.classList.toggle('active', willShow);
+  overlay.classList.toggle('active', willShow);
+  if (btn) btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
 };
 
 function updateMenuStates() {
   const pStatus = document.getElementById('menu-particles-status');
   const pIcon = document.getElementById('menu-particles-icon');
-  const pEnabled =
-    typeof WeatherParticles !== 'undefined' ? WeatherParticles.enabled : true;
+  const pEnabled = WeatherParticles.enabled;
   if (pStatus) {
     pStatus.innerText = pEnabled ? 'Ativo' : 'Desativado';
     pStatus.classList.toggle('active', pEnabled);
@@ -139,17 +172,13 @@ function updateMenuStates() {
 
   const nStatus = document.getElementById('menu-notif-status');
   const nIcon = document.getElementById('menu-notif-icon');
-  const nEnabled =
-    typeof notificationsEnabled !== 'undefined' ? notificationsEnabled : false;
   if (nStatus) {
-    nStatus.innerText = nEnabled ? 'Ativo' : 'Desativado';
-    nStatus.classList.toggle('active', nEnabled);
+    nStatus.innerText = notificationsEnabled ? 'Ativo' : 'Desativado';
+    nStatus.classList.toggle('active', notificationsEnabled);
   }
   if (nIcon) {
-    nIcon.style.color = nEnabled ? 'var(--accent-yellow)' : 'var(--text-muted)';
+    nIcon.style.color = notificationsEnabled ? 'var(--accent-yellow)' : 'var(--text-muted)';
   }
-
-  if (window.lucide) lucide.createIcons();
 }
 window.updateMenuStates = updateMenuStates;
 
@@ -157,12 +186,9 @@ window.updateMenuStates = updateMenuStates;
 window.toggleWeatherMap = function (show) {
   const overlay = document.getElementById('map-overlay');
   if (!overlay) return;
-  if (show) {
-    overlay.classList.add('active');
-    setTimeout(() => initRadarMap(), 300);
-  } else {
-    overlay.classList.remove('active');
-  }
+  overlay.classList.toggle('active', !!show);
+  overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
+  if (show) initRadarMap();
 };
 
 async function initRadarMap() {
@@ -174,51 +200,56 @@ async function initRadarMap() {
   const mapContainer = document.getElementById('weather-map-container');
   if (!mapContainer) return;
 
-  const currentLat = typeof LAT === 'number' ? LAT : -23.065;
-  const currentLon = typeof LON === 'number' ? LON : -54.1906;
-
   if (!weatherMap) {
-    weatherMap = L.map('weather-map-container', {
-      zoomControl: false
-    }).setView([currentLat, currentLon], 8);
-
+    weatherMap = L.map('weather-map-container', { zoomControl: false });
     L.control.zoom({ position: 'bottomright' }).addTo(weatherMap);
-
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       {
-        attribution: '&copy; Esri &copy; OpenStreetMap contributors',
+        attribution: '&copy; Esri &copy; OpenStreetMap contributors | Radar &copy; <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>',
         maxZoom: 16
       }
     ).addTo(weatherMap);
-  } else {
-    weatherMap.setView([currentLat, currentLon], 8);
-    weatherMap.invalidateSize();
   }
+
+  weatherMap.setView([LAT, LON], 7);
+  if (radarMarker) {
+    radarMarker.setLatLng([LAT, LON]);
+  } else {
+    radarMarker = L.circleMarker([LAT, LON], {
+      radius: 6,
+      color: '#00f5d4',
+      weight: 2,
+      fillColor: '#00f5d4',
+      fillOpacity: 0.8
+    }).addTo(weatherMap);
+  }
+  radarMarker.bindTooltip(escapeHtml(currentCityName));
+
+  // Recalcula o tamanho depois da animação de abertura do modal
+  setTimeout(() => weatherMap && weatherMap.invalidateSize(), 350);
 
   try {
     const response = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
       signal: AbortSignal.timeout(6000)
     });
-    if (!response.ok) return;
+    if (!response.ok) throw new Error('Status ' + response.status);
     const data = await response.json();
-
     if (!data || !data.radar || !data.radar.past || data.radar.past.length === 0) return;
 
     const latestEntry = data.radar.past[data.radar.past.length - 1];
-    const tileHost = data.host;
-    const tilePath = latestEntry.path;
+    if (radarLayer) weatherMap.removeLayer(radarLayer);
 
-    if (radarLayer && weatherMap) weatherMap.removeLayer(radarLayer);
-
-    radarLayer = L.tileLayer(`${tileHost}${tilePath}/256/{z}/{x}/{y}/2/1_1.png`, {
+    radarLayer = L.tileLayer(`${data.host}${latestEntry.path}/256/{z}/{x}/{y}/2/1_1.png`, {
       opacity: 0.65,
-      zIndex: 100
+      zIndex: 100,
+      maxNativeZoom: 7,
+      maxZoom: 16
     });
-
     radarLayer.addTo(weatherMap);
   } catch (err) {
     console.warn('Erro ao carregar radar:', err);
+    showToast('Não foi possível carregar o radar de chuva.');
   }
 }
 
@@ -227,14 +258,10 @@ window.toggleWellbeing = function (show) {
   const panel = document.getElementById('wellbeing-panel');
   const overlay = document.getElementById('wellbeing-overlay');
   if (!panel || !overlay) return;
-  if (show) {
-    panel.classList.add('active');
-    overlay.classList.add('active');
-    updateWellbeingRecommendations();
-  } else {
-    panel.classList.remove('active');
-    overlay.classList.remove('active');
-  }
+  panel.classList.toggle('active', !!show);
+  overlay.classList.toggle('active', !!show);
+  panel.setAttribute('aria-hidden', show ? 'false' : 'true');
+  if (show) updateWellbeingRecommendations();
 };
 
 function updateWellbeingRecommendations() {
@@ -243,7 +270,7 @@ function updateWellbeingRecommendations() {
   if (!globalWeatherData) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-info); margin-top: 40px;">
-          <i data-lucide="cloud-off" size="24" style="margin-bottom: 12px; opacity: 0.7;"></i>
+          <i data-lucide="cloud-off" width="24" height="24" style="margin-bottom: 12px; opacity: 0.7;"></i>
           <p>Nenhum dado meteorológico disponível para análise.</p>
       </div>
     `;
@@ -253,20 +280,36 @@ function updateWellbeingRecommendations() {
 
   const c = globalWeatherData.current;
   const h = globalWeatherData.hourly;
+  const d = globalWeatherData.daily;
   const startIndex = getCurrentHourlyIndex(h, c);
 
   // Dados atuais
+  const isDay = c.is_day === 1;
   const uv = h.uv_index && h.uv_index[startIndex] != null ? h.uv_index[startIndex] : 0;
   const temp = c.temperature_2m;
   const feels = c.apparent_temperature != null ? c.apparent_temperature : temp;
   const humidity = c.relative_humidity_2m;
-  const wind = c.wind_speed_10m;
+  const wind = c.wind_speed_10m || 0;
   const rain = c.precipitation || 0;
 
-  let recommendations = [];
+  const recommendations = [];
 
   // 1. Recomendação de Proteção UV
-  if (uv >= 8) {
+  if (!isDay) {
+    // À noite o UV é zero: mostra o pico previsto para o próximo período de sol
+    const beforeSunrise = d.sunrise && d.sunrise[1] && c.time < d.sunrise[1];
+    const nextIdx = beforeSunrise ? 1 : 2;
+    const nextUvMax = d.uv_index_max && d.uv_index_max[nextIdx];
+    recommendations.push({
+      category: 'uv',
+      icon: 'moon',
+      title: 'Sem Radiação UV Agora',
+      desc:
+        nextUvMax != null
+          ? `É noite, sem exposição solar. O índice UV máximo previsto para ${beforeSunrise ? 'hoje' : 'amanhã'} é ${nextUvMax.toFixed(1)}${nextUvMax >= 3 ? ', então separe o protetor solar.' : '.'}`
+          : 'É noite, sem exposição solar.'
+    });
+  } else if (uv >= 8) {
     recommendations.push({
       category: 'uv',
       icon: 'sun',
@@ -297,19 +340,26 @@ function updateWellbeingRecommendations() {
       title: 'Alerta de Calor Severo',
       desc: `Temperatura de ${temp.toFixed(1)}°C (Sensação de ${feels.toFixed(0)}°C). Risco de estresse térmico. Beba ao menos 3L de água hoje e evite exposição solar direta.`
     });
-  } else if (humidity <= 40) {
+  } else if (humidity <= 30) {
     recommendations.push({
       category: 'hydration',
       icon: 'droplets',
       title: 'Ar Muito Seco',
       desc: `Umidade relativa em ${humidity}%. Hidrate-se com frequência, use hidratante labial e umidificador para aliviar as vias respiratórias.`
     });
+  } else if (humidity <= 40) {
+    recommendations.push({
+      category: 'hydration',
+      icon: 'droplets',
+      title: 'Ar Seco',
+      desc: `Umidade relativa em ${humidity}%. Aumente a ingestão de água e evite ambientes muito climatizados por longos períodos.`
+    });
   } else {
     recommendations.push({
       category: 'hydration',
       icon: 'glass-water',
       title: 'Hidratação Normal',
-      desc: `Umidade em ${humidity}% e clima agradável. Mantenha o consumo regular de cerca de 2L/dia de água.`
+      desc: `Umidade em ${humidity}%. Mantenha o consumo regular de cerca de 2L/dia de água.`
     });
   }
 
@@ -326,14 +376,14 @@ function updateWellbeingRecommendations() {
       category: 'activity',
       icon: 'bike',
       title: 'Perfeito para Esportes ao Ar Livre',
-      desc: `Clima ideal de ${temp.toFixed(0)}°C e sem previsão de chuva. Perfeito para corrida, caminhada ou ciclismo.`
+      desc: `Clima ideal de ${temp.toFixed(0)}°C e sem chuva no momento. Perfeito para corrida, caminhada ou ciclismo.`
     });
   } else {
     recommendations.push({
       category: 'activity',
       icon: 'dumbbell',
       title: 'Atividade Física Moderada',
-      desc: `Condições meteorológicas estáveis. Planeje treinos ao ar livre no início da manhã ou no fim da tarde.`
+      desc: 'Condições menos favoráveis para treinos intensos. Prefira o início da manhã ou o fim da tarde e respeite seus limites.'
     });
   }
 
@@ -364,7 +414,7 @@ function updateWellbeingRecommendations() {
       category: 'wind',
       icon: 'smile',
       title: 'Conforto Térmico Ideal',
-      desc: `Equilíbrio harmonioso de temperatura e ventilação, com sensação neutra e agradável.`
+      desc: 'Equilíbrio harmonioso de temperatura e ventilação, com sensação neutra e agradável.'
     });
   }
 
@@ -373,7 +423,7 @@ function updateWellbeingRecommendations() {
       (r) => `
         <div class="wellbeing-card ${r.category}">
             <div class="wellbeing-card-title">
-                <i data-lucide="${r.icon}" size="18"></i>
+                <i data-lucide="${r.icon}" width="18" height="18"></i>
                 <span>${r.title}</span>
             </div>
             <div class="wellbeing-card-desc">${r.desc}</div>
@@ -387,103 +437,112 @@ function updateWellbeingRecommendations() {
 
 // --- SISTEMA DE NOTIFICAÇÕES PUSH ---
 window.toggleNotifications = async function () {
+  // Desativar nunca depende de permissão
+  if (notificationsEnabled) {
+    setNotificationsEnabled(false);
+    showToast('Notificações desativadas');
+    return;
+  }
+
   if (!('Notification' in window)) {
-    alert('Seu navegador não suporta notificações.');
+    showToast('Seu navegador não suporta notificações.');
     return;
   }
 
   if (Notification.permission === 'default') {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return;
+    await Notification.requestPermission();
   }
 
-  if (Notification.permission === 'denied') {
-    alert(
-      'Notificações bloqueadas. Habilite nas configurações do navegador para receber os alertas.'
-    );
+  if (Notification.permission !== 'granted') {
+    showToast('Notificações bloqueadas. Habilite nas configurações do navegador.');
     return;
   }
 
-  notificationsEnabled = !notificationsEnabled;
-  localStorage.setItem('notif_enabled', notificationsEnabled);
-  updateNotifBadge();
-
-  if (notificationsEnabled) {
-    sendWeatherNotification(
-      'AeroSky - Conectado! 🚀',
-      'Notificações inteligentes ativas. Você receberá alertas de clima severo e boletins de bem-estar personalizados.',
-      true,
-      'welcome'
-    );
-  }
+  setNotificationsEnabled(true);
+  sendWeatherNotification(
+    'AeroSky - Conectado! 🚀',
+    'Notificações inteligentes ativas. Você receberá alertas de clima severo para a cidade exibida.',
+    true,
+    'welcome'
+  );
 };
+
+function setNotificationsEnabled(enabled) {
+  notificationsEnabled = enabled;
+  try {
+    localStorage.setItem('notif_enabled', String(enabled));
+  } catch (e) {
+    /* armazenamento indisponível */
+  }
+  updateNotifBadge();
+}
 
 function updateNotifBadge() {
   const badge = document.getElementById('notif-badge');
-  if (badge) {
-    badge.classList.toggle('active', notificationsEnabled);
-  }
+  if (badge) badge.classList.toggle('active', notificationsEnabled);
   const btn = document.getElementById('btn-notifications');
   if (btn) {
-    btn.title = notificationsEnabled
+    const label = notificationsEnabled
       ? 'Notificações ativas (clique para desativar)'
       : 'Ativar notificações de alerta';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', notificationsEnabled ? 'true' : 'false');
   }
-  if (typeof updateMenuStates === 'function') {
-    updateMenuStates();
-  }
+  updateMenuStates();
 }
 
-function sendWeatherNotification(
-  title,
-  body,
-  bypassCooldown = false,
-  category = ''
-) {
-  if (!notificationsEnabled || Notification.permission !== 'granted') return;
+async function sendWeatherNotification(title, body, bypassCooldown = false, category = '') {
+  if (!notificationsEnabled || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
 
   const key = `notif_${(title + '_' + category).replace(/[\s\W]/g, '_')}`;
   if (!bypassCooldown) {
-    const lastSent = parseInt(localStorage.getItem(key) || '0');
-    const now = Date.now();
-    if (now - lastSent < 30 * 60 * 1000) return; // 30 min cooldown
-    localStorage.setItem(key, now.toString());
+    try {
+      const lastSent = parseInt(localStorage.getItem(key) || '0', 10);
+      const now = Date.now();
+      if (now - lastSent < 30 * 60 * 1000) return; // 30 min cooldown
+      localStorage.setItem(key, now.toString());
+    } catch (e) {
+      /* armazenamento indisponível: envia mesmo assim */
+    }
   }
 
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.showNotification(title, {
-        body: body,
-        icon: './icon-192.png',
-        badge: './icon-192.png',
-        vibrate: [200, 100, 200],
-        tag: key
-      });
-    });
-  } else {
-    new Notification(title, { body: body, icon: './icon-192.png' });
+  const options = {
+    body,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    vibrate: [200, 100, 200],
+    tag: key
+  };
+
+  try {
+    // No Android, "new Notification()" lança exceção: o caminho correto é via Service Worker
+    const reg =
+      'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    if (reg) {
+      await reg.showNotification(title, options);
+    } else {
+      new Notification(title, options);
+    }
+  } catch (e) {
+    console.warn('Falha ao exibir notificação:', e);
   }
 }
 
 // --- SISTEMA DE ALERTAS SEVEROS ---
-
 function checkAlerts(current, daily) {
   const container = document.getElementById('alert-container');
   if (!container) return;
   container.innerHTML = '';
-  let alerts = [];
+  const alerts = [];
 
   const code = current.weather_code;
   const gusts = current.wind_gusts_10m || 0;
   const tempFeels =
-    current.apparent_temperature != null
-      ? current.apparent_temperature
-      : current.temperature_2m;
+    current.apparent_temperature != null ? current.apparent_temperature : current.temperature_2m;
   const tempReal = current.temperature_2m;
-  const uvMax =
-    daily.uv_index_max && daily.uv_index_max[1] != null
-      ? daily.uv_index_max[1]
-      : 0;
+  const uvMax = daily.uv_index_max && daily.uv_index_max[1] != null ? daily.uv_index_max[1] : 0;
 
   // 1. Tempestades (Raios)
   if ([95, 96, 99].includes(code)) {
@@ -504,11 +563,12 @@ function checkAlerts(current, daily) {
 
   // 2. Ventos e Rajadas
   if (gusts >= ALERT_THRESHOLDS.windGusts) {
+    const severe = gusts >= 60;
     alerts.push({
-      type: gusts >= 60 ? 'danger' : 'warning',
+      type: severe ? 'danger' : 'warning',
       category: 'wind',
       icon: 'wind',
-      text: `${gusts >= 60 ? 'PERIGO' : 'ATENÇÃO'}: Rajadas de vento de ${Math.round(gusts)} km/h. ${gusts >= 60 ? 'Risco de queda de galhos e destelhamentos.' : 'Tenha cuidado ao ar livre.'}`
+      text: `${severe ? 'PERIGO' : 'ATENÇÃO'}: Rajadas de vento de ${Math.round(gusts)} km/h. ${severe ? 'Risco de queda de galhos e destelhamentos.' : 'Tenha cuidado ao ar livre.'}`
     });
   }
 
@@ -545,20 +605,18 @@ function checkAlerts(current, daily) {
   alerts.forEach((al) => {
     const div = document.createElement('div');
     div.className = `weather-alert alert-${al.type}`;
-    div.innerHTML = `<i data-lucide="${al.icon}" size="20" class="alert-icon"></i> <span>${escapeHtml(al.text)}</span>`;
+    div.setAttribute('role', 'alert');
+    div.innerHTML = `<i data-lucide="${al.icon}" width="20" height="20" class="alert-icon"></i> <span>${escapeHtml(al.text)}</span>`;
     container.appendChild(div);
   });
 
-  if (alerts.length > 0) {
-    if (window.lucide) lucide.createIcons();
+  if (alerts.length === 0) return;
+  if (window.lucide) lucide.createIcons();
 
+  // Só notifica com dados recém-obtidos da rede (não com previsão em cache)
+  if (Date.now() - lastFetchTime < 60000) {
     alerts.forEach((al) => {
-      sendWeatherNotification(
-        `⚠️ Alerta Clima - ${currentCityName}`,
-        al.text,
-        false,
-        al.category
-      );
+      sendWeatherNotification(`⚠️ Alerta Clima - ${currentCityName}`, al.text, false, al.category);
     });
   }
 }
@@ -568,40 +626,37 @@ function renderForecast() {
   if (!globalWeatherData) return;
   const container = document.getElementById('forecast-container');
   if (!container) return;
-  container.innerHTML = '';
 
   const c = globalWeatherData.current;
   const h = globalWeatherData.hourly;
   const d = globalWeatherData.daily;
   if (!h || !h.time) return;
 
-  const startIndex = typeof getCurrentHourlyIndex === 'function' ? getCurrentHourlyIndex(h, c) : 0;
+  container.innerHTML = '';
+  const startIndex = getCurrentHourlyIndex(h, c);
 
   if (currentForecastTab === '24h') {
-    let startLoop, endLoop;
-    if (selectedDayIndex === 0) {
-      startLoop = startIndex + 1;
-      endLoop = startIndex + 24;
-    } else {
-      startLoop = selectedDayIndex * 24;
-      endLoop = startLoop + 23;
-    }
+    const isNext24h = selectedDayIndex === 0;
+    const startLoop = isNext24h ? startIndex : selectedDayIndex * 24;
+    const endLoop = startLoop + 23;
 
     for (let i = startLoop; i <= endLoop && i < h.time.length; i++) {
       if (!h.time[i]) continue;
-      const hDate = new Date(h.time[i]);
-      const isHDay = hDate.getHours() > 5 && hDate.getHours() < 18;
-      const hwmo = typeof parseWMO === 'function' ? parseWMO(h.weather_code[i], isHDay) : { t: '', i: 'cloud', c: '#fff' };
-      const displayTemp = Math.round(h.temperature_2m[i]);
-      const prob = h.precipitation_probability ? h.precipitation_probability[i] : 0;
+      const hour = parseInt(h.time[i].slice(11, 13), 10);
+      const isHDay = h.is_day ? h.is_day[i] === 1 : hour >= 6 && hour < 18;
+      const hwmo = parseWMO(h.weather_code[i], isHDay);
+      const temp = h.temperature_2m[i];
+      const prob = h.precipitation_probability ? h.precipitation_probability[i] : null;
+      const isNow = i === startIndex;
 
       const card = document.createElement('div');
-      card.className = 'hour-card';
+      card.className = `hour-card ${isNow ? 'now' : ''}`;
+      card.title = hwmo.t;
       card.innerHTML = `
-        <div class="hour-time">${hDate.getHours()}:00</div>
-        <i data-lucide="${hwmo.i}" size="26" style="color:${hwmo.c};"></i>
-        <div class="hour-temp">${displayTemp}°</div>
-        <div class="hour-prob">${prob}%</div>
+        <div class="hour-time">${isNow ? 'Agora' : formatHourLabel(h.time[i])}</div>
+        <i data-lucide="${hwmo.i}" width="26" height="26" style="color:${hwmo.c};"></i>
+        <div class="hour-temp">${temp != null ? Math.round(temp) : '--'}°</div>
+        <div class="hour-prob">${prob != null ? prob + '%' : '--'}</div>
       `;
       container.appendChild(card);
     }
@@ -609,28 +664,31 @@ function renderForecast() {
     if (!d || !d.time) return;
     const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     for (let i = 1; i < Math.min(8, d.time.length); i++) {
-      const dDate = new Date(d.time[i] + 'T00:00:00');
-      const dwmo = typeof parseWMO === 'function' ? parseWMO(d.weather_code[i], true) : { t: '', i: 'cloud', c: '#fff' };
+      const dDate = new Date(d.time[i] + 'T12:00:00');
+      const dwmo = parseWMO(d.weather_code[i], true);
       const isToday = i === 1;
       const maxT = d.temperature_2m_max && d.temperature_2m_max[i] != null ? Math.round(d.temperature_2m_max[i]) : '--';
       const minT = d.temperature_2m_min && d.temperature_2m_min[i] != null ? Math.round(d.temperature_2m_min[i]) : '--';
-      const rainSum = d.precipitation_sum && d.precipitation_sum[i] != null ? Math.round(d.precipitation_sum[i]) : 0;
+      const rainSum = d.precipitation_sum && d.precipitation_sum[i] != null ? d.precipitation_sum[i] : 0;
+      const probMax =
+        d.precipitation_probability_max && d.precipitation_probability_max[i] != null
+          ? d.precipitation_probability_max[i]
+          : null;
 
-      const card = document.createElement('div');
-      card.className = `hour-card ${isToday ? 'now' : ''}`;
-      card.style.cssText = 'min-width: 90px; cursor: pointer; transition: transform 0.2s;';
-      card.setAttribute('title', 'Ver previsão de 24h deste dia');
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.onclick = () => viewDayForecast(i);
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `hour-card day-card ${isToday ? 'now' : ''}`;
+      card.title = `${dwmo.t} — ver previsão de 24h deste dia`;
+      card.addEventListener('click', () => viewDayForecast(i));
       card.innerHTML = `
         <div class="hour-time" style="font-weight: 600;">${isToday ? 'Hoje' : daysOfWeek[dDate.getDay()]}</div>
-        <i data-lucide="${dwmo.i}" size="26" style="color:${dwmo.c};"></i>
-        <div class="hour-temp" style="font-size: 0.95rem; display: flex; gap:5px;">
-            <span style="color:var(--accent-yellow);">${maxT}°</span> 
+        <i data-lucide="${dwmo.i}" width="26" height="26" style="color:${dwmo.c};"></i>
+        <div class="hour-temp day-temp">
+            <span style="color:var(--accent-yellow);">${maxT}°</span>
             <span style="color:var(--accent-cyan);">${minT}°</span>
         </div>
-        <div class="hour-prob">${rainSum}mm</div>
+        <div class="hour-prob">${probMax != null ? probMax + '%' : '--'}</div>
+        <div class="day-rain">${rainSum.toFixed(1)} mm</div>
       `;
       container.appendChild(card);
     }
@@ -640,53 +698,51 @@ function renderForecast() {
 }
 window.renderForecast = renderForecast;
 
-window.switchForecast = function (tab) {
-  currentForecastTab = tab;
+function setForecastTitle(text) {
   const titleEl = document.getElementById('forecast-header-title');
-  if (tab === '24h') {
-    selectedDayIndex = 0;
-    if (titleEl) {
-      titleEl.innerHTML = '<i data-lucide="calendar-clock"></i> Previsão (Próximas 24h)';
-    }
-  } else {
-    if (titleEl) {
-      titleEl.innerHTML = '<i data-lucide="calendar-clock"></i> Previsão (7 Dias)';
-    }
+  if (titleEl) {
+    titleEl.innerHTML = `<i data-lucide="calendar-clock"></i> ${escapeHtml(text)}`;
   }
+}
+
+function setForecastTabButtons(tab) {
   const btn24h = document.getElementById('btn-24h');
   const btn7d = document.getElementById('btn-7d');
-  if (btn24h) btn24h.classList.toggle('active', tab === '24h');
-  if (btn7d) btn7d.classList.toggle('active', tab === '7d');
+  if (btn24h) {
+    btn24h.classList.toggle('active', tab === '24h');
+    btn24h.setAttribute('aria-pressed', tab === '24h' ? 'true' : 'false');
+  }
+  if (btn7d) {
+    btn7d.classList.toggle('active', tab === '7d');
+    btn7d.setAttribute('aria-pressed', tab === '7d' ? 'true' : 'false');
+  }
+}
+
+window.switchForecast = function (tab) {
+  currentForecastTab = tab;
+  if (tab === '24h') selectedDayIndex = 0;
+  setForecastTitle(tab === '24h' ? 'Previsão (Próximas 24h)' : 'Previsão (7 Dias)');
+  setForecastTabButtons(tab);
   renderForecast();
+  const container = document.getElementById('forecast-container');
+  if (container) container.scrollLeft = 0;
 };
 
 window.viewDayForecast = function (dayIndex) {
   currentForecastTab = '24h';
   selectedDayIndex = dayIndex;
-  const btn24h = document.getElementById('btn-24h');
-  const btn7d = document.getElementById('btn-7d');
-  if (btn24h) btn24h.classList.add('active');
-  if (btn7d) btn7d.classList.remove('active');
+  setForecastTabButtons('24h');
 
-  const daysOfWeek = [
-    'Domingo',
-    'Segunda',
-    'Terça',
-    'Quarta',
-    'Quinta',
-    'Sexta',
-    'Sábado'
-  ];
+  const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   if (globalWeatherData && globalWeatherData.daily && globalWeatherData.daily.time) {
     const d = globalWeatherData.daily;
-    const dDate = new Date(d.time[dayIndex] + 'T00:00:00');
+    const dDate = new Date(d.time[dayIndex] + 'T12:00:00');
     const dayName = dayIndex === 1 ? 'Hoje' : daysOfWeek[dDate.getDay()];
-    const titleEl = document.getElementById('forecast-header-title');
-    if (titleEl) {
-      titleEl.innerHTML = `<i data-lucide="calendar-clock"></i> 24h (${dayName})`;
-    }
+    setForecastTitle(`24h (${dayName})`);
   }
   renderForecast();
+  const container = document.getElementById('forecast-container');
+  if (container) container.scrollLeft = 0;
 };
 
 // --- ALTERNADOR SOLAR / LUNAR (CICLOS CELESTES) ---
@@ -702,19 +758,41 @@ window.switchAstro = function (tab) {
   if (viewLunar) viewLunar.style.display = tab === 'lunar' ? 'flex' : 'none';
 };
 
+// --- FORMATADORES ---
+const formatClockTime = (date) =>
+  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+function getTrend(current, previous) {
+  let icon = 'minus';
+  let color = 'var(--text-muted)';
+  let label = 'Estável';
+  if (current != null && previous != null) {
+    if (current > previous) {
+      icon = 'trending-up';
+      color = '#4ade80';
+      label = 'Subindo';
+    } else if (current < previous) {
+      icon = 'trending-down';
+      color = '#fb923c';
+      label = 'Descendo';
+    }
+  }
+  return `<span class="trend-icon" title="${label}"><i data-lucide="${icon}" width="14" height="14" color="${color}" aria-label="${label}"></i></span>`;
+}
+
 // --- ATUALIZAÇÃO GERAL DA INTERFACE (POPULATE UI) ---
 function populateUI() {
   if (!globalWeatherData) return;
   const c = globalWeatherData.current;
   const h = globalWeatherData.hourly;
   const d = globalWeatherData.daily;
+  if (!c || !h || !d) return;
+
   const isDay = c.is_day === 1;
   const wmo = parseWMO(c.weather_code, isDay);
 
-  // Atualiza estação do ano com base na latitude
   updateSeason();
-
-  // Verifica Alertas Meteorológicos
+  updateClock();
   checkAlerts(c, d);
 
   // Background dinâmico
@@ -725,15 +803,16 @@ function populateUI() {
   }
 
   // Atualiza motor de partículas dinâmicas
-  if (typeof WeatherParticles !== 'undefined' && WeatherParticles.setWeatherCondition) {
-    WeatherParticles.setWeatherCondition(c.weather_code, c.is_day, c.wind_speed_10m);
-  }
+  WeatherParticles.setWeatherCondition(
+    c.weather_code,
+    c.is_day,
+    c.wind_speed_10m,
+    c.wind_direction_10m
+  );
 
   // Atualiza favoritos (barra e estrela)
-  if (typeof FavoritesManager !== 'undefined') {
-    FavoritesManager.renderFavoritesBar();
-    FavoritesManager.updateFavoriteStar();
-  }
+  FavoritesManager.renderFavoritesBar();
+  FavoritesManager.updateFavoriteStar();
 
   // Visão Geral
   const valTemp = document.getElementById('val-temp');
@@ -741,22 +820,22 @@ function populateUI() {
   const valDesc = document.getElementById('val-desc');
   if (valDesc) valDesc.innerText = wmo.t;
 
-  // Lógica de Tendência da Temperatura Atual
+  // Tendência da temperatura em relação à hora anterior
   const currentHourOffset = getCurrentHourlyIndex(h, c);
   const prevHourOffset = Math.max(0, currentHourOffset - 1);
   const prevTemp =
     h.temperature_2m && h.temperature_2m[prevHourOffset] != null
       ? h.temperature_2m[prevHourOffset]
       : c.temperature_2m;
-  const diffTemp = (c.temperature_2m - prevTemp).toFixed(1);
+  const diffTemp = Math.round((c.temperature_2m - prevTemp) * 10) / 10;
 
-  let trendTempHtml = '';
+  let trendTempHtml;
   if (diffTemp > 0) {
-    trendTempHtml = `<i data-lucide="trending-up" size="16" color="#ef4444"></i> <span style="color: #ef4444;">+${diffTemp}°</span>`;
+    trendTempHtml = `<i data-lucide="trending-up" width="16" height="16" color="#ef4444"></i> <span style="color: #ef4444;">+${diffTemp.toFixed(1)}°</span>`;
   } else if (diffTemp < 0) {
-    trendTempHtml = `<i data-lucide="trending-down" size="16" color="#3b82f6"></i> <span style="color: #3b82f6;">${diffTemp}°</span>`;
+    trendTempHtml = `<i data-lucide="trending-down" width="16" height="16" color="#3b82f6"></i> <span style="color: #3b82f6;">${diffTemp.toFixed(1)}°</span>`;
   } else {
-    trendTempHtml = `<i data-lucide="minus" size="16" color="var(--text-muted)"></i> <span style="color: var(--text-muted);">0.0°</span>`;
+    trendTempHtml = `<i data-lucide="minus" width="16" height="16" color="var(--text-muted)"></i> <span style="color: var(--text-muted);">0.0°</span>`;
   }
   const trendTempEl = document.getElementById('trend-temp');
   if (trendTempEl) trendTempEl.innerHTML = trendTempHtml;
@@ -781,135 +860,90 @@ function populateUI() {
         : '--') + '°';
   }
 
-  const iconEl = document.getElementById('main-icon');
-  if (iconEl) {
-    iconEl.setAttribute('data-lucide', wmo.i);
-    iconEl.style.color = wmo.c;
-    iconEl.style.filter = `drop-shadow(0 0 25px ${wmo.c})`;
+  // O ícone principal precisa ser recriado: o lucide substitui o <i> por <svg>
+  const iconWrapper = document.querySelector('.main-icon-wrapper');
+  if (iconWrapper) {
+    iconWrapper.innerHTML = `<i data-lucide="${wmo.i}" id="main-icon" stroke-width="1.5" style="color:${wmo.c}; filter: drop-shadow(0 0 25px ${wmo.c});" aria-label="${escapeHtml(wmo.t)}"></i>`;
   }
 
-  // Sol e Crepúsculo (sincronizado com horário local do tempo)
+  // Sol e Crepúsculo (horários locais da cidade, sem conversão de fuso)
   const sr = new Date(d.sunrise[1]);
   const ss = new Date(d.sunset[1]);
   const localNow = new Date(c.time);
 
   const valSunrise = document.getElementById('val-sunrise');
-  if (valSunrise) {
-    valSunrise.innerText = sr.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
+  if (valSunrise) valSunrise.innerText = formatHourLabel(d.sunrise[1]);
   const valSunset = document.getElementById('val-sunset');
-  if (valSunset) {
-    valSunset.innerText = ss.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
+  if (valSunset) valSunset.innerText = formatHourLabel(d.sunset[1]);
 
   // Golden Hour (45 min antes do pôr do sol)
   const ghStart = new Date(ss.getTime() - 45 * 60000);
   const valGoldenHour = document.getElementById('val-golden-hour');
   if (valGoldenHour) {
-    valGoldenHour.innerText =
-      ghStart.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }) +
-      ' às ' +
-      ss.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+    valGoldenHour.innerText = `${formatClockTime(ghStart)} às ${formatHourLabel(d.sunset[1])}`;
   }
 
   const diffMs = ss - sr;
+  const daylightMinutes = Math.round(diffMs / 60000);
   const valDaylight = document.getElementById('val-daylight');
   if (valDaylight) {
-    valDaylight.innerText = `${Math.floor(diffMs / 3600000)}h ${Math.round((diffMs % 3600000) / 60000)}m`;
+    valDaylight.innerText = `${Math.floor(daylightMinutes / 60)}h ${daylightMinutes % 60}m`;
   }
 
-  // Comparação precisa de duração da luz solar (hoje vs ontem)
-  if (
-    d.sunrise &&
-    d.sunset &&
-    d.sunrise[1] &&
-    d.sunset[1] &&
-    d.sunrise[0] &&
-    d.sunset[0]
-  ) {
-    const todayDaylight = new Date(d.sunset[1]) - new Date(d.sunrise[1]);
+  // Comparação de duração da luz solar (hoje vs ontem)
+  if (d.sunrise[0] && d.sunset[0]) {
     const yesterdayDaylight = new Date(d.sunset[0]) - new Date(d.sunrise[0]);
-    const isLengthening = todayDaylight >= yesterdayDaylight;
-
+    const isLengthening = diffMs >= yesterdayDaylight;
     const trendDaylightEl = document.getElementById('daylight-trend');
     if (trendDaylightEl) {
+      trendDaylightEl.title = isLengthening
+        ? 'Dias ficando mais longos'
+        : 'Dias ficando mais curtos';
       trendDaylightEl.innerHTML = isLengthening
-        ? `<i data-lucide="trending-up" size="14" color="#4ade80" title="Aumentando em relação a ontem"></i>`
-        : `<i data-lucide="trending-down" size="14" color="#fb923c" title="Diminuindo em relação a ontem"></i>`;
+        ? '<i data-lucide="trending-up" width="14" height="14" color="#4ade80"></i>'
+        : '<i data-lucide="trending-down" width="14" height="14" color="#fb923c"></i>';
     }
   }
 
-  let t = (localNow - sr) / diffMs;
-  if (t < 0) t = 0;
-  if (t > 1) t = 1;
+  const isSunUp = localNow >= sr && localNow <= ss;
+  const t = Math.min(1, Math.max(0, (localNow - sr) / diffMs));
 
   const p0 = { x: 20, y: 70 },
     p1 = { x: 100, y: -20 },
     p2 = { x: 180, y: 70 };
-  const sunX =
-    Math.pow(1 - t, 2) * p0.x +
-    2 * (1 - t) * t * p1.x +
-    Math.pow(t, 2) * p2.x;
-  const sunY =
-    Math.pow(1 - t, 2) * p0.y +
-    2 * (1 - t) * t * p1.y +
-    Math.pow(t, 2) * p2.y;
+  const sunX = Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x;
+  const sunY = Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y;
 
   const sunDot = document.getElementById('sun-dot');
   if (sunDot) {
     sunDot.setAttribute('cx', sunX);
     sunDot.setAttribute('cy', sunY);
+    sunDot.style.opacity = isSunUp ? '1' : '0.3';
   }
   const sunClip = document.getElementById('sun-clip-rect');
-  if (sunClip) {
-    sunClip.setAttribute('width', sunX);
-  }
+  if (sunClip) sunClip.setAttribute('width', sunX);
 
-  // Lógica do Ciclo Lunar
+  // Ciclo Lunar (usa o instante real; c.time está no fuso da cidade, não em UTC)
+  const nowMs = Date.now();
   const LUNAR_MONTH = 29.53058867;
-  const KNOWN_NEW_MOON = 1704974220000;
-  const diffDaysMoon =
-    (localNow.getTime() - KNOWN_NEW_MOON) / (1000 * 60 * 60 * 24);
+  const KNOWN_NEW_MOON = 1704974220000; // 11/01/2024 11:57 UTC
+  const diffDaysMoon = (nowMs - KNOWN_NEW_MOON) / 86400000;
   let phaseFraction = (diffDaysMoon % LUNAR_MONTH) / LUNAR_MONTH;
   if (phaseFraction < 0) phaseFraction += 1;
 
   let phaseName;
-  if (phaseFraction < 0.03 || phaseFraction >= 0.97) {
-    phaseName = 'Lua Nova';
-  } else if (phaseFraction < 0.22) {
-    phaseName = 'Crescente';
-  } else if (phaseFraction < 0.28) {
-    phaseName = 'Quarto Crescente';
-  } else if (phaseFraction < 0.47) {
-    phaseName = 'Crescente Convexa';
-  } else if (phaseFraction < 0.53) {
-    phaseName = 'Lua Cheia';
-  } else if (phaseFraction < 0.72) {
-    phaseName = 'Minguante Convexa';
-  } else if (phaseFraction < 0.78) {
-    phaseName = 'Quarto Minguante';
-  } else {
-    phaseName = 'Minguante Côncava';
-  }
+  if (phaseFraction < 0.03 || phaseFraction >= 0.97) phaseName = 'Lua Nova';
+  else if (phaseFraction < 0.22) phaseName = 'Crescente';
+  else if (phaseFraction < 0.28) phaseName = 'Quarto Crescente';
+  else if (phaseFraction < 0.47) phaseName = 'Crescente Gibosa';
+  else if (phaseFraction < 0.53) phaseName = 'Lua Cheia';
+  else if (phaseFraction < 0.72) phaseName = 'Minguante Gibosa';
+  else if (phaseFraction < 0.78) phaseName = 'Quarto Minguante';
+  else phaseName = 'Minguante';
 
-  const illumination = Math.round(
-    (0.5 - Math.cos(phaseFraction * Math.PI * 2) * 0.5) * 100
-  );
-  const ageDays = Math.round(phaseFraction * 29.53);
+  const illumination = Math.round((0.5 - Math.cos(phaseFraction * Math.PI * 2) * 0.5) * 100);
+  const ageDays = Math.floor(phaseFraction * LUNAR_MONTH);
 
-  const rMoon = 48;
   const sweepOut = phaseFraction <= 0.5 ? 1 : 0;
   let sweepRet;
   if (phaseFraction < 0.25) sweepRet = 0;
@@ -917,77 +951,66 @@ function populateUI() {
   else if (phaseFraction < 0.75) sweepRet = 0;
   else sweepRet = 1;
 
-  const rxMoon = rMoon * Math.abs(Math.cos(phaseFraction * 2 * Math.PI));
+  const rxMoon = 48 * Math.abs(Math.cos(phaseFraction * 2 * Math.PI));
   const litPath = `M 50 2 A 48 48 0 0 ${sweepOut} 50 98 A ${rxMoon} 48 0 0 ${sweepRet} 50 2`;
   const moonLitPath = document.getElementById('moon-lit-path');
   if (moonLitPath) moonLitPath.setAttribute('d', litPath);
+  // No Hemisfério Sul a face iluminada aparece espelhada (crescente iluminada à esquerda)
+  const moonSvg = document.getElementById('moon-svg');
+  if (moonSvg) moonSvg.style.transform = LAT < 0 ? 'scaleX(-1)' : '';
 
   const valMoonPhase = document.getElementById('val-moon-phase');
   if (valMoonPhase) valMoonPhase.innerText = phaseName;
   const valMoonIll = document.getElementById('val-moon-ill');
   if (valMoonIll) valMoonIll.innerText = illumination + '%';
   const valMoonAge = document.getElementById('val-moon-age');
-  if (valMoonAge) valMoonAge.innerText = ageDays + ' dias';
+  if (valMoonAge) valMoonAge.innerText = ageDays + (ageDays === 1 ? ' dia' : ' dias');
 
-  // Ponto Sublunar
-  const currentLon = typeof LON === 'number' ? LON : -54.1906;
-  const utcHour = localNow.getUTCHours() + localNow.getUTCMinutes() / 60;
-  let sunLon = (12 - utcHour) * 15;
-  let moonLon = sunLon - phaseFraction * 360;
-  while (moonLon <= -180) moonLon += 360;
-  while (moonLon > 180) moonLon -= 360;
+  // Ponto Sublunar: a Lua cruza o meridiano ~phase × 24h depois do Sol,
+  // portanto fica phase × 360° a leste do ponto subsolar
+  const utcNow = new Date(nowMs);
+  const utcHour = utcNow.getUTCHours() + utcNow.getUTCMinutes() / 60;
+  const sunLon = (12 - utcHour) * 15;
+  let moonLon = sunLon + phaseFraction * 360;
+  moonLon = ((((moonLon + 180) % 360) + 360) % 360) - 180;
 
-  let region = '';
-  if (moonLon > -180 && moonLon <= -130) region = 'Oceano Pacífico';
-  else if (moonLon > -130 && moonLon <= -80)
-    region = 'América do Norte / Pacífico';
-  else if (moonLon > -80 && moonLon <= -35)
-    region = 'América do Sul / Atlântico';
-  else if (moonLon > -35 && moonLon <= 20)
-    region = 'Oceano Atlântico / África';
-  else if (moonLon > 20 && moonLon <= 60)
-    region = 'África / Oriente Médio';
-  else if (moonLon > 60 && moonLon <= 120)
-    region = 'Ásia / Oceano Índico';
+  let region;
+  if (moonLon <= -130) region = 'Oceano Pacífico';
+  else if (moonLon <= -80) region = 'América do Norte / Pacífico';
+  else if (moonLon <= -35) region = 'América do Sul / Atlântico';
+  else if (moonLon <= 20) region = 'Oceano Atlântico / África';
+  else if (moonLon <= 60) region = 'África / Oriente Médio';
+  else if (moonLon <= 120) region = 'Ásia / Oceano Índico';
   else region = 'Austrália / Pacífico';
 
   const valMoonLoc = document.getElementById('val-moon-location');
   if (valMoonLoc) valMoonLoc.innerText = region;
 
-  // Visibilidade Local
-  let diffLon = moonLon - currentLon;
-  while (diffLon <= -180) diffLon += 360;
-  while (diffLon > 180) diffLon -= 360;
+  // Visibilidade Local (aproximação pelo ângulo horário)
+  let diffLon = moonLon - LON;
+  diffLon = ((((diffLon + 180) % 360) + 360) % 360) - 180;
 
   const badgeVis = document.getElementById('badge-moon-vis');
   const textVis = document.getElementById('val-moon-vis');
-  const iconVis = document.getElementById('icon-moon-vis');
 
   if (badgeVis) {
     badgeVis.setAttribute('title', `Visibilidade calculada para ${currentCityName}`);
   }
 
   if (Math.abs(diffLon) < 85) {
-    let direcao = 'Acima / Norte';
+    let direcao = 'Alta no céu';
     if (diffLon > 15) direcao = 'Leste';
     else if (diffLon < -15) direcao = 'Oeste';
 
-    if (badgeVis) {
-      badgeVis.style.background = 'rgba(74, 222, 128, 0.1)';
-      badgeVis.style.border = '1px solid rgba(74, 222, 128, 0.2)';
-      badgeVis.style.color = '#4ade80';
-    }
-    if (iconVis) iconVis.setAttribute('data-lucide', 'eye');
-    if (textVis)
+    if (badgeVis) badgeVis.className = 'moon-vis-badge visible';
+    if (textVis) {
       textVis.innerHTML = `<span style="color: #fff;">Visível agora:</span> ${direcao}`;
-  } else {
-    if (badgeVis) {
-      badgeVis.style.background = 'rgba(255, 255, 255, 0.05)';
-      badgeVis.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-      badgeVis.style.color = 'var(--text-muted)';
     }
-    if (iconVis) iconVis.setAttribute('data-lucide', 'eye-off');
-    if (textVis) textVis.innerHTML = 'Abaixo do horizonte';
+    setMoonVisIcon('eye');
+  } else {
+    if (badgeVis) badgeVis.className = 'moon-vis-badge';
+    if (textVis) textVis.innerText = 'Abaixo do horizonte';
+    setMoonVisIcon('eye-off');
   }
 
   // Bússola de Vento
@@ -995,46 +1018,21 @@ function populateUI() {
   const destDir = (originDir + 180) % 360;
 
   const windNeedle = document.getElementById('wind-needle');
-  if (windNeedle) {
-    windNeedle.style.transform = `rotate(${destDir}deg)`;
-  }
+  if (windNeedle) windNeedle.style.transform = `rotate(${destDir}deg)`;
   const valWindSfc = document.getElementById('val-wind-sfc');
-  if (valWindSfc) {
-    valWindSfc.innerText = Math.round(c.wind_speed_10m || 0);
-  }
-  const valGusts = document.getElementById('val-gusts');
-  if (valGusts) {
-    valGusts.innerText = Math.round(c.wind_gusts_10m || 0) + ' km/h';
-  }
+  if (valWindSfc) valWindSfc.innerText = Math.round(c.wind_speed_10m || 0);
   const valWindDest = document.getElementById('val-wind-dest');
-  if (valWindDest) {
-    valWindDest.innerText = getWindDirectionStr(destDir);
-  }
+  if (valWindDest) valWindDest.innerText = getWindDirectionStr(destDir);
 
   // Previsão Horária e Diária
-  if (typeof renderForecast === 'function') {
-    renderForecast();
-  }
+  renderForecast();
 
   // Tendências Atmosféricas
-  const startIndex = getCurrentHourlyIndex(h, c);
-  const prevIndex = Math.max(0, startIndex - 1);
-
-  const getTrend = (current, previous) => {
-    if (current == null || previous == null)
-      return `<i data-lucide="minus" size="14" color="var(--text-muted)" title="Estável"></i>`;
-    if (current > previous)
-      return `<i data-lucide="trending-up" size="14" color="#4ade80" title="Subindo"></i>`;
-    if (current < previous)
-      return `<i data-lucide="trending-down" size="14" color="#fb923c" title="Descendo"></i>`;
-    return `<i data-lucide="minus" size="14" color="var(--text-muted)" title="Estável"></i>`;
-  };
+  const startIndex = currentHourOffset;
+  const prevIndex = prevHourOffset;
 
   const valHum = document.getElementById('val-humidity');
-  if (valHum) {
-    valHum.innerText =
-      c.relative_humidity_2m != null ? c.relative_humidity_2m : '--';
-  }
+  if (valHum) valHum.innerText = c.relative_humidity_2m != null ? c.relative_humidity_2m : '--';
   const trendHum = document.getElementById('trend-humidity');
   if (trendHum) {
     trendHum.innerHTML = getTrend(
@@ -1044,73 +1042,55 @@ function populateUI() {
   }
 
   const valPress = document.getElementById('val-pressure');
-  if (valPress) {
-    valPress.innerText =
-      c.pressure_msl != null ? Math.round(c.pressure_msl) : '--';
-  }
+  if (valPress) valPress.innerText = c.pressure_msl != null ? Math.round(c.pressure_msl) : '--';
   const trendPress = document.getElementById('trend-pressure');
   if (trendPress) {
-    trendPress.innerHTML = getTrend(
-      c.pressure_msl,
-      h.pressure_msl ? h.pressure_msl[prevIndex] : null
-    );
+    trendPress.innerHTML = getTrend(c.pressure_msl, h.pressure_msl ? h.pressure_msl[prevIndex] : null);
   }
 
-  const visKm =
-    c.visibility != null ? (c.visibility / 1000).toFixed(1) : '--';
   const valVis = document.getElementById('val-vis');
-  if (valVis) valVis.innerText = visKm;
+  if (valVis) valVis.innerText = c.visibility != null ? (c.visibility / 1000).toFixed(1) : '--';
   const trendVis = document.getElementById('trend-vis');
   if (trendVis) {
-    trendVis.innerHTML = getTrend(
-      c.visibility,
-      h.visibility ? h.visibility[prevIndex] : null
-    );
+    trendVis.innerHTML = getTrend(c.visibility, h.visibility ? h.visibility[prevIndex] : null);
   }
 
   // Índice UV Atual
-  const currentUv =
-    h.uv_index && h.uv_index[startIndex] != null
-      ? h.uv_index[startIndex]
-      : 0;
-  const prevUv =
-    h.uv_index && h.uv_index[prevIndex] != null
-      ? h.uv_index[prevIndex]
-      : 0;
+  const currentUv = h.uv_index && h.uv_index[startIndex] != null ? h.uv_index[startIndex] : 0;
+  const prevUv = h.uv_index && h.uv_index[prevIndex] != null ? h.uv_index[prevIndex] : 0;
   const valUv = document.getElementById('val-uv');
   if (valUv) valUv.innerText = currentUv.toFixed(1);
   const trendUv = document.getElementById('trend-uv');
   if (trendUv) trendUv.innerHTML = getTrend(currentUv, prevUv);
 
-  let uvPct = Math.max(0, Math.min(1, currentUv / 11));
+  const uvPct = Math.max(0, Math.min(1, currentUv / 11));
   const uvRing = document.getElementById('uv-ring-mini');
-  if (uvRing) {
-    uvRing.style.strokeDashoffset = 200 - 200 * uvPct;
-  }
+  if (uvRing) uvRing.style.strokeDashoffset = 200 - 200 * uvPct;
 
   // Ponto de Orvalho Atual
   const currentDew =
-    h.dew_point_2m && h.dew_point_2m[startIndex] != null
-      ? h.dew_point_2m[startIndex]
-      : null;
+    h.dew_point_2m && h.dew_point_2m[startIndex] != null ? h.dew_point_2m[startIndex] : null;
   const prevDew =
-    h.dew_point_2m && h.dew_point_2m[prevIndex] != null
-      ? h.dew_point_2m[prevIndex]
-      : null;
+    h.dew_point_2m && h.dew_point_2m[prevIndex] != null ? h.dew_point_2m[prevIndex] : null;
   const valDew = document.getElementById('val-dew');
-  if (valDew) {
-    valDew.innerText = currentDew != null ? currentDew.toFixed(1) : '--';
-  }
+  if (valDew) valDew.innerText = currentDew != null ? currentDew.toFixed(1) : '--';
   const trendDew = document.getElementById('trend-dew');
   if (trendDew) trendDew.innerHTML = getTrend(currentDew, prevDew);
 
   if (window.lucide) lucide.createIcons();
 
-  // Renderiza gráficos
-  if (typeof renderCharts === 'function') {
-    renderCharts(h);
+  renderCharts(h);
+
+  // Mantém o painel de bem-estar sincronizado se estiver aberto
+  const wellbeingPanel = document.getElementById('wellbeing-panel');
+  if (wellbeingPanel && wellbeingPanel.classList.contains('active')) {
+    updateWellbeingRecommendations();
   }
 
-  // Oculta loader
   hideLoader();
+}
+
+function setMoonVisIcon(name) {
+  const holder = document.getElementById('moon-vis-icon-holder');
+  if (holder) holder.innerHTML = `<i data-lucide="${name}" width="12" height="12"></i>`;
 }

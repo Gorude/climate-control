@@ -2,36 +2,45 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>AeroSky</title>
+    <meta
+      name="description"
+      content="Dashboard meteorológico com previsão, radar de chuva e recomendações de bem-estar."
+    />
 
     <!-- PWA Config -->
     <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#060D17" />
+    <meta name="theme-color" content="#030712" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="AeroSky" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
 
-    <!-- Fontes e Ícones -->
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Leaflet para o Mapa de Chuva -->
+    <!-- Bibliotecas Externas (versões fixas para evitar quebras inesperadas) -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Bibliotecas Externas -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 
     <link rel="stylesheet" href="./css/style.css" />
   </head>
@@ -40,161 +49,118 @@
     <canvas id="weather-particles-canvas"></canvas>
     <div id="weather-bg" class="bg-day"></div>
 
-    <div id="loader">
-      <div class="spinner"></div>
-      <h3 style="font-weight: 500; letter-spacing: 1px">Sincronizando Dados</h3>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px">
-        Sincronizando satélites do AeroSky...
-      </p>
+    <div id="loader" role="status" aria-live="polite">
+      <div class="loader-busy">
+        <div class="spinner"></div>
+        <h3>Sincronizando Dados</h3>
+        <p id="loader-message">Sincronizando satélites do AeroSky...</p>
+      </div>
+      <div class="loader-error">
+        <h3>Falha de Conexão</h3>
+        <p>Não foi possível acessar os servidores meteorológicos.</p>
+        <button class="loader-retry-btn" onclick="retryFetch()">Tentar Novamente</button>
+      </div>
     </div>
 
-    <nav
-      class="top-nav"
-      style="
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        justify-content: space-between;
-        align-items: center;
-      "
-    >
+    <nav class="top-nav">
       <!-- LADO ESQUERDO: Localização e Favorito -->
-      <div
-        class="nav-title"
-        id="location-display"
-        style="
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: flex-start;
-          gap: 6px;
-          min-width: 0;
-          margin-right: auto;
-        "
-      >
+      <div class="nav-title" id="location-display">
         <button
           class="nav-city-btn"
+          data-search-toggle
           onclick="toggleSearch()"
           title="Alterar cidade"
           aria-label="Buscar cidade"
         >
           <i data-lucide="map-pin" class="pin-icon"></i>
           <span id="city-name">Naviraí - MS</span>
-          <i data-lucide="chevron-down" size="14" class="city-chevron"></i>
+          <i data-lucide="chevron-down" width="14" height="14" class="city-chevron"></i>
         </button>
 
         <button
           class="header-icon-btn"
           id="btn-favorite"
-          onclick="FavoritesManager.toggleFavorite(typeof CONFIG !== 'undefined' ? CONFIG.CITY : { name: currentCityName, lat: LAT, lon: LON })"
+          onclick="FavoritesManager.toggleFavorite()"
           title="Adicionar aos favoritos"
-          aria-label="Favoritar cidade"
+          aria-label="Adicionar aos favoritos"
         >
-          <i data-lucide="star" size="16"></i>
+          <i data-lucide="star" width="16" height="16"></i>
         </button>
       </div>
 
       <!-- PAINEL DE BUSCA COM AUTOCOMPLETE -->
-      <div
-        class="search-location"
-        id="search-panel"
-        style="display: none; width: 100%; max-width: 360px"
-      >
-        <div style="display: flex; gap: 8px; width: 100%; align-items: center">
+      <div class="search-location" id="search-panel" hidden>
+        <div class="search-row">
           <input
-            type="text"
+            type="search"
             id="search-input"
             placeholder="Buscar cidade..."
             autocomplete="off"
-            style="flex-grow: 1"
+            enterkeyhint="search"
+            aria-label="Buscar cidade"
+            aria-controls="search-results"
           />
           <button
             class="btn-locate"
             onclick="requestGeolocation()"
             title="Usar localização atual"
-            style="flex-shrink: 0"
+            aria-label="Usar localização atual"
           >
-            <i data-lucide="locate" size="18"></i>
+            <i data-lucide="locate" width="18" height="18"></i>
           </button>
           <button
             class="header-icon-btn"
-            onclick="toggleSearch()"
+            onclick="closeSearch()"
             title="Fechar busca"
-            style="flex-shrink: 0"
+            aria-label="Fechar busca"
           >
-            <i data-lucide="x" size="18"></i>
+            <i data-lucide="x" width="18" height="18"></i>
           </button>
         </div>
-        <div
-          class="search-results"
-          id="search-results"
-          style="width: 100%"
-        ></div>
+        <div class="search-results" id="search-results" role="listbox"></div>
       </div>
 
       <!-- LADO DIREITO: Controles e Ações -->
-      <div
-        class="nav-controls"
-        style="
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 6px;
-          flex-shrink: 0;
-          margin-left: auto;
-        "
-      >
+      <div class="nav-controls">
         <!-- Elementos Exclusivos do Desktop (> 820px) -->
         <div class="nav-desktop-elements">
-          <div id="api-status" class="status-badge" style="cursor: default">
-            <i data-lucide="check" size="14"></i> Conectado
+          <div id="api-status" class="status-badge" role="status">
+            <i data-lucide="check" width="14" height="14"></i> Conectado
           </div>
-          <div id="season-indicator" class="season-badge">
-            --
-          </div>
-          <div id="clock" class="clock-badge">
-            --:--
-          </div>
+          <div id="season-indicator" class="season-badge">--</div>
+          <div id="clock" class="clock-badge" title="Horário local da cidade">--:--</div>
           <button
             class="refresh-btn header-icon-btn particles-active"
             id="btn-particles"
-            onclick="WeatherParticles.toggle(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+            onclick="WeatherParticles.toggle()"
             title="Alternar efeitos climáticos dinâmicos"
             aria-label="Alternar efeitos climáticos"
           >
-            <i data-lucide="sparkles" size="18"></i>
+            <i data-lucide="sparkles" width="18" height="18"></i>
           </button>
           <button
             class="refresh-btn notif-btn"
             id="btn-notifications"
-            onclick="toggleNotifications(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+            onclick="toggleNotifications()"
             title="Ativar notificações de alerta"
+            aria-label="Ativar notificações de alerta"
           >
-            <i data-lucide="bell" size="18"></i>
+            <i data-lucide="bell" width="18" height="18"></i>
             <span class="notif-badge" id="notif-badge"></span>
           </button>
         </div>
 
-        <!-- Grupo de Ações Primárias (Linha Horizontal Estrita) -->
-        <div
-          class="nav-buttons-group"
-          style="
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-          "
-        >
+        <!-- Grupo de Ações Primárias -->
+        <div class="nav-buttons-group">
           <button
             class="refresh-btn nav-btn-search"
             id="btn-search-toggle"
+            data-search-toggle
             onclick="toggleSearch()"
-            title="Buscar cidade"
+            title="Buscar cidade (/)"
             aria-label="Buscar cidade"
           >
-            <i data-lucide="search" size="17"></i>
+            <i data-lucide="search" width="17" height="17"></i>
           </button>
           <button
             class="refresh-btn"
@@ -203,7 +169,7 @@
             title="Ver Mapa de Radar de Chuva"
             aria-label="Radar de chuva"
           >
-            <i data-lucide="map" size="17"></i>
+            <i data-lucide="map" width="17" height="17"></i>
           </button>
           <button
             class="refresh-btn pulse-heart-btn"
@@ -212,7 +178,7 @@
             title="Recomendações de Bem-Estar e Saúde"
             aria-label="Bem-estar"
           >
-            <i data-lucide="heart" size="17"></i>
+            <i data-lucide="heart" width="17" height="17"></i>
           </button>
           <button
             id="btn-refresh"
@@ -221,7 +187,7 @@
             title="Atualizar agora"
             aria-label="Atualizar dados"
           >
-            <i data-lucide="refresh-cw" size="17"></i>
+            <i data-lucide="refresh-cw" width="17" height="17"></i>
           </button>
 
           <!-- Botão de Menu Mais Opções (Mobile <= 820px) -->
@@ -231,8 +197,11 @@
             onclick="toggleMoreMenu()"
             title="Mais opções e configurações"
             aria-label="Menu de opções"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="more-menu-panel"
           >
-            <i data-lucide="more-vertical" size="18"></i>
+            <i data-lucide="more-vertical" width="18" height="18"></i>
           </button>
         </div>
       </div>
@@ -269,7 +238,7 @@
                 "
                 title="Variação na última hora"
               >
-                <i data-lucide="minus" size="16" color="var(--text-muted)"></i>
+                <i data-lucide="minus" width="16" height="16" color="var(--text-muted)"></i>
                 <span style="color: var(--text-muted)">--°</span>
               </div>
             </div>
@@ -313,17 +282,20 @@
         <div class="grid-cell cell-hourly">
           <div class="cell-header">
             <div class="cell-header-title" id="forecast-header-title">
-              <i data-lucide="calendar-clock"></i> Previsão
+              <i data-lucide="calendar-clock"></i> Previsão (Próximas 24h)
             </div>
             <div class="forecast-toggle">
               <button
                 id="btn-24h"
                 class="active"
+                aria-pressed="true"
                 onclick="switchForecast('24h')"
               >
                 24h
               </button>
-              <button id="btn-7d" onclick="switchForecast('7d')">7 Dias</button>
+              <button id="btn-7d" aria-pressed="false" onclick="switchForecast('7d')">
+                7 Dias
+              </button>
             </div>
           </div>
           <div class="hourly-scroll" id="forecast-container">
@@ -400,7 +372,7 @@
                 ><span
                   ><i
                     data-lucide="sunrise"
-                    size="14"
+                    width="14" height="14"
                     color="#f97316"
                     style="vertical-align: middle"
                   ></i>
@@ -429,7 +401,7 @@
                 ><span
                   ><i
                     data-lucide="sunset"
-                    size="14"
+                    width="14" height="14"
                     color="#a855f7"
                     style="vertical-align: middle"
                   ></i>
@@ -454,7 +426,7 @@
                   font-weight: 500;
                 "
               >
-                <i data-lucide="camera" size="12"></i> Golden Hour:
+                <i data-lucide="camera" width="12" height="12"></i> Golden Hour:
                 <span id="val-golden-hour" style="color: #fff">--:--</span>
               </div>
             </div>
@@ -546,27 +518,17 @@
                 "
                 title="Ponto Sublunar (Onde a lua está a pino na Terra agora)"
               >
-                <i data-lucide="map-pin" size="12"></i> Vertical em:
+                <i data-lucide="map-pin" width="12" height="12"></i> Vertical em:
                 <span id="val-moon-location" style="color: #fff">--</span>
               </div>
             </div>
 
             <!-- Indicador de Visibilidade Local -->
             <div style="text-align: center; margin-top: 2px">
-              <div
-                id="badge-moon-vis"
-                style="
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 4px 12px;
-                  border-radius: 20px;
-                  font-size: 0.75rem;
-                  font-weight: 500;
-                "
-                title="Visibilidade calculada para Naviraí"
-              >
-                <i data-lucide="eye" size="12" id="icon-moon-vis"></i>
+              <div id="badge-moon-vis" class="moon-vis-badge">
+                <span id="moon-vis-icon-holder"
+                  ><i data-lucide="eye" width="12" height="12"></i
+                ></span>
                 <span id="val-moon-vis">--</span>
               </div>
             </div>
@@ -777,7 +739,7 @@
         <!-- 6. Atmosfera (Bottom Horizontal Strip) -->
         <div class="grid-cell cell-atmos">
           <div class="atmos-item">
-            <i data-lucide="droplets" size="32" color="var(--accent-blue)"></i>
+            <i data-lucide="droplets" width="32" height="32" color="var(--accent-blue)"></i>
             <div>
               <div class="atmos-label">Umidade Relativa</div>
               <div class="atmos-val premium-center">
@@ -790,7 +752,7 @@
             </div>
           </div>
           <div class="atmos-item">
-            <i data-lucide="gauge" size="32" color="#a855f7"></i>
+            <i data-lucide="gauge" width="32" height="32" color="#a855f7"></i>
             <div>
               <div class="atmos-label">Pressão (Nível do Mar)</div>
               <div class="atmos-val premium-center">
@@ -803,7 +765,7 @@
             </div>
           </div>
           <div class="atmos-item">
-            <i data-lucide="eye" size="32" color="#4ade80"></i>
+            <i data-lucide="eye" width="32" height="32" color="#4ade80"></i>
             <div>
               <div class="atmos-label">Visibilidade</div>
               <div class="atmos-val premium-center">
@@ -856,7 +818,7 @@
             </div>
           </div>
           <div class="atmos-item">
-            <i data-lucide="thermometer" size="32" color="#38bdf8"></i>
+            <i data-lucide="thermometer" width="32" height="32" color="#38bdf8"></i>
             <div>
               <div class="atmos-label">Ponto de Orvalho</div>
               <div class="atmos-val premium-center">
@@ -878,10 +840,10 @@
       id="more-menu-overlay"
       onclick="toggleMoreMenu(false)"
     ></div>
-    <div class="more-menu-panel" id="more-menu-panel">
+    <div class="more-menu-panel" id="more-menu-panel" role="dialog" aria-label="Opções">
       <div class="more-menu-header">
         <div style="display: flex; align-items: center; gap: 8px">
-          <i data-lucide="sliders" size="18" style="color: var(--accent-cyan)"></i>
+          <i data-lucide="sliders" width="18" height="18" style="color: var(--accent-cyan)"></i>
           <span
             style="
               font-weight: 600;
@@ -896,7 +858,7 @@
           onclick="toggleMoreMenu(false)"
           aria-label="Fechar menu"
         >
-          <i data-lucide="x" size="18"></i>
+          <i data-lucide="x" width="18" height="18"></i>
         </button>
       </div>
 
@@ -907,7 +869,7 @@
           onclick="forceUpdate(); toggleMoreMenu(false);"
         >
           <div class="menu-action-icon">
-            <i data-lucide="refresh-cw" size="18"></i>
+            <i data-lucide="refresh-cw" width="18" height="18"></i>
           </div>
           <div class="menu-action-text">
             <div class="menu-action-title">Atualizar Dados Agora</div>
@@ -923,7 +885,7 @@
           onclick="requestGeolocation(); toggleMoreMenu(false);"
         >
           <div class="menu-action-icon">
-            <i data-lucide="locate" size="18"></i>
+            <i data-lucide="locate" width="18" height="18"></i>
           </div>
           <div class="menu-action-text">
             <div class="menu-action-title">Minha Localização GPS</div>
@@ -932,34 +894,34 @@
         </button>
 
         <!-- Ação 3: Efeitos Climáticos Dinâmicos (Partículas) -->
-        <div
+        <button
           class="menu-action-item menu-toggle-item"
-          onclick="WeatherParticles.toggle(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+          onclick="WeatherParticles.toggle()"
         >
           <div class="menu-action-icon">
-            <i data-lucide="sparkles" size="18" id="menu-particles-icon"></i>
+            <i data-lucide="sparkles" width="18" height="18" id="menu-particles-icon"></i>
           </div>
           <div class="menu-action-text">
             <div class="menu-action-title">Efeitos Climáticos</div>
             <div class="menu-action-sub">Chuva, raios e estrelas na tela</div>
           </div>
           <div class="menu-toggle-badge" id="menu-particles-status">Ativo</div>
-        </div>
+        </button>
 
         <!-- Ação 4: Notificações de Alerta -->
-        <div
+        <button
           class="menu-action-item menu-toggle-item"
-          onclick="toggleNotifications(); if(typeof updateMenuStates === 'function') updateMenuStates();"
+          onclick="toggleNotifications()"
         >
           <div class="menu-action-icon">
-            <i data-lucide="bell" size="18" id="menu-notif-icon"></i>
+            <i data-lucide="bell" width="18" height="18" id="menu-notif-icon"></i>
           </div>
           <div class="menu-action-text">
             <div class="menu-action-title">Notificações de Alerta</div>
             <div class="menu-action-sub">Avisos de tempestades e calor</div>
           </div>
-          <div class="menu-toggle-badge" id="menu-notif-status">Inativo</div>
-        </div>
+          <div class="menu-toggle-badge" id="menu-notif-status">Desativado</div>
+        </button>
 
         <div class="menu-divider"></div>
 
@@ -985,15 +947,22 @@
       id="wellbeing-overlay"
       onclick="toggleWellbeing(false)"
     ></div>
-    <div class="wellbeing-panel" id="wellbeing-panel">
+    <div
+      class="wellbeing-panel"
+      id="wellbeing-panel"
+      role="dialog"
+      aria-label="Consultor de bem-estar"
+      aria-hidden="true"
+    >
       <div class="wellbeing-header">
         <h2><i data-lucide="heart"></i> Bem-Estar</h2>
         <button
           class="wellbeing-close"
           onclick="toggleWellbeing(false)"
           title="Fechar painel"
+          aria-label="Fechar painel"
         >
-          <i data-lucide="x" size="18"></i>
+          <i data-lucide="x" width="18" height="18"></i>
         </button>
       </div>
       <div class="wellbeing-content" id="wellbeing-content">
@@ -1002,8 +971,8 @@
         >
           <i
             data-lucide="loader"
-            class="spinning"
-            size="24"
+            class="spin"
+            width="24" height="24"
             style="margin-bottom: 12px; opacity: 0.7"
           ></i>
           <p>Analisando dados atmosféricos...</p>
@@ -1015,21 +984,19 @@
     <div
       class="map-overlay"
       id="map-overlay"
+      aria-hidden="true"
       onclick="if(event.target === this) toggleWeatherMap(false)"
     >
-      <div class="map-modal">
-        <button class="map-close-btn" onclick="toggleWeatherMap(false)">
-          <i data-lucide="x" size="24"></i>
-        </button>
-        <div
-          style="
-            padding: 20px;
-            border-bottom: 1px solid var(--divider);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-          "
+      <div class="map-modal" role="dialog" aria-label="Radar de precipitação">
+        <button
+          class="map-close-btn"
+          onclick="toggleWeatherMap(false)"
+          title="Fechar mapa"
+          aria-label="Fechar mapa"
         >
+          <i data-lucide="x" width="24" height="24"></i>
+        </button>
+        <div class="map-header">
           <i data-lucide="map" color="var(--accent-cyan)"></i>
           <h3 style="font-family: var(--font-family-title); font-size: 1.1rem">
             Radar de Precipitação em Tempo Real
@@ -1040,12 +1007,12 @@
     </div>
 
     <!-- MÓDULOS MODULARES AEROSKY -->
-    <script src="./js/constants.js"></script>
-    <script src="./js/weather.js"></script>
-    <script src="./js/charts.js"></script>
-    <script src="./js/particles.js"></script>
-    <script src="./js/favorites.js"></script>
-    <script src="./js/ui.js"></script>
-    <script src="./js/app.js"></script>
+    <script defer src="./js/constants.js"></script>
+    <script defer src="./js/weather.js"></script>
+    <script defer src="./js/charts.js"></script>
+    <script defer src="./js/particles.js"></script>
+    <script defer src="./js/favorites.js"></script>
+    <script defer src="./js/ui.js"></script>
+    <script defer src="./js/app.js"></script>
   </body>
 </html>

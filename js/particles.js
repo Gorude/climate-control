@@ -16,6 +16,7 @@ const WeatherParticles = {
   splashes: [],
   shootingStars: [],
   windSpeed: 10, // km/h
+  windDrift: 1, // componente leste-oeste do vento (-1 = para oeste, 1 = para leste)
   isDay: 1,
   lastFlashTime: 0,
   lastFrameTime: 0,
@@ -35,6 +36,9 @@ const WeatherParticles = {
       const saved = localStorage.getItem(this.STORAGE_KEY);
       if (saved !== null) {
         this.enabled = saved === 'true';
+      } else if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        // Respeita a preferência do sistema por menos animações
+        this.enabled = false;
       }
     } catch (e) {
       console.warn('Erro ao ler preferência de partículas:', e);
@@ -50,7 +54,10 @@ const WeatherParticles = {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
           // Só redimensiona se houver mudança real de largura (evita disparos causados pela barra do navegador móvel)
-          if (Math.abs(window.innerWidth - (this.displayWidth || 0)) > 20) {
+          if (
+            Math.abs(window.innerWidth - (this.displayWidth || 0)) > 20 ||
+            Math.abs(window.innerHeight - (this.displayHeight || 0)) > 150
+          ) {
             this.resize();
           }
         }, 200);
@@ -85,6 +92,7 @@ const WeatherParticles = {
   updateToggleButton() {
     const btn = document.getElementById('btn-particles');
     if (btn) {
+      btn.setAttribute('aria-pressed', this.enabled ? 'true' : 'false');
       if (this.enabled) {
         btn.classList.add('particles-active');
         btn.title = 'Desativar efeitos climáticos dinâmicos';
@@ -123,9 +131,14 @@ const WeatherParticles = {
     }
   },
 
-  setWeatherCondition(weatherCode, isDay = 1, windKmh = 10) {
+  setWeatherCondition(weatherCode, isDay = 1, windKmh = 10, windFromDeg = 270) {
     this.isDay = isDay;
     this.windSpeed = typeof windKmh === 'number' ? windKmh : 10;
+    // Direção meteorológica indica de onde o vento vem; a chuva é levada para o lado oposto
+    if (typeof windFromDeg === 'number') {
+      const towardRad = (((windFromDeg + 180) % 360) * Math.PI) / 180;
+      this.windDrift = Math.sin(towardRad);
+    }
 
     let newMode = 'none';
 
@@ -213,7 +226,7 @@ const WeatherParticles = {
   },
 
   createRainDrop(w, h, randomY = false) {
-    const windEffect = Math.min(Math.max(this.windSpeed * 0.2, -10), 10);
+    const windEffect = Math.min(Math.max(this.windSpeed * 0.2 * this.windDrift, -10), 10);
     return {
       x: Math.random() * (w + 160) - 80,
       y: randomY ? Math.random() * h : -20,

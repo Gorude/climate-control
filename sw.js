@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aerosky-v7';
+const CACHE_NAME = 'aerosky-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -15,14 +15,22 @@ const ASSETS = [
   './js/app.js'
 ];
 
-// Instalação: Cacheia os ativos estáticos essenciais
+// Bibliotecas e fontes externas que podem ser cacheadas (todas com versão fixa)
+const CACHEABLE_HOSTS = [
+  'unpkg.com',
+  'cdn.jsdelivr.net',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com'
+];
+
+// Instalação: Cacheia os ativos estáticos essenciais (ignorando o cache HTTP do navegador)
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS).catch((err) => {
-        console.warn('Falha parcial ao pré-cachear ativos:', err);
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache
+        .addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' })))
+        .catch((err) => console.warn('Falha parcial ao pré-cachear ativos:', err))
+    )
   );
   self.skipWaiting();
 });
@@ -30,60 +38,66 @@ self.addEventListener('install', (event) => {
 // Ativação: Limpa caches antigos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        )
+      )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Interceptação de Fetch: Estratégia Stale-While-Revalidate com Fallback Offline
+function putInCache(request, response) {
+  if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
-  // Ignora requisições não-GET ou de esquemas não suportados (ex: extensões)
-  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
+  const request = event.request;
+  if (request.method !== 'GET' || !request.url.startsWith('http')) return;
+
+  const url = new URL(request.url);
+
+  // Navegação: rede primeiro (para receber atualizações), com fallback offline
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => putInCache(request, response))
+        .catch(async () => (await caches.match('./index.html')) || (await caches.match('./')) || Response.error())
+    );
     return;
   }
 
-  // Ignora requisições de dados em tempo real (APIs externas de clima e geocodificação)
-  if (
-    event.request.url.includes('api.open-meteo.com') ||
-    event.request.url.includes('nominatim.openstreetmap.org') ||
-    event.request.url.includes('api.rainviewer.com')
-  ) {
-    return;
-  }
+  // Só cacheia ativos do próprio app e das CDNs conhecidas. APIs de clima,
+  // geocodificação e tiles de mapa/radar ficam fora (dados em tempo real e cache sem limite).
+  const isSameOrigin = url.origin === self.location.origin;
+  if (!isSameOrigin && !CACHEABLE_HOSTS.includes(url.hostname)) return;
 
+  // Stale-While-Revalidate
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            (networkResponse.type === 'basic' || networkResponse.type === 'cors')
-          ) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // Em falha de rede para navegação de páginas, fallback para a tela principal offline
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html') || caches.match('./');
-          }
-          return null;
-        });
-
+    caches.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request)
+        .then((response) => putInCache(request, response))
+        .catch(() => cachedResponse || Response.error());
       return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+// Clique na notificação: foca o app aberto ou abre uma nova janela
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      return self.clients.openWindow('./');
     })
   );
 });

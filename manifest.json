@@ -1,24 +1,26 @@
 {
+  "id": "./",
   "name": "AeroSky - Dashboard de Clima Inteligente",
   "short_name": "AeroSky",
   "description": "Dashboard meteorológico premium e consultor de bem-estar inteligente",
+  "lang": "pt-BR",
   "scope": "./",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#060D17",
-  "theme_color": "#00D2D3",
+  "background_color": "#030712",
+  "theme_color": "#030712",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
