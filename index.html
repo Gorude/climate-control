@@ -286,44 +286,52 @@
               <h2 class="cell-header-title" id="precip-header-title">
                 <i data-lucide="cloud-rain"></i> Chuva
               </h2>
-              <div class="seg" role="group" aria-label="Tipo de gráfico">
-                <button id="btn-precip-rain" class="active" onclick="switchPrecipView('rain')">
-                  Chuva
-                </button>
-                <button id="btn-precip-temp" onclick="switchPrecipView('temp')">
-                  Temperatura
+              <div class="header-actions">
+                <div class="seg" role="group" aria-label="Tipo de gráfico">
+                  <button
+                    id="btn-precip-rain"
+                    class="active"
+                    aria-pressed="true"
+                    onclick="switchPrecipView('rain')"
+                  >
+                    Chuva
+                  </button>
+                  <button id="btn-precip-temp" aria-pressed="false" onclick="switchPrecipView('temp')">
+                    Temperatura
+                  </button>
+                </div>
+                <button
+                  class="icon-toggle"
+                  id="btn-precip-table"
+                  aria-pressed="false"
+                  aria-controls="precip-table"
+                  title="Ver como tabela"
+                  onclick="toggleChartTable('precip')"
+                >
+                  <i data-lucide="table-2" width="16" height="16"></i>
                 </button>
               </div>
             </div>
             <div class="cell-header-row">
-              <div class="cell-header-meta">
-                <span id="meta-rain"
-                  >Acumulado: <strong id="val-precip">-- mm</strong></span
-                >
-                <span id="meta-temp" class="meta-temp" style="display: none"
-                  >Variação: <strong id="val-temp-range">--° — --°</strong></span
-                >
-              </div>
-              <div class="seg seg-sm" id="precip-sub-toggle" role="group" aria-label="Período do gráfico">
-                <button
-                  id="btn-precip-forecast"
-                  class="active"
-                  onclick="switchPrecipSubTab('forecast')"
-                >
-                  Previsão
-                </button>
-                <button id="btn-precip-history" onclick="switchPrecipSubTab('history')">
-                  Histórico
-                </button>
-              </div>
+              <div class="cell-header-meta" id="precip-meta" aria-live="polite">--</div>
+              <div class="chart-legend" id="precip-legend"></div>
             </div>
           </div>
-          <div class="chart-container" id="view-precip-rain">
-            <canvas id="chart-precip" aria-label="Gráfico de chuva" role="img"></canvas>
+          <div class="chart-container chart-rain" id="view-precip-rain">
+            <canvas
+              id="chart-precip"
+              role="img"
+              aria-label="Gráfico de chance e volume de chuva das últimas 12 horas e próximas 24 horas. Use as setas para percorrer os horários."
+            ></canvas>
           </div>
           <div class="chart-container" id="view-precip-temp" style="display: none">
-            <canvas id="chart-temp-history" aria-label="Gráfico de temperatura" role="img"></canvas>
+            <canvas
+              id="chart-temp-history"
+              role="img"
+              aria-label="Gráfico de temperatura e sensação térmica das últimas 12 horas e próximas 24 horas. Use as setas para percorrer os horários."
+            ></canvas>
           </div>
+          <div class="chart-table" id="precip-table" hidden></div>
         </section>
 
         <!-- 4. Detalhes atmosféricos -->
@@ -441,21 +449,20 @@
               <h2 class="cell-header-title" id="wind-header-title">
                 <i data-lucide="wind"></i> Vento
               </h2>
-              <div class="seg seg-sm" id="wind-sub-toggle" role="group" aria-label="Período do vento">
-                <button
-                  id="btn-wind-forecast"
-                  class="active"
-                  onclick="switchWindSubTab('forecast')"
-                >
-                  Previsão
-                </button>
-                <button id="btn-wind-history" onclick="switchWindSubTab('history')">
-                  Histórico
-                </button>
-              </div>
+              <button
+                class="icon-toggle"
+                id="btn-wind-table"
+                aria-pressed="false"
+                aria-controls="wind-table"
+                title="Ver como tabela"
+                onclick="toggleChartTable('wind')"
+              >
+                <i data-lucide="table-2" width="16" height="16"></i>
+              </button>
             </div>
-            <div class="cell-header-meta">
-              Rajada máx. em 24h: <strong id="val-gusts">-- km/h</strong>
+            <div class="cell-header-row">
+              <div class="cell-header-meta" id="wind-meta">--</div>
+              <div class="chart-legend" id="wind-legend"></div>
             </div>
           </div>
 
@@ -480,9 +487,14 @@
             </div>
           </div>
 
-          <div class="chart-container chart-wind">
-            <canvas id="chart-wind" aria-label="Gráfico de vento" role="img"></canvas>
+          <div class="chart-container chart-wind" id="view-wind-chart">
+            <canvas
+              id="chart-wind"
+              role="img"
+              aria-label="Gráfico de velocidade do vento e rajadas, com setas de direção a cada 3 horas. Use as setas para percorrer os horários."
+            ></canvas>
           </div>
+          <div class="chart-table" id="wind-table" hidden></div>
         </section>
 
         <!-- 6. Ciclos Celestes -->
@@ -716,27 +728,72 @@
       </div>
     </div>
 
-    <!-- ESTRUTURA DO MAPA -->
+    <!-- RADAR DE CHUVA -->
     <div
       class="map-overlay"
       id="map-overlay"
       aria-hidden="true"
       onclick="if(event.target === this) toggleWeatherMap(false)"
     >
-      <div class="map-modal" role="dialog" aria-label="Radar de precipitação">
-        <button
-          class="map-close-btn"
-          onclick="toggleWeatherMap(false)"
-          title="Fechar mapa"
-          aria-label="Fechar mapa"
-        >
-          <i data-lucide="x" width="24" height="24"></i>
-        </button>
+      <div class="map-modal" role="dialog" aria-modal="true" aria-labelledby="map-title">
         <div class="map-header">
-          <i data-lucide="map" color="var(--accent-cyan)"></i>
-          <h3>Radar de Chuva em Tempo Real</h3>
+          <span class="map-header-icon"><i data-lucide="radar" width="20" height="20"></i></span>
+          <div class="map-header-text">
+            <h3 id="map-title">Radar de chuva</h3>
+            <p class="map-subtitle" id="radar-status" aria-live="polite">Carregando radar...</p>
+          </div>
+          <button
+            class="map-close-btn"
+            onclick="toggleWeatherMap(false)"
+            title="Fechar mapa"
+            aria-label="Fechar mapa"
+          >
+            <i data-lucide="x" width="22" height="22"></i>
+          </button>
         </div>
-        <div id="weather-map-container"></div>
+
+        <div class="map-stage">
+          <div id="weather-map-container" aria-label="Mapa do radar. Toque em um ponto para ver a previsão dele."></div>
+
+          <!-- Legenda de intensidade (paleta Universal Blue do RainViewer) -->
+          <div class="radar-legend">
+            <div class="radar-legend-title">Intensidade</div>
+            <div class="radar-legend-bar" aria-hidden="true"></div>
+            <div class="radar-legend-labels">
+              <span>Fraca</span><span>Moderada</span><span>Forte</span><span>Extrema</span>
+            </div>
+          </div>
+
+          <!-- Controles da animação -->
+          <div class="radar-player">
+            <button class="radar-play" id="radar-play" onclick="RadarMap.togglePlay()" aria-label="Reproduzir animação" title="Reproduzir">
+              <i data-lucide="play" width="18" height="18"></i>
+            </button>
+            <div class="radar-time">
+              <strong id="radar-time">--:--</strong>
+              <span id="radar-ago"></span>
+            </div>
+            <input
+              type="range"
+              class="radar-slider"
+              id="radar-slider"
+              min="0"
+              max="0"
+              value="0"
+              step="1"
+              aria-label="Momento do radar"
+            />
+            <button
+              class="radar-chip"
+              id="radar-opacity"
+              onclick="RadarMap.cycleOpacity()"
+              aria-label="Opacidade do radar: 70%"
+              title="Opacidade do radar"
+            >
+              <i data-lucide="layers" width="15" height="15"></i><span>70%</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -746,6 +803,7 @@
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/particles.js"></script>
     <script defer src="./js/favorites.js"></script>
+    <script defer src="./js/radar.js"></script>
     <script defer src="./js/ui.js"></script>
     <script defer src="./js/app.js"></script>
   </body>

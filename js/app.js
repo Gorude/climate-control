@@ -16,9 +16,6 @@ let globalWeatherData = null;
 let globalWeatherLocation = null; // { lat, lon } a que globalWeatherData pertence
 let lastFetchTime = 0;
 let fetchSeq = 0;
-let weatherMap = null;
-let radarLayer = null;
-let radarMarker = null;
 let currentForecastTab = '24h';
 let selectedDayIndex = 0; // 0 = próximas 24h a partir do momento atual
 let notificationsEnabled = false;
@@ -97,6 +94,23 @@ window.selectCity = function (lat, lon, name) {
   setLocation(lat, lon, name, 'manual');
 };
 
+/**
+ * Troca para coordenadas sem nome conhecido (GPS ou ponto escolhido no radar):
+ * exibe um nome provisório e resolve o nome real da cidade em segundo plano.
+ */
+window.setLocationFromCoords = async function (lat, lon, placeholder, source) {
+  setLocation(lat, lon, placeholder, source);
+  const versionAfterSet = locationVersion;
+
+  const resolvedCity = await WeatherService.reverseGeocode(lat, lon);
+  if (locationVersion !== versionAfterSet) return;
+
+  currentCityName = resolvedCity;
+  CONFIG.CITY = { name: resolvedCity, lat, lon };
+  saveLocation();
+  updateLocationLabels();
+};
+
 // --- AEROSKY: GEOLOCALIZAÇÃO INTELIGENTE (MOBILE-FRIENDLY & NÃO BLOQUEANTE) ---
 function performGeolocation(isAutomatic = false) {
   if (!navigator.geolocation) {
@@ -113,20 +127,12 @@ function performGeolocation(isAutomatic = false) {
       // Se o usuário escolheu outra cidade enquanto o GPS respondia, não sobrescreve a escolha
       if (isAutomatic && locationVersion !== versionAtStart) return;
 
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-
-      setLocation(lat, lon, 'Sua Localização', 'gps');
-      const versionAfterSet = locationVersion;
-
-      // Resolve o nome da cidade em segundo plano sem travar a interface
-      const resolvedCity = await WeatherService.reverseGeocode(lat, lon);
-      if (locationVersion !== versionAfterSet) return;
-
-      currentCityName = resolvedCity;
-      CONFIG.CITY = { name: resolvedCity, lat, lon };
-      saveLocation();
-      updateLocationLabels();
+      setLocationFromCoords(
+        position.coords.latitude,
+        position.coords.longitude,
+        'Sua Localização',
+        'gps'
+      );
     },
     (error) => {
       console.warn('Geolocalização não disponível ou negada:', error.message);
@@ -448,10 +454,7 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
     resizeAllCharts();
-    const mapOverlay = document.getElementById('map-overlay');
-    if (weatherMap && mapOverlay && mapOverlay.classList.contains('active')) {
-      weatherMap.invalidateSize();
-    }
+    RadarMap.invalidate();
   }, 150);
 });
 
