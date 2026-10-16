@@ -2087,7 +2087,7 @@ h3 {
 .wellbeing-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
 
 .wellbeing-empty {
@@ -2104,82 +2104,372 @@ h3 {
   opacity: 0.7;
 }
 
-.wellbeing-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 16px 16px 20px;
+/* Cabeçalho do painel */
+.wellbeing-heading {
+  min-width: 0;
+}
+
+.wellbeing-subtitle {
+  margin-top: 2px;
   overflow: hidden;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--glass-border);
-  transition: all 0.3s ease;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
-.wellbeing-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--accent-cyan);
+/* Paleta de status (sempre acompanhada de ícone + rótulo) */
+.wellbeing-panel {
+  --sev-critical: #ff6b6b;
+  --sev-warning: #fab219;
+  --sev-serious: #ec835a;
+  --sev-good: #4ade80;
+  --sev-info: #7cc4ff;
 }
 
-.wellbeing-card-title {
+/* Índice de conforto */
+.wb-hero {
+  --tone: var(--sev-good);
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--font-family-title);
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--tone) 14%, transparent), transparent 60%),
+    rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--glass-border);
 }
 
-.wellbeing-card-desc {
-  font-size: 0.88rem;
+.wb-hero.tone-warning {
+  --tone: var(--sev-warning);
+}
+
+.wb-hero.tone-serious {
+  --tone: var(--sev-serious);
+}
+
+.wb-ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 92px;
+  height: 92px;
+}
+
+.wb-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.wb-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 8;
+}
+
+.wb-ring-fill {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wb-ring-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 30px;
+  gap: 1px;
+}
+
+.wb-ring-value strong {
+  font-family: var(--font-family-title);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.wb-ring-value span {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.wb-hero-text {
+  min-width: 0;
+}
+
+.wb-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.wb-score-label {
+  margin-top: 2px;
+  font-family: var(--font-family-title);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--tone);
+}
+
+.wb-summary {
+  margin-top: 4px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-info);
+}
+
+/* Seções */
+.wb-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wb-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.wb-section-title {
+  font-family: var(--font-family-title);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--text-info);
+}
+
+.wb-best-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 245, 212, 0.1);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+/* Conforto hora a hora (uma cor; a melhor janela ganha destaque) */
+.wb-timeline {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  height: 84px;
+  padding: 10px 10px 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--surface-soft-border);
+}
+
+.wb-bar {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  padding-bottom: 18px;
+}
+
+.wb-bar-fill {
+  display: block;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: rgba(0, 245, 212, 0.28);
+  transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wb-bar.is-best .wb-bar-fill {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 245, 212, 0.35);
+}
+
+.wb-bar.is-now .wb-bar-fill {
+  outline: 1.5px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 1px;
+}
+
+.wb-bar-time {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Leve com você */
+.wb-carry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.wb-carry-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.wb-carry-item svg {
+  color: var(--accent-cyan);
+}
+
+/* Recomendações */
+.wb-recs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wb-rec {
+  --sev: var(--sev-info);
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--glass-border);
+}
+
+.wb-rec::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--sev);
+}
+
+.wb-rec.sev-critical {
+  --sev: var(--sev-critical);
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.wb-rec.sev-warning {
+  --sev: var(--sev-warning);
+}
+
+.wb-rec.sev-good {
+  --sev: var(--sev-good);
+}
+
+.wb-rec-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--sev) 14%, transparent);
+  color: var(--sev);
+}
+
+.wb-rec-body {
+  min-width: 0;
+}
+
+.wb-rec-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.wb-tag,
+.wb-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.wb-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sev) 14%, transparent);
+  color: var(--sev);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.wb-when {
+  color: var(--text-muted);
+}
+
+.wb-rec-title {
+  font-family: var(--font-family-title);
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.wb-rec-desc {
+  margin-top: 3px;
+  font-size: 0.85rem;
   line-height: 1.5;
   color: var(--text-info);
 }
 
-.wellbeing-card.uv::before {
-  background: var(--accent-yellow);
+/* Ponto de alerta no botão de bem-estar */
+#btn-wellbeing {
+  position: relative;
 }
-.wellbeing-card.hydration::before {
-  background: var(--accent-blue);
+
+#btn-wellbeing.has-alert::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  border: 2px solid #030712;
+  animation: pulse-alert-dot 1.6s infinite;
 }
-.wellbeing-card.activity::before {
-  background: #4ade80;
-}
-.wellbeing-card.wind::before {
-  background: #a855f7;
-}
-.wellbeing-card.alert::before {
-  background: var(--accent-danger);
-}
-.wellbeing-card.uv .wellbeing-card-title {
-  color: var(--accent-yellow);
-}
-.wellbeing-card.hydration .wellbeing-card-title {
-  color: var(--accent-blue);
-}
-.wellbeing-card.activity .wellbeing-card-title {
-  color: #4ade80;
-}
-.wellbeing-card.wind .wellbeing-card-title {
-  color: #a855f7;
-}
-.wellbeing-card.alert .wellbeing-card-title {
-  color: var(--accent-danger);
+
+@keyframes pulse-alert-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 107, 107, 0);
+  }
 }
 
 @media (min-width: 600px) {
   .wellbeing-panel {
     top: 0;
     left: auto;
-    width: 440px;
+    width: 480px;
     max-height: none;
     padding: calc(28px + var(--safe-top)) calc(28px + var(--safe-right)) 28px 28px;
     border-radius: 0;
@@ -2198,7 +2488,7 @@ h3 {
   }
 
   .wellbeing-content {
-    gap: 16px;
+    gap: 22px;
   }
 }
 
@@ -2847,11 +3137,6 @@ h3 {
   .more-menu-close:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-main);
-  }
-
-  .wellbeing-card:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: var(--glass-border-hover);
   }
 
   .icon-toggle:hover,

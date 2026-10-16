@@ -192,179 +192,8 @@ window.toggleWellbeing = function (show) {
   panel.classList.toggle('active', !!show);
   overlay.classList.toggle('active', !!show);
   panel.setAttribute('aria-hidden', show ? 'false' : 'true');
-  if (show) updateWellbeingRecommendations();
+  if (show) Wellbeing.render();
 };
-
-function updateWellbeingRecommendations() {
-  const container = document.getElementById('wellbeing-content');
-  if (!container) return;
-  if (!globalWeatherData) {
-    container.innerHTML = `
-      <div class="wellbeing-empty">
-          <i data-lucide="cloud-off" width="24" height="24"></i>
-          <p>Nenhum dado meteorológico disponível para análise.</p>
-      </div>
-    `;
-    if (window.lucide) lucide.createIcons();
-    return;
-  }
-
-  const c = globalWeatherData.current;
-  const h = globalWeatherData.hourly;
-  const d = globalWeatherData.daily;
-  const startIndex = getCurrentHourlyIndex(h, c);
-
-  // Dados atuais
-  const isDay = c.is_day === 1;
-  const uv = h.uv_index && h.uv_index[startIndex] != null ? h.uv_index[startIndex] : 0;
-  const temp = c.temperature_2m;
-  const feels = c.apparent_temperature != null ? c.apparent_temperature : temp;
-  const humidity = c.relative_humidity_2m;
-  const wind = c.wind_speed_10m || 0;
-  const rain = c.precipitation || 0;
-
-  const recommendations = [];
-
-  // 1. Recomendação de Proteção UV
-  if (!isDay) {
-    // À noite o UV é zero: mostra o pico previsto para o próximo período de sol
-    const beforeSunrise = d.sunrise && d.sunrise[1] && c.time < d.sunrise[1];
-    const nextIdx = beforeSunrise ? 1 : 2;
-    const nextUvMax = d.uv_index_max && d.uv_index_max[nextIdx];
-    recommendations.push({
-      category: 'uv',
-      icon: 'moon',
-      title: 'Sem Radiação UV Agora',
-      desc:
-        nextUvMax != null
-          ? `É noite, sem exposição solar. O índice UV máximo previsto para ${beforeSunrise ? 'hoje' : 'amanhã'} é ${nextUvMax.toFixed(1)}${nextUvMax >= 3 ? ', então separe o protetor solar.' : '.'}`
-          : 'É noite, sem exposição solar.'
-    });
-  } else if (uv >= 8) {
-    recommendations.push({
-      category: 'uv',
-      icon: 'sun',
-      title: 'Radiação UV Extrema',
-      desc: `Índice UV está em ${uv.toFixed(1)} (Muito Alto). Use protetor solar FPS 50+, evite exposição direta entre 10h e 16h, e use óculos de sol e roupas protetoras.`
-    });
-  } else if (uv >= 3) {
-    recommendations.push({
-      category: 'uv',
-      icon: 'sun-medium',
-      title: 'Exposição UV Moderada',
-      desc: `Índice UV está em ${uv.toFixed(1)}. Recomenda-se protetor solar FPS 30+, mesmo em dias nublados.`
-    });
-  } else {
-    recommendations.push({
-      category: 'uv',
-      icon: 'sun-dim',
-      title: 'Radiação UV Baixa',
-      desc: `Índice UV em ${uv.toFixed(1)}. Baixo risco para a pele. Ótimo momento para aproveitar a luz natural com segurança.`
-    });
-  }
-
-  // 2. Recomendação de Hidratação
-  if (temp >= 33 || feels >= 35) {
-    recommendations.push({
-      category: 'hydration',
-      icon: 'droplet',
-      title: 'Alerta de Calor Severo',
-      desc: `Temperatura de ${temp.toFixed(1)}°C (Sensação de ${feels.toFixed(0)}°C). Risco de estresse térmico. Beba ao menos 3L de água hoje e evite exposição solar direta.`
-    });
-  } else if (humidity <= 30) {
-    recommendations.push({
-      category: 'hydration',
-      icon: 'droplets',
-      title: 'Ar Muito Seco',
-      desc: `Umidade relativa em ${humidity}%. Hidrate-se com frequência, use hidratante labial e umidificador para aliviar as vias respiratórias.`
-    });
-  } else if (humidity <= 40) {
-    recommendations.push({
-      category: 'hydration',
-      icon: 'droplets',
-      title: 'Ar Seco',
-      desc: `Umidade relativa em ${humidity}%. Aumente a ingestão de água e evite ambientes muito climatizados por longos períodos.`
-    });
-  } else {
-    recommendations.push({
-      category: 'hydration',
-      icon: 'glass-water',
-      title: 'Hidratação Normal',
-      desc: `Umidade em ${humidity}%. Mantenha o consumo regular de cerca de 2L/dia de água.`
-    });
-  }
-
-  // 3. Atividades Físicas / Exercícios
-  if (rain > 0) {
-    recommendations.push({
-      category: 'activity',
-      icon: 'home',
-      title: 'Exercícios Indoor Recomendados',
-      desc: `Precipitação no momento (${rain.toFixed(1)} mm). Dê preferência a atividades físicas em locais fechados ou academia.`
-    });
-  } else if (temp >= 16 && temp <= 26 && wind < 25) {
-    recommendations.push({
-      category: 'activity',
-      icon: 'bike',
-      title: 'Perfeito para Esportes ao Ar Livre',
-      desc: `Clima ideal de ${temp.toFixed(0)}°C e sem chuva no momento. Perfeito para corrida, caminhada ou ciclismo.`
-    });
-  } else {
-    recommendations.push({
-      category: 'activity',
-      icon: 'dumbbell',
-      title: 'Atividade Física Moderada',
-      desc: 'Condições menos favoráveis para treinos intensos. Prefira o início da manhã ou o fim da tarde e respeite seus limites.'
-    });
-  }
-
-  // 4. Perfil Eólico e Conforto Térmico
-  if (wind >= 30) {
-    recommendations.push({
-      category: 'wind',
-      icon: 'wind',
-      title: 'Ventos Fortes & Alergias',
-      desc: `Vento soprando a ${Math.round(wind)} km/h. Risco de dispersão de poeira e partículas. Pessoas alérgicas devem ter cautela.`
-    });
-  } else if (feels <= 15) {
-    recommendations.push({
-      category: 'wind',
-      icon: 'thermometer-snowflake',
-      title: 'Desconforto por Frio',
-      desc: `Sensação térmica baixa de ${feels.toFixed(0)}°C. Agasalhe-se bem e consuma bebidas quentes para conforto térmico.`
-    });
-  } else if (feels >= 32) {
-    recommendations.push({
-      category: 'wind',
-      icon: 'sun',
-      title: 'Calor Intenso',
-      desc: `Sensação térmica elevada de ${feels.toFixed(0)}°C. Permaneça em ambientes arejados ou climatizados e evite esforço excessivo.`
-    });
-  } else {
-    recommendations.push({
-      category: 'wind',
-      icon: 'smile',
-      title: 'Conforto Térmico Ideal',
-      desc: 'Equilíbrio harmonioso de temperatura e ventilação, com sensação neutra e agradável.'
-    });
-  }
-
-  container.innerHTML = recommendations
-    .map(
-      (r) => `
-        <div class="wellbeing-card ${r.category}">
-            <div class="wellbeing-card-title">
-                <i data-lucide="${r.icon}" width="18" height="18"></i>
-                <span>${r.title}</span>
-            </div>
-            <div class="wellbeing-card-desc">${r.desc}</div>
-        </div>
-      `
-    )
-    .join('');
-
-  if (window.lucide) lucide.createIcons();
-}
 
 // --- SISTEMA DE NOTIFICAÇÕES PUSH ---
 window.toggleNotifications = async function () {
@@ -877,10 +706,11 @@ function populateUI() {
 
   renderCharts(h);
 
-  // Mantém o painel de bem-estar sincronizado se estiver aberto
+  // Bem-estar: indicador de alerta no botão e painel sincronizado se estiver aberto
+  Wellbeing.updateBadge();
   const wellbeingPanel = document.getElementById('wellbeing-panel');
   if (wellbeingPanel && wellbeingPanel.classList.contains('active')) {
-    updateWellbeingRecommendations();
+    Wellbeing.render();
   }
 
   hideLoader();
