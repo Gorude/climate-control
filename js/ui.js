@@ -40,16 +40,23 @@ function showLoaderError() {
 window.showLoaderError = showLoaderError;
 
 // --- HORÁRIOS NO FUSO DA CIDADE EXIBIDA ---
+// Criar um Intl.DateTimeFormat é caro e o relógio formata a hora todo segundo: guarda por fuso/formato
+const timeFormatters = new Map();
 function formatTimeInCity(ms, withSeconds = false) {
-  const options = { hour: '2-digit', minute: '2-digit' };
-  if (withSeconds) options.second = '2-digit';
-  if (globalWeatherData && globalWeatherData.timezone) options.timeZone = globalWeatherData.timezone;
-  try {
-    return new Date(ms).toLocaleTimeString('pt-BR', options);
-  } catch (e) {
-    delete options.timeZone;
-    return new Date(ms).toLocaleTimeString('pt-BR', options);
+  const timeZone = (globalWeatherData && globalWeatherData.timezone) || '';
+  const key = `${timeZone}|${withSeconds}`;
+  let fmt = timeFormatters.get(key);
+  if (!fmt) {
+    const options = { hour: '2-digit', minute: '2-digit' };
+    if (withSeconds) options.second = '2-digit';
+    try {
+      fmt = new Intl.DateTimeFormat('pt-BR', timeZone ? { ...options, timeZone } : options);
+    } catch (e) {
+      fmt = new Intl.DateTimeFormat('pt-BR', options); // fuso desconhecido: usa o do aparelho
+    }
+    timeFormatters.set(key, fmt);
   }
+  return fmt.format(ms);
 }
 
 // --- STATUS DA CONEXÃO COM A API ---
@@ -485,8 +492,7 @@ window.switchForecast = function (tab) {
   setForecastTitle(tab === '24h' ? 'Próximas 24h' : 'Próximos 7 dias');
   setForecastTabButtons(tab);
   renderForecast();
-  const container = document.getElementById('forecast-container');
-  if (container) container.scrollLeft = 0;
+  DragScroll.reset(document.getElementById('forecast-container'));
 };
 
 window.viewDayForecast = function (dayIndex) {
@@ -502,8 +508,7 @@ window.viewDayForecast = function (dayIndex) {
     setForecastTitle(dayIndex === 1 ? 'Hoje' : dayName);
   }
   renderForecast();
-  const container = document.getElementById('forecast-container');
-  if (container) container.scrollLeft = 0;
+  DragScroll.reset(document.getElementById('forecast-container'));
 };
 
 // --- ALTERNADOR SOLAR / LUNAR (CICLOS CELESTES) ---

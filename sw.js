@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aerosky-v13';
+const CACHE_NAME = 'aerosky-v14';
 const ASSETS = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/radar.js',
   './js/sky.js',
   './js/compass.js',
+  './js/drag-scroll.js',
   './js/wellbeing.js',
   './js/ui.js',
   './js/app.js'

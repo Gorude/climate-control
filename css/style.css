@@ -1039,6 +1039,18 @@ h3 {
   scrollbar-color: var(--divider) transparent;
 }
 
+/* Arrasto horizontal com inércia (drag-scroll.js); o navegador fica só com a rolagem vertical e o zoom */
+.hourly-scroll,
+.favorites-bar {
+  touch-action: pan-y pinch-zoom;
+}
+
+.hourly-scroll.is-dragging,
+.favorites-bar.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .hourly-scroll::-webkit-scrollbar {
   height: 6px;
 }
@@ -1061,7 +1073,10 @@ h3 {
   background: var(--surface-soft);
   border: 1px solid var(--surface-soft-border);
   scroll-snap-align: start;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hour-card svg {
@@ -3349,6 +3364,23 @@ h3 {
   to {
     transform: scale(2.4);
     opacity: 0;
+  }
+}
+
+/* Celular/tablet: o canvas de partículas muda a cada quadro, e cada cartão com backdrop-filter obrigava a
+   GPU a desfocar de novo o que está atrás dele, 60 vezes por segundo (engasgos ao rolar). Sem o desfoque,
+   um fundo um pouco mais opaco mantém a leitura e o visual de vidro escuro. */
+@media (hover: none) and (pointer: coarse) {
+  .grid-cell {
+    background: rgba(10, 18, 30, 0.74);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .top-nav {
+    background: rgba(3, 7, 18, 0.92);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
