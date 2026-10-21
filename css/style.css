@@ -1511,6 +1511,33 @@ h3 {
   font-weight: 600;
 }
 
+/* Bússola real (celular): o mostrador gira contra o rumo do aparelho e as letras ficam em pé */
+.compass-dial.is-live {
+  transform: rotate(calc(var(--heading, 0) * -1deg));
+}
+
+.compass-dial.is-live span {
+  transform: rotate(calc(var(--heading, 0) * 1deg));
+}
+
+.compass-live {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.compass-live[hidden],
+.compass-enable[hidden] {
+  display: none;
+}
+
+.compass-enable {
+  align-self: flex-start;
+  cursor: pointer;
+}
+
 /* ---------- 14. Céu (Sol e Lua) ---------- */
 .astro-view {
   flex: 1 1 auto;
